@@ -1,7 +1,7 @@
 #include "utility.h"
 #include <QDebug>
 
-char readBuf[20001];
+char readBuf[2001];
 
 QString
 ErrMsg(int sta, int err, long cntl) {
@@ -23,7 +23,7 @@ ErrMsg(int sta, int err, long cntl) {
   if (sta & DTAS)  sError += QString(" DTAS");
   if (sta & DCAS)  sError += QString(" DCAS");
 
-  sTmp = QString(">\r\nerror = 0x%1").arg(err, 4, 16, QChar('0'));
+  sTmp = QString("> error = 0x%1").arg(err, 4, 16, QChar('0'));
   sError += sTmp;
   if (err == EDVR) sError += QString(" EDVR <DOS Error>");
   if (err == ECIC) sError += QString(" ECIC <Not CIC>");
@@ -41,7 +41,7 @@ ErrMsg(int sta, int err, long cntl) {
   if (err == ESRQ) sError += QString(" ESRQ <SRQ stuck on>");
   if (err == ETAB) sError += QString(" ETAB <Table Overflow>");
 
-  sTmp = QString("\r\ncount = 0x%1\r\n").arg(cntl, 4, 16, QChar('0'));
+  sTmp = QString(" count = 0x%1").arg(cntl, 4, 16, QChar('0'));
   sError += sTmp;
   return sError;
 }

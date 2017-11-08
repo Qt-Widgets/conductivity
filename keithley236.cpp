@@ -4,13 +4,15 @@
 #include <QThread>
 #include <ni4882.h>
 
-int RearmMask;
+#define MAX_COMPLIANCE_EVENTS 5
 
-
-int __stdcall
-MyCallback(int LocalUd, unsigned long LocalIbsta, unsigned long LocalIberr, long LocalIbcntl, void* callbackData) {
-  reinterpret_cast<Keithley236*>(callbackData)->onGpibCallback(LocalUd, LocalIbsta, LocalIberr, LocalIbcntl);
-  return RearmMask;
+namespace keithley236 {
+  int RearmMask;
+  int __stdcall
+  MyCallback(int LocalUd, unsigned long LocalIbsta, unsigned long LocalIberr, long LocalIbcntl, void* callbackData) {
+    reinterpret_cast<Keithley236*>(callbackData)->onGpibCallback(LocalUd, LocalIbsta, LocalIberr, LocalIbcntl);
+    return RearmMask;
+  }
 }
 
 
@@ -32,7 +34,7 @@ Keithley236::~Keithley236() {
 
 int
 Keithley236::Init() {
-  K236 = ibdev(0, K236Address, 0, T100ms, 1, 0);
+  K236 = ibdev(GPIBNumber, K236Address, 0, T100ms, 1, 0);
   if(K236 < 0) {
     qDebug() << "ibdev() Failed";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
@@ -55,7 +57,7 @@ Keithley236::Init() {
   // set up the asynchronous event notification routine on RQS
   ibnotify(K236,
            RQS,
-           (GpibNotifyCallback_t) MyCallback,
+           (GpibNotifyCallback_t) keithley236::MyCallback,
            this);
   if(ibsta & ERR) {
     qDebug() << "ibnotify call failed.";

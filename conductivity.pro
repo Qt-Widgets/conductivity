@@ -24,7 +24,9 @@ SOURCES += main.cpp \
     stripchart.cpp \
     AxisFrame.cpp \
     cdatastream.cpp \
-    DataSetProperties.cpp
+    DataSetProperties.cpp \
+    lakeshore330.cpp \
+    configuredialog.cpp
 SOURCES += mainwindow.cpp
 
 HEADERS += mainwindow.h \
@@ -35,10 +37,13 @@ HEADERS += mainwindow.h \
     stripchart.h \
     AxisFrame.h \
     cdatastream.h \
-    DataSetProperties.h
+    DataSetProperties.h \
+    lakeshore330.h \
+    configuredialog.h
 
 FORMS   += mainwindow.ui \
-    axesdialog.ui
+    axesdialog.ui \
+    configuredialog.ui
 
 # For National Instruments DAQ Boards
 LIBS += "C:/Program Files (x86)/National Instruments/NI-DAQ/DAQmx ANSI C Dev/lib/msvc/NIDAQmx.lib"
