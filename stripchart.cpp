@@ -1,5 +1,6 @@
 #include <QPainter>
 #include <QPaintEvent>
+#include <QSettings>
 #include <cmath>
 #include <math.h>
 #include <float.h>
@@ -21,9 +22,13 @@ const int StripChart::icircle     = 7;
 
 
 StripChart::StripChart(QWidget *parent, QString Title)
-  : QWidget(parent)
+//  : QWidget(parent)
+  : QDialog(parent)
   , sTitle(Title)
 {
+
+  QSettings settings;
+  restoreGeometry(settings.value(sTitle+QString("Plot")).toByteArray());
   xMarker      = 0.0;
   yMarker      = 0.0;
   bShowMarker  = false;
@@ -46,6 +51,8 @@ StripChart::StripChart(QWidget *parent, QString Title)
 
 
 StripChart::~StripChart() {
+  QSettings settings;
+  settings.setValue(sTitle+QString("Plot"), saveGeometry());
   while(!dataSetList.isEmpty()) {
     delete dataSetList.takeFirst();
   }
@@ -93,8 +100,9 @@ StripChart::sizeHint() const {
 
 void
 StripChart::closeEvent(QCloseEvent *event) {
-  //event->ignore();
-  event->accept();
+  QSettings settings;
+  settings.setValue(sTitle+QString("Plot"), saveGeometry());
+  event->ignore();
 }
 
 

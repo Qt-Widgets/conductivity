@@ -37,8 +37,10 @@ private slots:
   void on_testValueEdit_textChanged(const QString &arg1);
 
 private:
+  // QLineEdit styles
   QString     sNormalStyle;
   QString     sErrorStyle;
+  // Limit Values
   const double currentMin;
   const double currentMax;
   const double voltageMin;
@@ -47,6 +49,7 @@ private:
   const double temperatureMax;
   const int    sweepTimeMin;
   const int    sweepTimeMax;
+  // Dialog user interace
   Ui::ConfigureDialog *ui;
 };
 

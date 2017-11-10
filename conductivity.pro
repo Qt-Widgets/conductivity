@@ -12,39 +12,39 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = conductivity
 TEMPLATE = app
 
-# For National Instruments DAQ Boards
+# For National Instruments DAQ & GPIB Boards
 INCLUDEPATH += "C:/Program Files (x86)/National Instruments/NI-DAQ/DAQmx ANSI C Dev/include"
 INCLUDEPATH += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/include"
 
-SOURCES += main.cpp \
-    utility.cpp \
-    keithley236.cpp \
-    axesdialog.cpp \
-    AxisLimits.cpp \
-    stripchart.cpp \
-    AxisFrame.cpp \
-    cdatastream.cpp \
-    DataSetProperties.cpp \
-    lakeshore330.cpp \
-    configuredialog.cpp
+SOURCES += main.cpp
+SOURCES += utility.cpp
+SOURCES += keithley236.cpp
+SOURCES += axesdialog.cpp
+SOURCES += AxisLimits.cpp
+SOURCES += stripchart.cpp
+SOURCES += AxisFrame.cpp
+SOURCES += cdatastream.cpp
+SOURCES += DataSetProperties.cpp
+SOURCES += lakeshore330.cpp
+SOURCES += configuredialog.cpp
 SOURCES += mainwindow.cpp
 
-HEADERS += mainwindow.h \
-    utility.h \
-    keithley236.h \
-    axesdialog.h \
-    AxisLimits.h \
-    stripchart.h \
-    AxisFrame.h \
-    cdatastream.h \
-    DataSetProperties.h \
-    lakeshore330.h \
-    configuredialog.h
+HEADERS += mainwindow.h
+HEADERS += utility.h
+HEADERS += keithley236.h
+HEADERS += axesdialog.h
+HEADERS += AxisLimits.h
+HEADERS += stripchart.h
+HEADERS += AxisFrame.h
+HEADERS += cdatastream.h
+HEADERS += DataSetProperties.h
+HEADERS += lakeshore330.h
+HEADERS += configuredialog.h
 
-FORMS   += mainwindow.ui \
-    axesdialog.ui \
-    configuredialog.ui
+FORMS   += mainwindow.ui
+FORMS   += axesdialog.ui
+FORMS   += configuredialog.ui
 
-# For National Instruments DAQ Boards
+# For National Instruments DAQ & GPIB Boards
 LIBS += "C:/Program Files (x86)/National Instruments/NI-DAQ/DAQmx ANSI C Dev/lib/msvc/NIDAQmx.lib"
 LIBS += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/lib32/msvc/gpib-32.obj"

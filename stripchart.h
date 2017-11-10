@@ -2,13 +2,15 @@
 #define STRIPCHART_H
 
 #include <QWidget>
+#include <QDialog>
 #include <QPen>
 
 #include "AxisLimits.h"
 #include "AxisFrame.h"
 #include "cdatastream.h"
 
-class StripChart : public QWidget
+//class StripChart : public QWidget
+class StripChart : public QDialog
 {
   Q_OBJECT
 public:

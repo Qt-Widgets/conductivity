@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>341</width>
-    <height>426</height>
+    <height>340</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -80,19 +80,19 @@
      <string>V</string>
     </property>
    </widget>
-  </widget>
-  <widget class="QLabel" name="labelSourceVal">
-   <property name="geometry">
-    <rect>
-     <x>170</x>
-     <y>57</y>
-     <width>47</width>
-     <height>13</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Voltage</string>
-   </property>
+   <widget class="QLabel" name="labelSourceVal">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>47</y>
+      <width>47</width>
+      <height>13</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Voltage</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QGroupBox" name="TemperatureGroupBox">
    <property name="geometry">
@@ -210,6 +210,19 @@
      <string>s</string>
     </property>
    </widget>
+  </widget>
+  <widget class="QGroupBox" name="SampleGroupBox">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>230</y>
+     <width>301</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>Sample Information</string>
+   </property>
   </widget>
  </widget>
  <resources/>

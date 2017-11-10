@@ -73,10 +73,10 @@ MainWindow::MainWindow(QWidget *parent)
     pLakeShore->SetTemperature(100.0);
   }
 */
-/*
+
   pPlot1 = new StripChart(this, QString("Measurements"));
   pPlot1->setMaxPoints(nChartPoints);
-*/
+  pPlot1->show();
 }
 
 
