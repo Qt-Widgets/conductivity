@@ -54,7 +54,7 @@ MainWindow::MainWindow(QWidget *parent)
   QSettings settings;
   restoreGeometry(settings.value("mainWindowGeometry").toByteArray());
   restoreState(settings.value("mainWindowState").toByteArray());
-
+/*
   if(!CheckInstruments())
     exit(-1);
 
@@ -72,7 +72,7 @@ MainWindow::MainWindow(QWidget *parent)
     }
     pLakeShore->SetTemperature(100.0);
   }
-
+*/
 /*
   pPlot1 = new StripChart(this, QString("Measurements"));
   pPlot1->setMaxPoints(nChartPoints);

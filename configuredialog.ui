@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>ConfigureDialog</class>
  <widget class="QDialog" name="ConfigureDialog">
@@ -5,13 +6,211 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>341</width>
+    <height>426</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Configure Measurement</string>
   </property>
+  <property name="whatsThis">
+   <string/>
+  </property>
+  <widget class="QGroupBox" name="measureTypeGroupBox">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>10</y>
+     <width>301</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>Measure Type</string>
+   </property>
+   <widget class="QRadioButton" name="radioButtonSourceI">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>30</y>
+      <width>121</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Source I Measure V</string>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="radioButtonSourceV">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>60</y>
+      <width>121</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Source V Measure I</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="testValueEdit">
+    <property name="geometry">
+     <rect>
+      <x>198</x>
+      <y>44</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="labelUnits">
+    <property name="geometry">
+     <rect>
+      <x>280</x>
+      <y>46</y>
+      <width>21</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>V</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QLabel" name="labelSourceVal">
+   <property name="geometry">
+    <rect>
+     <x>170</x>
+     <y>57</y>
+     <width>47</width>
+     <height>13</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Voltage</string>
+   </property>
+  </widget>
+  <widget class="QGroupBox" name="TemperatureGroupBox">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>120</y>
+     <width>301</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>Temperature Control</string>
+   </property>
+   <widget class="QLabel" name="labelTStart">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>30</y>
+      <width>47</width>
+      <height>13</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Starting T</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="labelTEnd">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>30</y>
+      <width>47</width>
+      <height>13</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Ending T</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="TStartEdit">
+    <property name="geometry">
+     <rect>
+      <x>62</x>
+      <y>28</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="TEndEdit">
+    <property name="geometry">
+     <rect>
+      <x>198</x>
+      <y>30</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="labelUnitsT">
+    <property name="geometry">
+     <rect>
+      <x>280</x>
+      <y>30</y>
+      <width>21</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>K</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="labelSweepTime">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>60</y>
+      <width>61</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Sweep Time</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="SweepTimeEdit">
+    <property name="geometry">
+     <rect>
+      <x>80</x>
+      <y>59</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="labelUnitsTime">
+    <property name="geometry">
+     <rect>
+      <x>160</x>
+      <y>60</y>
+      <width>21</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>s</string>
+    </property>
+   </widget>
+  </widget>
  </widget>
  <resources/>
  <connections/>
