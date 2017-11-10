@@ -38,7 +38,8 @@ private:
 
   int GpibBoardID;
   bool bStartDaq;
-  StripChart *pPlot1;
+  StripChart *pPlotMeasurements;
+  StripChart *pPlotTemperature;
   int nChartPoints;
 };
 

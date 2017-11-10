@@ -47,7 +47,8 @@ MainWindow::MainWindow(QWidget *parent)
   , pKeithley(Q_NULLPTR)
   , pLakeShore(Q_NULLPTR)
   , GpibBoardID(0)
-  , pPlot1(Q_NULLPTR)
+  , pPlotMeasurements(Q_NULLPTR)
+  , pPlotTemperature(Q_NULLPTR)
 {
   ui->setupUi(this);
 
@@ -73,18 +74,23 @@ MainWindow::MainWindow(QWidget *parent)
     pLakeShore->SetTemperature(100.0);
   }
 */
-
-  pPlot1 = new StripChart(this, QString("Measurements"));
-  pPlot1->setMaxPoints(nChartPoints);
-  pPlot1->show();
+  nChartPoints = 3000;
+  pPlotMeasurements = new StripChart(this, QString("Measurements"));
+  pPlotMeasurements->setMaxPoints(nChartPoints);
+  pPlotMeasurements->show();
+  pPlotTemperature = new StripChart(this, QString("Temperature"));
+  pPlotTemperature->setMaxPoints(nChartPoints);
+  pPlotTemperature->show();
 }
 
 
 MainWindow::~MainWindow() {
   if(pKeithley != Q_NULLPTR) delete pKeithley;
   pKeithley = Q_NULLPTR;
-  if(pPlot1) delete pPlot1;
-  pPlot1 = Q_NULLPTR;
+  if(pPlotMeasurements) delete pPlotMeasurements;
+  pPlotMeasurements = Q_NULLPTR;
+  if(pPlotTemperature) delete pPlotTemperature;
+  pPlotTemperature = Q_NULLPTR;
 
   delete ui;
 }
