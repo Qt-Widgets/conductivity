@@ -274,20 +274,20 @@ StripChart::XTicLin(QPainter* painter, QFontMetrics fontMetrics) {
   else dx = 100.0;
 
   dx = dx * pow(10.0, (double)ic);
-  xfact = (Pf.r-Pf.l) / (xmax-xmin);
+  xfact = (Pf.right-Pf.left) / (xmax-xmin);
   dxx = (xmax+dx) / dx;
   dxx = floor(dxx) * dx;
-  iy0 = int(Pf.b + fontMetrics.height()+5);
+  iy0 = int(Pf.bottom + fontMetrics.height()+5);
   iesp = int(floor(log10(dxx)));
   if (dxx > xmax) dxx = dxx - dx;
   do {
     if(isx == -1)
-      ix = int(Pf.r-(dxx-xmin) * xfact);
+      ix = int(Pf.right-(dxx-xmin) * xfact);
     else
-      ix = int((dxx-xmin) * xfact + Pf.l);
-    jy = int(Pf.b + 5);// Perche' 5 ?
+      ix = int((dxx-xmin) * xfact + Pf.left);
+    jy = int(Pf.bottom + 5);// Perche' 5 ?
     painter->setPen(gridPen);
-    painter->drawLine(QLine(ix, int(Pf.t), ix, jy));
+    painter->drawLine(QLine(ix, int(Pf.top), ix, jy));
     isig = 0;
     if(dxx == 0.0)
       fmant= 0.0;
@@ -309,11 +309,11 @@ StripChart::XTicLin(QPainter* painter, QFontMetrics fontMetrics) {
     dxx = isig*dxx - dx;
   }	while(dxx >= xmin);
   painter->setPen(labelPen);
-  painter->drawText(QPoint(int(Pf.r + 2),	int(Pf.b - 0.5*fontMetrics.height())), "x10");
+  painter->drawText(QPoint(int(Pf.right + 2),	int(Pf.bottom - 0.5*fontMetrics.height())), "x10");
   int icx = fontMetrics.width("x10 ");
   Label.sprintf("%-3i", iesp);
   painter->setPen(labelPen);
-  painter->drawText(QPoint(int(Pf.r+icx),	int(Pf.b - fontMetrics.height())), Label);
+  painter->drawText(QPoint(int(Pf.right+icx),	int(Pf.bottom - fontMetrics.height())), Label);
 }
 
 
@@ -340,19 +340,19 @@ StripChart::YTicLin(QPainter* painter, QFontMetrics fontMetrics) {
   else dy = 100.0;
 
   dy = dy * pow(10.0, (double)icc);
-  yfact = (Pf.t-Pf.b) / (ymax-ymin);
+  yfact = (Pf.top-Pf.bottom) / (ymax-ymin);
   dyy = (ymax+dy) / dy;
   dyy = floor(dyy) * dy;
   iesp = int(floor(log10(dyy)));
   if(dyy > ymax) dyy = dyy - dy;
   do {
     if(isy == -1)
-      iy = int(Pf.t - (dyy-ymin) * yfact);
+      iy = int(Pf.top - (dyy-ymin) * yfact);
     else
-      iy = int((dyy-ymin) * yfact + Pf.b);
-    jx = int(Pf.r);
+      iy = int((dyy-ymin) * yfact + Pf.bottom);
+    jx = int(Pf.right);
     painter->setPen(gridPen);
-    painter->drawLine(QLine(int(Pf.l-5), iy, jx, iy));
+    painter->drawLine(QLine(int(Pf.left-5), iy, jx, iy));
     isig = 0;
     if(dyy == 0.0)
       fmant = 0.0;
@@ -368,19 +368,19 @@ StripChart::YTicLin(QPainter* painter, QFontMetrics fontMetrics) {
       Label.sprintf("% 7.3f", (double)isy*fmant);
     else
       Label.sprintf("% 7.4f", (double)isy*fmant);
-    ix0 = int(Pf.l - fontMetrics.width(Label) - 5);
+    ix0 = int(Pf.left - fontMetrics.width(Label) - 5);
     iy0 = iy + fontMetrics.height()/2;
     painter->setPen(labelPen);
     painter->drawText(QPoint(ix0, iy0), Label);
     dyy = isig*dyy - dy;
   }	while (dyy >= ymin);
-  QPoint point(int(Pf.l), int(Pf.t-0.5*fontMetrics.height()));
+  QPoint point(int(Pf.left), int(Pf.top-0.5*fontMetrics.height()));
   painter->setPen(labelPen);
   painter->drawText(point, "x10");
   int icx = fontMetrics.width("x10 ");
   Label.sprintf("%-3i", iesp);
   painter->setPen(labelPen);
-  painter->drawText(QPoint(int(int(Pf.l)+icx),int(Pf.t-fontMetrics.height())),Label);
+  painter->drawText(QPoint(int(int(Pf.left)+icx),int(Pf.top-fontMetrics.height())),Label);
 }
 
 
@@ -390,8 +390,8 @@ StripChart::XTicLog(QPainter* painter, QFontMetrics fontMetrics) {
   double dx;
   QString Label;
 
-  jy = int(Pf.b + 5);// Perche' 5 ?
-  iy0 = int(Pf.b + fontMetrics.height()+5);
+  jy = int(Pf.bottom + 5);// Perche' 5 ?
+  iy0 = int(Pf.bottom + fontMetrics.height()+5);
 
   if(Ax.XMin < FLT_MIN) Ax.XMin = FLT_MIN;
   if(Ax.XMax < FLT_MIN) Ax.XMax = 10.0*FLT_MIN;
@@ -404,7 +404,7 @@ StripChart::XTicLog(QPainter* painter, QFontMetrics fontMetrics) {
   int maxx = int(xlmax);
   if((xlmax > 0.0) && (xlmax != maxx)) maxx= maxx + 1;
 
-  xfact = (Pf.r-Pf.l) / ((xlmax-xlmin)+FLT_MIN);
+  xfact = (Pf.right-Pf.left) / ((xlmax-xlmin)+FLT_MIN);
 
   bool init = true;
   int decades = maxx - minx;
@@ -413,7 +413,7 @@ StripChart::XTicLog(QPainter* painter, QFontMetrics fontMetrics) {
     for(i=0; i<decades; i++) {
       dx = pow(10.0, (minx + i));
       if(x >= Ax.XMin) {
-        ix = int(Pf.l + (log10(x)-xlmin)*xfact);
+        ix = int(Pf.left + (log10(x)-xlmin)*xfact);
         Label.sprintf("%7.0e", x);
         ix0 = ix - fontMetrics.width(Label)/2;
         painter->setPen(labelPen);
@@ -423,9 +423,9 @@ StripChart::XTicLog(QPainter* painter, QFontMetrics fontMetrics) {
       for(j=1; j<10; j++){
         x = x + dx;
         if((x >= Ax.XMin) && (x <= Ax.XMax)) {
-          ix = int(Pf.l + (log10(x)-xlmin)*xfact);
+          ix = int(Pf.left + (log10(x)-xlmin)*xfact);
           painter->setPen(gridPen);
-          painter->drawLine(QLine(ix, int(Pf.t), ix, jy));
+          painter->drawLine(QLine(ix, int(Pf.top), ix, jy));
           Label.sprintf("%7.0e", x);
           if(init || (j == 9 && decades == 1)) {
             ix0 = ix - fontMetrics.width(Label)/2;
@@ -443,7 +443,7 @@ StripChart::XTicLog(QPainter* painter, QFontMetrics fontMetrics) {
     }// for(i=0; i<decades; i++)
     if((decades != 1) && (x <= Ax.XMax)) {
       Label.sprintf("%7.0e", x);
-      ix = int(Pf.l + (log10(x)-xlmin)*xfact);
+      ix = int(Pf.left + (log10(x)-xlmin)*xfact);
       ix0 = ix - fontMetrics.width(Label)/2;
       painter->setPen(labelPen);
       painter->drawText(QPoint(ix0, iy0), Label);
@@ -452,9 +452,9 @@ StripChart::XTicLog(QPainter* painter, QFontMetrics fontMetrics) {
     for(i=1; i<=decades; i++) {
       x = pow(10.0, minx + i);
       if((x >= Ax.XMin) && (x <= Ax.XMax)) {
-        ix = int(Pf.l + (log10(x)-xlmin)*xfact);
+        ix = int(Pf.left + (log10(x)-xlmin)*xfact);
         painter->setPen(gridPen);
-        painter->drawLine(QLine(ix, int(Pf.t),ix, jy));
+        painter->drawLine(QLine(ix, int(Pf.top),ix, jy));
         Label.sprintf("%7.0e", x);
         ix0 = ix - fontMetrics.width(Label)/2;
         painter->setPen(labelPen);
@@ -482,7 +482,7 @@ StripChart::YTicLog(QPainter* painter, QFontMetrics fontMetrics) {
   int maxy = int(ylmax);
   if((ylmax > 0.0) && (ylmax != maxy)) maxy= maxy + 1;
 
-  yfact = (Pf.t-Pf.b) / ((ylmax-ylmin)+FLT_MIN);
+  yfact = (Pf.top-Pf.bottom) / ((ylmax-ylmin)+FLT_MIN);
 
   bool init = true;
   int decades = maxy - miny;
@@ -491,9 +491,9 @@ StripChart::YTicLog(QPainter* painter, QFontMetrics fontMetrics) {
     for(i=0; i<decades; i++) {
       dy = pow(10.0, (miny + i));
       if(y >= Ax.YMin) {
-        iy = int(Pf.b + (log10(y)-ylmin)*yfact);
+        iy = int(Pf.bottom + (log10(y)-ylmin)*yfact);
         Label.sprintf("%7.0e", y);
-        ix0 = int(Pf.l - fontMetrics.width(Label) - 5);
+        ix0 = int(Pf.left - fontMetrics.width(Label) - 5);
         iy0 = iy + fontMetrics.height()/2;
         painter->setPen(labelPen);
         painter->drawText(QPoint(ix0, iy0), Label);
@@ -502,19 +502,19 @@ StripChart::YTicLog(QPainter* painter, QFontMetrics fontMetrics) {
       for(j=1; j<10; j++){
         y = y + dy;
         if((y >= Ax.YMin) && (y <= Ax.YMax)) {
-          iy = int(Pf.b + (log10(y)-ylmin)*yfact);
+          iy = int(Pf.bottom + (log10(y)-ylmin)*yfact);
           painter->setPen(gridPen);
-          painter->drawLine(QLine(int(Pf.l-5), iy, int(Pf.r), iy));
+          painter->drawLine(QLine(int(Pf.left-5), iy, int(Pf.right), iy));
           Label.sprintf("%7.0e", y);
           if(init || (j == 9 && decades == 1)) {
-            ix0 = int(Pf.l - fontMetrics.width(Label) - 5);
+            ix0 = int(Pf.left - fontMetrics.width(Label) - 5);
             iy0 = iy + fontMetrics.height()/2;
             painter->setPen(labelPen);
             painter->drawText(QPoint(ix0, iy0), Label);
             init = false;
           } else if (decades == 1) {
             Label = Label.left(2);
-            ix0 = int(Pf.l - fontMetrics.width(Label) - 5);
+            ix0 = int(Pf.left - fontMetrics.width(Label) - 5);
             iy0 = iy + fontMetrics.height()/2;
             painter->setPen(labelPen);
             painter->drawText(QPoint(ix0, iy0), Label);
@@ -524,8 +524,8 @@ StripChart::YTicLog(QPainter* painter, QFontMetrics fontMetrics) {
     }// for(i=0; i<decades; i++)
     if((decades != 1) && (y <= Ax.YMax)) {
       Label.sprintf("%7.0e", y);
-      iy = int(Pf.b - (log10(y)-ylmin)*yfact);
-      ix0 = int(Pf.l - fontMetrics.width(Label) - 5);
+      iy = int(Pf.bottom - (log10(y)-ylmin)*yfact);
+      ix0 = int(Pf.left - fontMetrics.width(Label) - 5);
       iy0 = iy + fontMetrics.height()/2;
       painter->setPen(labelPen);
       painter->drawText(QPoint(ix0, iy0), Label);
@@ -534,11 +534,11 @@ StripChart::YTicLog(QPainter* painter, QFontMetrics fontMetrics) {
     for(i=1; i<=decades; i++) {
       y = pow(10.0, miny + i);
       if((y >= Ax.YMin) && (y <= Ax.YMax)) {
-        iy = int(Pf.b + (log10(y)-ylmin)*yfact);
+        iy = int(Pf.bottom + (log10(y)-ylmin)*yfact);
         painter->setPen(gridPen);
-        painter->drawLine(QLine(int(Pf.l-5), iy, int(Pf.r), iy));
+        painter->drawLine(QLine(int(Pf.left-5), iy, int(Pf.right), iy));
         Label.sprintf("%7.0e", y);
-        ix0 = int(Pf.l - fontMetrics.width(Label) - 5);
+        ix0 = int(Pf.left - fontMetrics.width(Label) - 5);
         iy0 = iy + fontMetrics.height()/2;
         painter->setPen(labelPen);
         painter->drawText(QPoint(ix0, iy0), Label);
@@ -554,10 +554,10 @@ StripChart::DrawFrame(QPainter* painter, QFontMetrics fontMetrics) {
   if(Ax.LogY) YTicLog(painter, fontMetrics); else YTicLin(painter, fontMetrics);
 
   painter->setPen(framePen);
-  painter->drawLine(QLine(int(Pf.l), int(Pf.b), int(Pf.r), int(Pf.b)));
-  painter->drawLine(QLine(int(Pf.r), int(Pf.b), int(Pf.r), int(Pf.t)));
-  painter->drawLine(QLine(int(Pf.r), int(Pf.t), int(Pf.l), int(Pf.t)));
-  painter->drawLine(QLine(int(Pf.l), int(Pf.t), int(Pf.l), int(Pf.b)));
+  painter->drawLine(QLine(int(Pf.left), int(Pf.bottom), int(Pf.right), int(Pf.bottom)));
+  painter->drawLine(QLine(int(Pf.right), int(Pf.bottom), int(Pf.right), int(Pf.top)));
+  painter->drawLine(QLine(int(Pf.right), int(Pf.top), int(Pf.left), int(Pf.top)));
+  painter->drawLine(QLine(int(Pf.left), int(Pf.top), int(Pf.left), int(Pf.bottom)));
 
   painter->setPen(labelPen);
   int icx = fontMetrics.width((sTitle));
@@ -604,36 +604,36 @@ StripChart::LinePlot(QPainter* painter, CDataStream* pData) {
   else ylmin = FLT_MIN;
 
   if(Ax.LogX) {
-    ix0 = int(((log10(1.0) - xlmin)*xfact) + Pf.l);
+    ix0 = int(((log10(1.0) - xlmin)*xfact) + Pf.left);
   } else
-    ix0 = int(((1.0 - Ax.XMin)*xfact) + Pf.l);
+    ix0 = int(((1.0 - Ax.XMin)*xfact) + Pf.left);
   if(Ax.LogY) {
     if(pData->m_pointArray[0] > 0.0)
-      iy0 = int((Pf.b + (log10(pData->m_pointArray[0]) - ylmin)*yfact));
+      iy0 = int((Pf.bottom + (log10(pData->m_pointArray[0]) - ylmin)*yfact));
     else
       iy0 =-INT_MAX; // Solo per escludere il punto
   } else
-    iy0 = int((Pf.b + (pData->m_pointArray[0] - Ax.YMin)*yfact));
+    iy0 = int((Pf.bottom + (pData->m_pointArray[0] - Ax.YMin)*yfact));
 
   for(int i=1; i<iMax; i++) {
     if(Ax.LogX)
-      ix1 = int(((log10(i+1) - xlmin)*xfact) + Pf.l);
+      ix1 = int(((log10(i+1) - xlmin)*xfact) + Pf.left);
     else
-      ix1 = int(((i+1 - Ax.XMin)*xfact) + Pf.l);
+      ix1 = int(((i+1 - Ax.XMin)*xfact) + Pf.left);
     if(Ax.LogY)
       if(pData->m_pointArray[i] > 0.0)
-        iy1 = int((Pf.b + (log10(pData->m_pointArray[i]) - ylmin)*yfact));
+        iy1 = int((Pf.bottom + (log10(pData->m_pointArray[i]) - ylmin)*yfact));
       else
         iy1 =-INT_MAX; // Solo per escludere il punto
     else
-      iy1 = int((Pf.b + (pData->m_pointArray[i] - Ax.YMin)*yfact));
+      iy1 = int((Pf.bottom + (pData->m_pointArray[i] - Ax.YMin)*yfact));
 
-    if(!(ix1<Pf.l || iy1<Pf.t || iy1>Pf.b)) {
+    if(!(ix1<Pf.left || iy1<Pf.top || iy1>Pf.bottom)) {
       painter->drawLine(ix0, iy0, ix1, iy1);
     }
     ix0 = ix1;
     iy0 = iy1;
-    if(ix1 > Pf.r) {
+    if(ix1 > Pf.right) {
       break;
     }
   }
@@ -657,17 +657,17 @@ StripChart::DrawLastPoint(QPainter* painter, CDataStream* pData) {
   else ylmin = FLT_MIN;
 
   if(Ax.LogX) {
-    ix = int(((log10(pData->m_pointArray.count()) - xlmin)*xfact) + Pf.l);
+    ix = int(((log10(pData->m_pointArray.count()) - xlmin)*xfact) + Pf.left);
   } else
-    ix = int(((pData->m_pointArray.count() - Ax.XMin)*xfact) + Pf.l);
+    ix = int(((pData->m_pointArray.count() - Ax.XMin)*xfact) + Pf.left);
   if(Ax.LogY) {
     if(pData->m_pointArray[i] > 0.0)
-      iy = int((Pf.b + (log10(pData->m_pointArray[i]) - ylmin)*yfact));
+      iy = int((Pf.bottom + (log10(pData->m_pointArray[i]) - ylmin)*yfact));
     else
       return;
   } else
-    iy = int((Pf.b + (pData->m_pointArray[i] - Ax.YMin)*yfact));
-    if(ix<=Pf.r && ix>=Pf.l && iy>=Pf.t && iy<=Pf.b)
+    iy = int((Pf.bottom + (pData->m_pointArray[i] - Ax.YMin)*yfact));
+    if(ix<=Pf.right && ix>=Pf.left && iy>=Pf.top && iy<=Pf.bottom)
       painter->drawPoint(ix, iy);
   return;
 }
@@ -693,16 +693,16 @@ StripChart::PointPlot(QPainter* painter, CDataStream* pData) {
   for (int i=0; i < iMax; i++) {
     if(!(pData->m_pointArray[i] < Ax.YMin || pData->m_pointArray[i] > Ax.YMax )) {
       if(Ax.LogX) {
-        ix = int(((log10(i+1) - xlmin)*xfact) + Pf.l);
+        ix = int(((log10(i+1) - xlmin)*xfact) + Pf.left);
       } else
-        ix = int(((i+1 - Ax.XMin)*xfact) + Pf.l);
+        ix = int(((i+1 - Ax.XMin)*xfact) + Pf.left);
       if(Ax.LogY) {
         if(pData->m_pointArray[i] > 0.0)
-          iy = int((Pf.b + (log10(pData->m_pointArray[i]) - ylmin)*yfact));
+          iy = int((Pf.bottom + (log10(pData->m_pointArray[i]) - ylmin)*yfact));
         else
           iy =-INT_MAX; // Solo per escludere il punto
       } else
-        iy = int((Pf.b + (pData->m_pointArray[i] - Ax.YMin)*yfact));
+        iy = int((Pf.bottom + (pData->m_pointArray[i] - Ax.YMin)*yfact));
       painter->drawPoint(ix, iy);
     }
   }//for (int i=0; i <= iMax; i++)
@@ -735,16 +735,16 @@ StripChart::ScatterPlot(QPainter* painter, CDataStream* pData) {
     if(pData->m_pointArray[i] >= Ax.YMin &&
        pData->m_pointArray[i] <= Ax.YMax) {
       if(Ax.LogX)
-        ix = int(((log10(i+1) - xlmin)*xfact) + Pf.l);
+        ix = int(((log10(i+1) - xlmin)*xfact) + Pf.left);
       else//Asse X Lineare
-        ix= int(((i+1 - Ax.XMin)*xfact) + Pf.l);
+        ix= int(((i+1 - Ax.XMin)*xfact) + Pf.left);
       if(Ax.LogY) {
         if(pData->m_pointArray[i] > 0.0)
-          iy = int(((log10(pData->m_pointArray[i]) - ylmin)*yfact) + Pf.b);
+          iy = int(((log10(pData->m_pointArray[i]) - ylmin)*yfact) + Pf.bottom);
         else
           iy =-INT_MAX; // Solo per escludere il punto
       } else
-        iy = int(((pData->m_pointArray[i] - Ax.YMin)*yfact) + Pf.b);
+        iy = int(((pData->m_pointArray[i] - Ax.YMin)*yfact) + Pf.bottom);
 
       if(pData->GetProperties().Symbol == iplus) {
         painter->drawLine(ix, iy-Size.height()/2, ix, iy+Size.height()/2+1);
@@ -780,7 +780,7 @@ void
 StripChart::ShowTitle(QPainter* painter, QFontMetrics fontMetrics, CDataStream *pData) {
   QPen titlePen = QPen(pData->GetProperties().Color);
   painter->setPen(titlePen);
-  painter->drawText(int(Pf.r+4), int(Pf.t+fontMetrics.height()*(pData->GetId())), pData->GetTitle());
+  painter->drawText(int(Pf.right+4), int(Pf.top+fontMetrics.height()*(pData->GetId())), pData->GetTitle());
 }
 
 
@@ -830,10 +830,10 @@ StripChart::DrawPlot(QPainter* painter, QPaintEvent *event) {
   painter->setFont(QFont("Helvetica", 8, QFont::Normal));
   QFontMetrics fontMetrics = painter->fontMetrics();
 
-  Pf.l = fontMetrics.width("-0.00000") + 2.0;
-  Pf.r = width() - fontMetrics.width("x10-999") - 5.0;
-  Pf.t = 2.0 * fontMetrics.height();
-  Pf.b = height() - 3.0*fontMetrics.height();
+  Pf.left = fontMetrics.width("-0.00000") + 2.0;
+  Pf.right = width() - fontMetrics.width("x10-999") - 5.0;
+  Pf.top = 2.0 * fontMetrics.height();
+  Pf.bottom = height() - 3.0*fontMetrics.height();
 
   DrawFrame(painter, fontMetrics);
   DrawData(painter, fontMetrics);
@@ -878,18 +878,18 @@ StripChart::mouseReleaseEvent(QMouseEvent *event) {
       if(abs(distance.rx()) < 10 || abs(distance.ry()) < 10) return;
       double x1, x2, y1, y2, tmp;
       if(Ax.LogX) {
-        x1 = pow(10.0, log10(Ax.XMin)+(zoomEnd.rx()-Pf.l)/xfact);
-        x2 = pow(10.0, log10(Ax.XMin)+(zoomStart.rx()-Pf.l)/xfact);
+        x1 = pow(10.0, log10(Ax.XMin)+(zoomEnd.rx()-Pf.left)/xfact);
+        x2 = pow(10.0, log10(Ax.XMin)+(zoomStart.rx()-Pf.left)/xfact);
       } else {
-        x1 = (zoomEnd.rx()-Pf.l)/xfact + Ax.XMin;
-        x2 = (zoomStart.rx()-Pf.l)/xfact + Ax.XMin;
+        x1 = (zoomEnd.rx()-Pf.left)/xfact + Ax.XMin;
+        x2 = (zoomStart.rx()-Pf.left)/xfact + Ax.XMin;
       }
       if(Ax.LogY) {
-        y1 = pow(10.0, log10(Ax.YMin)+(zoomEnd.ry()-Pf.b)/yfact);
-        y2 = pow(10.0, log10(Ax.YMin)+(zoomStart.ry()-Pf.b)/yfact);
+        y1 = pow(10.0, log10(Ax.YMin)+(zoomEnd.ry()-Pf.bottom)/yfact);
+        y2 = pow(10.0, log10(Ax.YMin)+(zoomStart.ry()-Pf.bottom)/yfact);
       } else {
-        y1 = (zoomEnd.ry()-Pf.b) / yfact + Ax.YMin;
-        y2 = (zoomStart.ry()-Pf.b) / yfact + Ax.YMin;
+        y1 = (zoomEnd.ry()-Pf.bottom) / yfact + Ax.YMin;
+        y2 = (zoomStart.ry()-Pf.bottom) / yfact + Ax.YMin;
       }
       if(x2<x1) {
         tmp = x2;
@@ -943,14 +943,14 @@ StripChart::mouseMoveEvent(QMouseEvent *event) {
   } else {
     double xval, yval;
     if(Ax.LogX) {
-      xval = pow(10.0, log10(Ax.XMin)+(event->pos().rx()-Pf.l)/xfact);
+      xval = pow(10.0, log10(Ax.XMin)+(event->pos().rx()-Pf.left)/xfact);
     }else {
-      xval =Ax.XMin + (event->pos().rx()-Pf.l) / xfact;
+      xval =Ax.XMin + (event->pos().rx()-Pf.left) / xfact;
     }
     if(Ax.LogY) {
-      yval = pow(10.0, log10(Ax.YMin)+(event->pos().ry()-Pf.b)/yfact);
+      yval = pow(10.0, log10(Ax.YMin)+(event->pos().ry()-Pf.bottom)/yfact);
     } else {
-      yval =Ax.YMin + (event->pos().ry()-Pf.b) / yfact;
+      yval =Ax.YMin + (event->pos().ry()-Pf.bottom) / yfact;
     }
     sXCoord.sprintf("X=% -10.7g", xval);
     sYCoord.sprintf("Y=% -10.7g", yval);

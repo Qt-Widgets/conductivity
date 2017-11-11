@@ -1,7 +1,7 @@
 #include "AxisFrame.h"
 
 CAxisFrame::CAxisFrame(void):
-  l(0.0), r(1.0), t(0.0), b(1.0) {
+  left(0.0), right(1.0), top(0.0), bottom(1.0) {
 }
 
 CAxisFrame::~CAxisFrame(void) {

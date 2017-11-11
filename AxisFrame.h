@@ -4,5 +4,5 @@ class CAxisFrame {
 public:
   CAxisFrame(void);
   virtual ~CAxisFrame(void);
-	double l, r, t, b;
+  double left, right, top, bottom;
 };
