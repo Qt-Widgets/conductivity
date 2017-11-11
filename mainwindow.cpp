@@ -64,10 +64,8 @@ MainWindow::MainWindow(QWidget *parent)
   nChartPoints = 3000;
   pPlotMeasurements = new StripChart(this, sMeasurementPlotLabel);
   pPlotMeasurements->setMaxPoints(nChartPoints);
-  pPlotMeasurements->show();
   pPlotTemperature = new StripChart(this, sTemperaturePlotLabel);
   pPlotTemperature->setMaxPoints(nChartPoints);
-  pPlotTemperature->show();
 }
 
 
@@ -196,6 +194,8 @@ MainWindow::on_startButton_clicked() {
   ui->statusBar->showMessage("Checking for the GPIB Instruments");
   if(!CheckInstruments()) {
     ui->statusBar->showMessage("GPIB Instruments not found");
+    pPlotMeasurements->hide();
+    pPlotTemperature->hide();
     QApplication::restoreOverrideCursor();
     return;
   }
@@ -205,6 +205,8 @@ MainWindow::on_startButton_clicked() {
     initError = pKeithley->Init();
     if(initError) {
       ui->statusBar->showMessage("Unable to Initialize Keithley 236...");
+      pPlotMeasurements->hide();
+      pPlotTemperature->hide();
       QApplication::restoreOverrideCursor();
       return;
     }
@@ -214,6 +216,8 @@ MainWindow::on_startButton_clicked() {
     initError = pLakeShore->Init();
     if(initError) {
       ui->statusBar->showMessage("Unable to Initialize LakeShore 330...");
+      pPlotMeasurements->hide();
+      pPlotTemperature->hide();
       QApplication::restoreOverrideCursor();
       return;
     }
@@ -236,9 +240,15 @@ MainWindow::on_startButton_clicked() {
                           .arg(configureDialog.sBaseDir)
                           .arg(configureDialog.sOutFileName));
     ui->statusBar->showMessage("Unable to Open Output file...");
+    pPlotMeasurements->hide();
+    pPlotTemperature->hide();
     QApplication::restoreOverrideCursor();
     return;
   }
   QApplication::restoreOverrideCursor();
   ui->statusBar->clearMessage();
+  pPlotMeasurements->ClearChart();
+  pPlotTemperature->ClearChart();
+  pPlotMeasurements->show();
+  pPlotTemperature->show();
 }
