@@ -120,6 +120,7 @@ ConfigureDialog::setToolTips() {
   ui->outPathEdit->setToolTip(QString("Output File Folder"));
   ui->outFileEdit->setToolTip(QString("Enter Output File Name"));
   ui->outFilePathButton->setToolTip((QString("Press to Change Output File Folder")));
+  ui->doneButton->setToolTip(QString("Press when Done"));
 }
 
 
