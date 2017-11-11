@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMainWindow>
 #include <NIDAQmx.h>
 
-#include "configuredialog.h"
+#include "configureRvsTdialog.h"
 
 namespace Ui {
 class MainWindow;
@@ -48,8 +48,7 @@ protected:
   void stopDAQ();
 
 private slots:
-  void on_configureButton_clicked();
-  void on_startButton_clicked();
+  void on_startRvsTButton_clicked();
 
 private:
   Ui::MainWindow *ui;
@@ -58,7 +57,7 @@ private:
   QFile* pOutputFile;
   Keithley236* pKeithley;
   LakeShore330* pLakeShore;
-  ConfigureDialog configureDialog;
+  ConfigureRvsTDialog configureRvsTDialog;
 
   int         gpibBoardID;
   int32       error;
@@ -70,7 +69,7 @@ private:
   StripChart *pPlotTemperature;
   QString     sMeasurementPlotLabel;
   QString     sTemperaturePlotLabel;
-  int nChartPoints;
+  int         nChartPoints;
 };
 
 #endif // MAINWINDOW_H

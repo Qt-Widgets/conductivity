@@ -19,6 +19,8 @@
 #You should have received a copy of the GNU General Public License
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# To avoid DAQmx and GPIB errors
+DEFINES += SIMULATION
 
 QT += core
 QT += gui
@@ -42,7 +44,7 @@ SOURCES += AxisFrame.cpp
 SOURCES += cdatastream.cpp
 SOURCES += DataSetProperties.cpp
 SOURCES += lakeshore330.cpp
-SOURCES += configuredialog.cpp
+SOURCES += configureRvsTdialog.cpp
 SOURCES += mainwindow.cpp
 
 HEADERS += mainwindow.h
@@ -55,11 +57,11 @@ HEADERS += AxisFrame.h
 HEADERS += cdatastream.h
 HEADERS += DataSetProperties.h
 HEADERS += lakeshore330.h
-HEADERS += configuredialog.h
+HEADERS += configureRvsTdialog.h
 
 FORMS   += mainwindow.ui
 FORMS   += axesdialog.ui
-FORMS   += configuredialog.ui
+FORMS   += configureRvsTdialog.ui
 
 # For National Instruments DAQ & GPIB Boards
 LIBS += "C:/Program Files (x86)/National Instruments/NI-DAQ/DAQmx ANSI C Dev/lib/msvc/NIDAQmx.lib"

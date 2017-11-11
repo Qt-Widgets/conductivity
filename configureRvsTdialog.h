@@ -16,24 +16,24 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
-#ifndef CONFIGUREDIALOG_H
-#define CONFIGUREDIALOG_H
+#ifndef ConfigureRvsTDialog_H
+#define ConfigureRvsTDialog_H
 
 #include <QDialog>
 
 QT_FORWARD_DECLARE_CLASS(QDoubleValidator)
 
 namespace Ui {
-class ConfigureDialog;
+class ConfigureRvsTDialog;
 }
 
-class ConfigureDialog : public QDialog
+class ConfigureRvsTDialog : public QDialog
 {
   Q_OBJECT
 
 public:
-  explicit ConfigureDialog(QWidget *parent = 0);
-  ~ConfigureDialog();
+  explicit ConfigureRvsTDialog(QWidget *parent = 0);
+  ~ConfigureRvsTDialog();
 
 public:
   bool   bSourceI;
@@ -67,6 +67,8 @@ private slots:
   void on_outFileEdit_editingFinished();
 
 
+  void on_cancelButton_clicked();
+
 private:
   // QLineEdit styles
   QString     sNormalStyle;
@@ -81,7 +83,7 @@ private:
   const double TRateMin;
   const double TRateMax;
   // Dialog user interace
-  Ui::ConfigureDialog *ui;
+  Ui::ConfigureRvsTDialog *ui;
 };
 
-#endif // CONFIGUREDIALOG_H
+#endif // ConfigureRvsTDialog_H

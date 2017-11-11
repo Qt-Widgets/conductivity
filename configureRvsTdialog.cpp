@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
-#include "configuredialog.h"
-#include "ui_configuredialog.h"
+#include "configureRvsTdialog.h"
+#include "ui_ConfigureRvsTDialog.h"
 
 
 #include <QSettings>
@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileDialog>
 #include <QMessageBox>
 
-ConfigureDialog::ConfigureDialog(QWidget *parent)
+ConfigureRvsTDialog::ConfigureRvsTDialog(QWidget *parent)
   : QDialog(parent)
   , sBaseDir(QDir::homePath())
   , sOutFileName("conductivity.dat")
@@ -38,7 +38,7 @@ ConfigureDialog::ConfigureDialog(QWidget *parent)
   , temperatureMax(450.0)
   , TRateMin(0.01)
   , TRateMax(10.0)
-  , ui(new Ui::ConfigureDialog)
+  , ui(new Ui::ConfigureRvsTDialog)
 {
   setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
   setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
@@ -85,16 +85,16 @@ ConfigureDialog::ConfigureDialog(QWidget *parent)
 }
 
 
-ConfigureDialog::~ConfigureDialog() {
+ConfigureRvsTDialog::~ConfigureRvsTDialog() {
   delete ui;
 }
 
 
 void
-ConfigureDialog::restoreSettings() {
+ConfigureRvsTDialog::restoreSettings() {
   QSettings settings;
 
-  restoreGeometry(settings.value("configureDialogGeometry").toByteArray());
+  restoreGeometry(settings.value("ConfigureRvsTDialogGeometry").toByteArray());
 
   bSourceI     = settings.value("configureSourceI", true).toBool();
   dSourceValue = settings.value("configureSourceValue", 0.0).toDouble();
@@ -108,7 +108,7 @@ ConfigureDialog::restoreSettings() {
 
 
 void
-ConfigureDialog::saveSettings() {
+ConfigureRvsTDialog::saveSettings() {
   QSettings settings;
 
   settings.setValue("configureSourceI", bSourceI);
@@ -124,7 +124,7 @@ ConfigureDialog::saveSettings() {
 
 
 void
-ConfigureDialog::setToolTips() {
+ConfigureRvsTDialog::setToolTips() {
   QString sHeader = QString("Enter values in range [%1 : %2]");
   if(bSourceI)
     ui->testValueEdit->setToolTip(sHeader.arg(currentMin).arg(currentMax));
@@ -143,14 +143,14 @@ ConfigureDialog::setToolTips() {
 
 
 void
-ConfigureDialog::closeEvent(QCloseEvent *event) {
+ConfigureRvsTDialog::closeEvent(QCloseEvent *event) {
   Q_UNUSED(event)
   saveSettings();
 }
 
 
 void
-ConfigureDialog::setCaptions(bool bSourceI) {
+ConfigureRvsTDialog::setCaptions(bool bSourceI) {
   ui->radioButtonSourceI->setChecked(bSourceI);
   ui->radioButtonSourceV->setChecked(!bSourceI);
   if(bSourceI) {
@@ -165,7 +165,7 @@ ConfigureDialog::setCaptions(bool bSourceI) {
 
 
 void
-ConfigureDialog::on_radioButtonSourceI_clicked() {
+ConfigureRvsTDialog::on_radioButtonSourceI_clicked() {
   bSourceI = true;
   ui->testValueEdit->setToolTip(QString("Enter values in range [%1 : %2]").arg(currentMin).arg(currentMax));
   setCaptions(bSourceI);
@@ -178,7 +178,7 @@ ConfigureDialog::on_radioButtonSourceI_clicked() {
 
 
 void
-ConfigureDialog::on_radioButtonSourceV_clicked() {
+ConfigureRvsTDialog::on_radioButtonSourceV_clicked() {
   bSourceI = false;
   ui->testValueEdit->setToolTip(QString("Enter values in range [%1 : %2]").arg(voltageMin).arg(voltageMax));
   setCaptions(bSourceI);
@@ -191,7 +191,7 @@ ConfigureDialog::on_radioButtonSourceV_clicked() {
 
 
 bool
-ConfigureDialog::isSourceValueValid() {
+ConfigureRvsTDialog::isSourceValueValid() {
   bool ok;
   double tmp = ui->testValueEdit->text().toDouble(&ok);
   if(!ok) {
@@ -213,19 +213,19 @@ ConfigureDialog::isSourceValueValid() {
 
 
 bool
-ConfigureDialog::isTemperatureValueValid(double dTemperature) {
+ConfigureRvsTDialog::isTemperatureValueValid(double dTemperature) {
   return (dTemperature >= temperatureMin) && (dTemperature <= temperatureMax);
 }
 
 
 bool
-ConfigureDialog::isTRateValid(double dTRate) {
+ConfigureRvsTDialog::isTRateValid(double dTRate) {
   return (dTRate >= TRateMin) && (dTRate <= TRateMax);
 }
 
 
 void
-ConfigureDialog::on_testValueEdit_textChanged(const QString &arg1) {
+ConfigureRvsTDialog::on_testValueEdit_textChanged(const QString &arg1) {
   Q_UNUSED(arg1)
   if(isSourceValueValid()) {
     dSourceValue = ui->testValueEdit->text().toDouble();
@@ -238,7 +238,7 @@ ConfigureDialog::on_testValueEdit_textChanged(const QString &arg1) {
 
 
 void
-ConfigureDialog::on_doneButton_clicked() {
+ConfigureRvsTDialog::on_doneButton_clicked() {
   sOutFileName = ui->outFileEdit->text();
   if(QDir(sBaseDir).exists(sOutFileName)) {
     int iAnswer = QMessageBox::question(
@@ -253,12 +253,12 @@ ConfigureDialog::on_doneButton_clicked() {
       return;
     }
   }
-  close();
+  accept();
 }
 
 
 void
-ConfigureDialog::on_TStartEdit_textChanged(const QString &arg1) {
+ConfigureRvsTDialog::on_TStartEdit_textChanged(const QString &arg1) {
   if(isTemperatureValueValid(arg1.toDouble())){
     dTempStart = arg1.toDouble();
     ui->TStartEdit->setStyleSheet(sNormalStyle);
@@ -270,7 +270,7 @@ ConfigureDialog::on_TStartEdit_textChanged(const QString &arg1) {
 
 
 void
-ConfigureDialog::on_TEndEdit_textChanged(const QString &arg1) {
+ConfigureRvsTDialog::on_TEndEdit_textChanged(const QString &arg1) {
   if(isTemperatureValueValid(arg1.toDouble())){
     dTempEnd = arg1.toDouble();
     ui->TEndEdit->setStyleSheet(sNormalStyle);
@@ -282,12 +282,12 @@ ConfigureDialog::on_TEndEdit_textChanged(const QString &arg1) {
 
 
 void
-ConfigureDialog::on_outFileEdit_editingFinished() {
+ConfigureRvsTDialog::on_outFileEdit_editingFinished() {
 }
 
 
 void
-ConfigureDialog::on_outFilePathButton_clicked() {
+ConfigureRvsTDialog::on_outFilePathButton_clicked() {
   QFileDialog chooseDirDialog;
   QDir outDir(sBaseDir);
   chooseDirDialog.setFileMode(QFileDialog::DirectoryOnly);
@@ -305,7 +305,7 @@ ConfigureDialog::on_outFilePathButton_clicked() {
 
 
 void
-ConfigureDialog::on_TRateEdit_textChanged(const QString &arg1) {
+ConfigureRvsTDialog::on_TRateEdit_textChanged(const QString &arg1) {
     if(isTRateValid(arg1.toDouble())){
       dTRate = arg1.toDouble();
       ui->TRateEdit->setStyleSheet(sNormalStyle);
@@ -313,4 +313,10 @@ ConfigureDialog::on_TRateEdit_textChanged(const QString &arg1) {
     else {
       ui->TRateEdit->setStyleSheet(sErrorStyle);
     }
+}
+
+
+void
+ConfigureRvsTDialog::on_cancelButton_clicked() {
+  reject();
 }

@@ -62,6 +62,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define LAMP_OFF 0
 //#define SIMULATION
 
+
 #define DAQmxErrChk(functionCall) if( DAQmxFailed(error=(functionCall)) ) goto Error;
 
 
@@ -85,6 +86,9 @@ MainWindow::MainWindow(QWidget *parent)
   , sTemperaturePlotLabel(QString("T [K] vs t [s]"))
 {
   ui->setupUi(this);
+
+  ui->startRvsTButton->show();
+  ui->startIvsVButton->show();
 
   QSettings settings;
   restoreGeometry(settings.value("mainWindowGeometry").toByteArray());
@@ -116,12 +120,6 @@ MainWindow::closeEvent(QCloseEvent *event) {
   QSettings settings;
   settings.setValue("mainWindowGeometry", saveGeometry());
   settings.setValue("mainWindowState", saveState());
-}
-
-
-void
-MainWindow::on_configureButton_clicked() {
-  configureDialog.exec();
 }
 
 
@@ -273,7 +271,14 @@ MainWindow::stopDAQ() {
 
 
 void
-MainWindow::on_startButton_clicked() {
+MainWindow::on_startRvsTButton_clicked() {
+  if(ui->startRvsTButton->text().contains("Stop")) {
+    ui->startRvsTButton->setText("Start R vs T");
+    ui->startIvsVButton->setEnabled(true);
+    return;
+  }
+  if(configureRvsTDialog.exec() == QDialog::Rejected) return;
+
   QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
   // Start the Digital Output Tasks
@@ -321,22 +326,27 @@ MainWindow::on_startButton_clicked() {
     pOutputFile = Q_NULLPTR;
   }
 #endif
-  pOutputFile = new QFile(configureDialog.sBaseDir + "/" + configureDialog.sOutFileName);
+  pOutputFile = new QFile(configureRvsTDialog.sBaseDir + "/" + configureRvsTDialog.sOutFileName);
   if(!pOutputFile->open(QIODevice::Text|QIODevice::WriteOnly)) {
     QMessageBox::critical(this,
                           "Error: Unable to Open Output File",
                           QString("%1/%2")
-                          .arg(configureDialog.sBaseDir)
-                          .arg(configureDialog.sOutFileName));
+                          .arg(configureRvsTDialog.sBaseDir)
+                          .arg(configureRvsTDialog.sOutFileName));
     ui->statusBar->showMessage("Unable to Open Output file...");
     QApplication::restoreOverrideCursor();
     return;
   }
 
-  QApplication::restoreOverrideCursor();
+  ui->startIvsVButton->setDisabled(true);
+  ui->startRvsTButton->setText("Stop R vs T");
+
   ui->statusBar->clearMessage();
+
   pPlotMeasurements->ClearChart();
   pPlotTemperature->ClearChart();
   pPlotMeasurements->show();
   pPlotTemperature->show();
+  QApplication::restoreOverrideCursor();
 }
+
