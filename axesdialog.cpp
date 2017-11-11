@@ -40,3 +40,9 @@ AxesDialog::on_buttonBox_accepted() {
   newLimits.LogY =  ui->LogY->isChecked();
   accept();
 }
+
+
+void
+AxesDialog::on_buttonBox_rejected() {
+    accept();
+}

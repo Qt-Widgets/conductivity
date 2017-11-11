@@ -9,6 +9,7 @@ namespace Ui {
 class MainWindow;
 }
 
+QT_FORWARD_DECLARE_CLASS(QFile)
 QT_FORWARD_DECLARE_CLASS(Keithley236)
 QT_FORWARD_DECLARE_CLASS(LakeShore330)
 QT_FORWARD_DECLARE_CLASS(StripChart)
@@ -28,10 +29,13 @@ protected:
 private slots:
   void on_configureButton_clicked();
 
+  void on_startButton_clicked();
+
 private:
   Ui::MainWindow *ui;
 
 private:
+  QFile* pOutputFile;
   Keithley236* pKeithley;
   LakeShore330* pLakeShore;
   ConfigureDialog configureDialog;

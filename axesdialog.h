@@ -24,6 +24,7 @@ public:
   CAxisLimits newLimits;
 private slots:
   void on_buttonBox_accepted();
+  void on_buttonBox_rejected();
 };
 
 #endif // AXESDIALOG_H

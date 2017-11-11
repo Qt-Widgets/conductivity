@@ -26,7 +26,10 @@ StripChart::StripChart(QWidget *parent, QString Title)
   : QDialog(parent)
   , sTitle(Title)
 {
-
+  setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
+  setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
+  setWindowFlags(windowFlags() | Qt::WindowMinMaxButtonsHint);
+//  setAttribute(Qt::WA_AlwaysShowToolTips);
   QSettings settings;
   restoreGeometry(settings.value(sTitle+QString("Plot")).toByteArray());
   xMarker      = 0.0;
@@ -953,6 +956,7 @@ StripChart::mouseMoveEvent(QMouseEvent *event) {
     sYCoord.sprintf("Y=% -10.7g", yval);
     //>>>>>>>>>>>>>SetTimer(MOUSETIMER, CURSORUPDATETIME, NULL);
   }
+//  setToolTip(sXCoord + " " + sYCoord);
   event->accept();
 }
 

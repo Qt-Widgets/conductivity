@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>341</width>
-    <height>340</height>
+    <width>340</width>
+    <height>481</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -223,6 +223,78 @@
    <property name="title">
     <string>Sample Information</string>
    </property>
+   <widget class="QPlainTextEdit" name="sampleInformationEdit">
+    <property name="geometry">
+     <rect>
+      <x>13</x>
+      <y>30</y>
+      <width>271</width>
+      <height>51</height>
+     </rect>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QPushButton" name="doneButton">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>440</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Done</string>
+   </property>
+  </widget>
+  <widget class="QGroupBox" name="outFileGroupBox">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>340</y>
+     <width>301</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>Output File</string>
+   </property>
+   <widget class="QLineEdit" name="outFileEdit">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>59</y>
+      <width>281</width>
+      <height>20</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="outFilePathButton">
+    <property name="geometry">
+     <rect>
+      <x>270</x>
+      <y>28</y>
+      <width>21</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>...</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="outPathEdit">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>28</y>
+      <width>251</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
   </widget>
  </widget>
  <resources/>

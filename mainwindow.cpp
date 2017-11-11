@@ -9,6 +9,7 @@
 #include <QMessageBox>
 #include <QDebug>
 #include <QSettings>
+#include <QFile>
 #include <ni4882.h>
 #include <NIDAQmx.h>
 
@@ -44,6 +45,7 @@
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow(parent)
   , ui(new Ui::MainWindow)
+  , pOutputFile(Q_NULLPTR)
   , pKeithley(Q_NULLPTR)
   , pLakeShore(Q_NULLPTR)
   , GpibBoardID(0)
@@ -55,25 +57,7 @@ MainWindow::MainWindow(QWidget *parent)
   QSettings settings;
   restoreGeometry(settings.value("mainWindowGeometry").toByteArray());
   restoreState(settings.value("mainWindowState").toByteArray());
-/*
-  if(!CheckInstruments())
-    exit(-1);
 
-  int initError;
-  if(pKeithley  != Q_NULLPTR)  {
-    initError = pKeithley->Init();
-    if(initError) {
-      exit(-2);
-    }
-  }
-  if(pLakeShore != Q_NULLPTR) {
-    initError = pLakeShore->Init();
-    if(initError) {
-      exit(-3);
-    }
-    pLakeShore->SetTemperature(100.0);
-  }
-*/
   nChartPoints = 3000;
   pPlotMeasurements = new StripChart(this, QString("Measurements"));
   pPlotMeasurements->setMaxPoints(nChartPoints);
@@ -102,6 +86,12 @@ MainWindow::closeEvent(QCloseEvent *event) {
   QSettings settings;
   settings.setValue("mainWindowGeometry", saveGeometry());
   settings.setValue("mainWindowState", saveState());
+}
+
+
+void
+MainWindow::on_configureButton_clicked() {
+  configureDialog.exec();
 }
 
 
@@ -197,6 +187,55 @@ MainWindow::CheckInstruments() {
 
 
 void
-MainWindow::on_configureButton_clicked() {
-  configureDialog.exec();
+MainWindow::on_startButton_clicked() {
+  // Are the instruments connectd and ready to start ?
+  QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+  ui->statusBar->showMessage("Checking for the GPIB Instruments");
+  if(!CheckInstruments()) {
+    ui->statusBar->showMessage("GPIB Instruments not found");
+    QApplication::restoreOverrideCursor();
+    return;
+  }
+  int initError;
+  if(pKeithley  != Q_NULLPTR)  {
+    ui->statusBar->showMessage("Initializing Keithley 236...");
+    initError = pKeithley->Init();
+    if(initError) {
+      ui->statusBar->showMessage("Unable to Initialize Keithley 236...");
+      QApplication::restoreOverrideCursor();
+      return;
+    }
+  }
+  if(pLakeShore != Q_NULLPTR) {
+    ui->statusBar->showMessage("Initializing LakeShore 330...");
+    initError = pLakeShore->Init();
+    if(initError) {
+      ui->statusBar->showMessage("Unable to Initialize LakeShore 330...");
+      QApplication::restoreOverrideCursor();
+      return;
+    }
+    pLakeShore->SetTemperature(100.0);
+  }
+
+  // Open the Output file
+  ui->statusBar->showMessage("Opening Output file...");
+  if(pOutputFile) {
+    if(pOutputFile->isOpen())
+      pOutputFile->close();
+    pOutputFile->deleteLater();
+    pOutputFile = Q_NULLPTR;
+  }
+  pOutputFile = new QFile(configureDialog.sBaseDir + "/" + configureDialog.sOutFileName);
+  if(!pOutputFile->open(QIODevice::Text|QIODevice::WriteOnly)) {
+    QMessageBox::critical(this,
+                          "Error: Unable to Open Output File",
+                          QString("%1/%2")
+                          .arg(configureDialog.sBaseDir)
+                          .arg(configureDialog.sOutFileName));
+    ui->statusBar->showMessage("Unable to Open Output file...");
+    QApplication::restoreOverrideCursor();
+    return;
+  }
+  QApplication::restoreOverrideCursor();
+  ui->statusBar->clearMessage();
 }
