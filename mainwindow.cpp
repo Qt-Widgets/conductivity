@@ -1,3 +1,21 @@
+/*
+ *
+Copyright (C) 2016  Gabriele Salvato
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+*/
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -40,6 +58,9 @@
 #define TIMEOUT_TIMER      10
 */
 
+#define LAMP_ON  1
+#define LAMP_OFF 0
+//#define SIMULATION
 
 #define DAQmxErrChk(functionCall) if( DAQmxFailed(error=(functionCall)) ) goto Error;
 
@@ -50,13 +71,18 @@ MainWindow::MainWindow(QWidget *parent)
   , pOutputFile(Q_NULLPTR)
   , pKeithley(Q_NULLPTR)
   , pLakeShore(Q_NULLPTR)
-  , GpibBoardID(0)
-  , DOTaskHandle(0)
+  , gpibBoardID(0)
+  , lampTaskHandle(0)
+#ifdef SIMULATION
+  , sLampLine(QString("Fake2/port0/line0"))
+#else
+  , sLampLine(QString("NiUSB-6211/port0/line0"))
+#endif
+  , currentLampStatus(LAMP_OFF)
   , pPlotMeasurements(Q_NULLPTR)
   , pPlotTemperature(Q_NULLPTR)
   , sMeasurementPlotLabel(QString("1/R [OHM] vs T [K]"))
   , sTemperaturePlotLabel(QString("T [K] vs t [s]"))
-
 {
   ui->setupUi(this);
 
@@ -106,7 +132,7 @@ MainWindow::CheckInstruments() {
   for(short i=0; i<30; i++) padlist[i] = i+1;
   padlist[30] = NOADDR;
 
-  SendIFC(GpibBoardID);
+  SendIFC(gpibBoardID);
   if(ThreadIbsta() & ERR) {
     qDebug() << "In SendIFC: ";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
@@ -119,7 +145,7 @@ MainWindow::CheckInstruments() {
   // to all the devices on the bus
   Addr4882_t addrlist;
   addrlist = NOADDR;
-  DevClearList(GpibBoardID, &addrlist);
+  DevClearList(gpibBoardID, &addrlist);
 
   if(ThreadIbsta() & ERR) {
     qDebug() << "In DevClearList: ";
@@ -129,7 +155,7 @@ MainWindow::CheckInstruments() {
     return false;
   }
 
-  FindLstn(GpibBoardID, padlist, resultlist, 30);
+  FindLstn(gpibBoardID, padlist, resultlist, 30);
   if(ThreadIbsta() & ERR) {
     qDebug() << "Errore IEEE 488\nControllare che gli Strumenti Siano Connessi e Accesi !\n";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
@@ -142,14 +168,14 @@ MainWindow::CheckInstruments() {
   char readBuf[257];
   QString sCommand = "*IDN?\r\n";
   for(int i=0; i<nDevices; i++) {
-    Send(GpibBoardID, resultlist[i], sCommand.toUtf8().constData(), sCommand.length(), DABend);
+    Send(gpibBoardID, resultlist[i], sCommand.toUtf8().constData(), sCommand.length(), DABend);
     if(ThreadIbsta() & ERR) {
       qDebug() << "In Send: ";
       QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
       qDebug() << sError;
       return false;
     }
-    Receive(GpibBoardID, resultlist[i], readBuf, 256, STOPend);
+    Receive(gpibBoardID, resultlist[i], readBuf, 256, STOPend);
     if(ThreadIbsta() & ERR) {
       qDebug() << "In Receive: ";
       QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
@@ -160,10 +186,10 @@ MainWindow::CheckInstruments() {
     // La source Measure Unit K236 non risponde al comando di identificazione !!!!
     if(sInstrumentID.contains("NSDCI", Qt::CaseInsensitive)) {
       if(pKeithley == Q_NULLPTR)
-        pKeithley = new Keithley236(GpibBoardID, resultlist[i], this);
+        pKeithley = new Keithley236(gpibBoardID, resultlist[i], this);
     } else if(sInstrumentID.contains("MODEL330", Qt::CaseInsensitive)) {
       if(pLakeShore == NULL)
-        pLakeShore = new LakeShore330(GpibBoardID, resultlist[i], this);
+        pLakeShore = new LakeShore330(gpibBoardID, resultlist[i], this);
     }
   }
 
@@ -194,18 +220,36 @@ bool
 MainWindow::startDAQ() {
   // DAQmx Configure Digital Output Code
   DAQmxErrChk (
-    DAQmxCreateTask("Switch the Lamp", &DOTaskHandle)
+    DAQmxCreateTask("Switch the Lamp", &lampTaskHandle)
   );
   DAQmxErrChk (
-      DAQmxCreateDOChan(DOTaskHandle,
-                        "NiUSB-6211/port0/line0",
-                        "Lamp Switch",
-                        DAQmx_Val_ChanPerLine)
+      DAQmxCreateDOChan(
+        lampTaskHandle,
+        sLampLine.toLatin1().constData(),
+        "Lamp Switch",
+        DAQmx_Val_ChanPerLine)
   );
-
+  DAQmxErrChk (
+    DAQmxSetDOOutputDriveType(
+      lampTaskHandle,
+      sLampLine.toLatin1().constData(),
+      DAQmx_Val_ActiveDrive)
+  );
   // DAQmx Start Code
   DAQmxErrChk (
-    DAQmxStartTask(DOTaskHandle)
+    DAQmxStartTask(lampTaskHandle)
+  );
+  // Write Initial Lamp Status
+  DAQmxErrChk(
+    DAQmxWriteDigitalLines(
+      lampTaskHandle,
+      1,                       // numSampsPerChan
+      1,                       // autoStart
+      1.0,                     // timeout [s]
+      DAQmx_Val_GroupByChannel,// dataLayout
+      &currentLampStatus,      // writeArray[]
+      NULL,                    // *sampsPerChanWritten
+      NULL)                    // *reserved
   );
   return true;
 
@@ -213,10 +257,18 @@ Error:
   if(DAQmxFailed(error)) {
     char errBuf[2048];
     DAQmxGetExtendedErrorInfo(errBuf, sizeof(errBuf));
-    DAQmxClearTask(DOTaskHandle);
+    DAQmxClearTask(lampTaskHandle);
     QMessageBox::critical(Q_NULLPTR, "DAQmx Error", QString(errBuf));
   }
   return false;
+}
+
+
+void
+MainWindow::stopDAQ() {
+  DAQmxStopTask(lampTaskHandle);
+  DAQmxClearTask(lampTaskHandle);
+  lampTaskHandle = Q_NULLPTR;
 }
 
 
@@ -231,7 +283,7 @@ MainWindow::on_startButton_clicked() {
     QApplication::restoreOverrideCursor();
     return;
   }
-
+#ifndef SIMULATION
   // Are the instruments connectd and ready to start ?
   ui->statusBar->showMessage("Checking for the GPIB Instruments");
   if(!CheckInstruments()) {
@@ -268,6 +320,7 @@ MainWindow::on_startButton_clicked() {
     pOutputFile->deleteLater();
     pOutputFile = Q_NULLPTR;
   }
+#endif
   pOutputFile = new QFile(configureDialog.sBaseDir + "/" + configureDialog.sOutFileName);
   if(!pOutputFile->open(QIODevice::Text|QIODevice::WriteOnly)) {
     QMessageBox::critical(this,
