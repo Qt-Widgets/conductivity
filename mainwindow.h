@@ -23,6 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <NIDAQmx.h>
 
 #include "configureRvsTdialog.h"
+#include "configureIvsVdialog.h"
+
 
 namespace Ui {
 class MainWindow;
@@ -50,6 +52,8 @@ protected:
 private slots:
   void on_startRvsTButton_clicked();
 
+  void on_startIvsVButton_clicked();
+
 private:
   Ui::MainWindow *ui;
 
@@ -57,7 +61,9 @@ private:
   QFile* pOutputFile;
   Keithley236* pKeithley;
   LakeShore330* pLakeShore;
+
   ConfigureRvsTDialog configureRvsTDialog;
+  ConfigureIvsVDialog configureIvsVDialog;
 
   int         gpibBoardID;
   int32       error;

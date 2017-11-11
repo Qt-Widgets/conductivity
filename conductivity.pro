@@ -34,7 +34,8 @@ TEMPLATE = app
 INCLUDEPATH += "C:/Program Files (x86)/National Instruments/NI-DAQ/DAQmx ANSI C Dev/include"
 INCLUDEPATH += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/include"
 
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    configureIvsVdialog.cpp
 SOURCES += utility.cpp
 SOURCES += keithley236.cpp
 SOURCES += axesdialog.cpp
@@ -47,7 +48,8 @@ SOURCES += lakeshore330.cpp
 SOURCES += configureRvsTdialog.cpp
 SOURCES += mainwindow.cpp
 
-HEADERS += mainwindow.h
+HEADERS += mainwindow.h \
+    configureIvsVdialog.h
 HEADERS += utility.h
 HEADERS += keithley236.h
 HEADERS += axesdialog.h
@@ -59,7 +61,8 @@ HEADERS += DataSetProperties.h
 HEADERS += lakeshore330.h
 HEADERS += configureRvsTdialog.h
 
-FORMS   += mainwindow.ui
+FORMS   += mainwindow.ui \
+    configureIvsVdialog.ui
 FORMS   += axesdialog.ui
 FORMS   += configureRvsTdialog.ui
 

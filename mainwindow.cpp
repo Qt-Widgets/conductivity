@@ -350,3 +350,26 @@ MainWindow::on_startRvsTButton_clicked() {
   QApplication::restoreOverrideCursor();
 }
 
+
+void
+MainWindow::on_startIvsVButton_clicked() {
+  if(ui->startIvsVButton->text().contains("Stop")) {
+    ui->startIvsVButton->setText("Start I vs V");
+    ui->startRvsTButton->setEnabled(true);
+    return;
+  }
+
+  QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+
+  if(configureIvsVDialog.exec() == QDialog::Rejected) return;
+  ui->startRvsTButton->setDisabled(true);
+  ui->startIvsVButton->setText("Stop I vs V");
+
+  ui->statusBar->clearMessage();
+
+  pPlotMeasurements->ClearChart();
+  pPlotTemperature->ClearChart();
+  pPlotMeasurements->show();
+  pPlotTemperature->show();
+  QApplication::restoreOverrideCursor();
+}
