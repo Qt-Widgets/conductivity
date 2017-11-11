@@ -41,6 +41,8 @@
 */
 
 
+#define DAQmxErrChk(functionCall) if( DAQmxFailed(error=(functionCall)) ) goto Error;
+
 
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow(parent)
@@ -49,6 +51,7 @@ MainWindow::MainWindow(QWidget *parent)
   , pKeithley(Q_NULLPTR)
   , pLakeShore(Q_NULLPTR)
   , GpibBoardID(0)
+  , DOTaskHandle(0)
   , pPlotMeasurements(Q_NULLPTR)
   , pPlotTemperature(Q_NULLPTR)
   , sMeasurementPlotLabel(QString("1/R [OHM] vs T [K]"))
@@ -187,15 +190,52 @@ MainWindow::CheckInstruments() {
 }
 
 
+bool
+MainWindow::startDAQ() {
+  // DAQmx Configure Digital Output Code
+  DAQmxErrChk (
+    DAQmxCreateTask("Switch the Lamp", &DOTaskHandle)
+  );
+  DAQmxErrChk (
+      DAQmxCreateDOChan(DOTaskHandle,
+                        "NiUSB-6211/port0/line0",
+                        "Lamp Switch",
+                        DAQmx_Val_ChanPerLine)
+  );
+
+  // DAQmx Start Code
+  DAQmxErrChk (
+    DAQmxStartTask(DOTaskHandle)
+  );
+  return true;
+
+Error:
+  if(DAQmxFailed(error)) {
+    char errBuf[2048];
+    DAQmxGetExtendedErrorInfo(errBuf, sizeof(errBuf));
+    DAQmxClearTask(DOTaskHandle);
+    QMessageBox::critical(Q_NULLPTR, "DAQmx Error", QString(errBuf));
+  }
+  return false;
+}
+
+
 void
 MainWindow::on_startButton_clicked() {
-  // Are the instruments connectd and ready to start ?
   QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+
+  // Start the Digital Output Tasks
+  ui->statusBar->showMessage("Checking for the Presence of Lamp Switch");
+  if(!startDAQ()) {
+    ui->statusBar->showMessage("National Instruments DAQ Board not present");
+    QApplication::restoreOverrideCursor();
+    return;
+  }
+
+  // Are the instruments connectd and ready to start ?
   ui->statusBar->showMessage("Checking for the GPIB Instruments");
   if(!CheckInstruments()) {
     ui->statusBar->showMessage("GPIB Instruments not found");
-    pPlotMeasurements->hide();
-    pPlotTemperature->hide();
     QApplication::restoreOverrideCursor();
     return;
   }
@@ -205,8 +245,6 @@ MainWindow::on_startButton_clicked() {
     initError = pKeithley->Init();
     if(initError) {
       ui->statusBar->showMessage("Unable to Initialize Keithley 236...");
-      pPlotMeasurements->hide();
-      pPlotTemperature->hide();
       QApplication::restoreOverrideCursor();
       return;
     }
@@ -216,8 +254,6 @@ MainWindow::on_startButton_clicked() {
     initError = pLakeShore->Init();
     if(initError) {
       ui->statusBar->showMessage("Unable to Initialize LakeShore 330...");
-      pPlotMeasurements->hide();
-      pPlotTemperature->hide();
       QApplication::restoreOverrideCursor();
       return;
     }
@@ -240,11 +276,10 @@ MainWindow::on_startButton_clicked() {
                           .arg(configureDialog.sBaseDir)
                           .arg(configureDialog.sOutFileName));
     ui->statusBar->showMessage("Unable to Open Output file...");
-    pPlotMeasurements->hide();
-    pPlotTemperature->hide();
     QApplication::restoreOverrideCursor();
     return;
   }
+
   QApplication::restoreOverrideCursor();
   ui->statusBar->clearMessage();
   pPlotMeasurements->ClearChart();

@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <NIDAQmx.h>
 
 #include "configuredialog.h"
 
@@ -25,6 +26,7 @@ public:
 protected:
   void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
   bool CheckInstruments();
+  bool startDAQ();
 
 private slots:
   void on_configureButton_clicked();
@@ -41,6 +43,8 @@ private:
   ConfigureDialog configureDialog;
 
   int GpibBoardID;
+  int32       error;
+  TaskHandle  DOTaskHandle;// Digital Output
   bool bStartDaq;
   StripChart *pPlotMeasurements;
   StripChart *pPlotTemperature;
