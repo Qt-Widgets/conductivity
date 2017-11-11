@@ -171,23 +171,23 @@
      <string>K</string>
     </property>
    </widget>
-   <widget class="QLabel" name="labelSweepTime">
+   <widget class="QLabel" name="labelTemperatureRate">
     <property name="geometry">
      <rect>
       <x>10</x>
       <y>60</y>
-      <width>61</width>
+      <width>47</width>
       <height>16</height>
      </rect>
     </property>
     <property name="text">
-     <string>Sweep Time</string>
+     <string>T Rate</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="SweepTimeEdit">
+   <widget class="QLineEdit" name="TRateEdit">
     <property name="geometry">
      <rect>
-      <x>80</x>
+      <x>62</x>
       <y>59</y>
       <width>71</width>
       <height>20</height>
@@ -200,14 +200,14 @@
    <widget class="QLabel" name="labelUnitsTime">
     <property name="geometry">
      <rect>
-      <x>160</x>
+      <x>140</x>
       <y>60</y>
-      <width>21</width>
+      <width>31</width>
       <height>16</height>
      </rect>
     </property>
     <property name="text">
-     <string>s</string>
+     <string>K/min</string>
     </property>
    </widget>
   </widget>

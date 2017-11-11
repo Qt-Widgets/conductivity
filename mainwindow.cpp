@@ -51,6 +51,9 @@ MainWindow::MainWindow(QWidget *parent)
   , GpibBoardID(0)
   , pPlotMeasurements(Q_NULLPTR)
   , pPlotTemperature(Q_NULLPTR)
+  , sMeasurementPlotLabel(QString("1/R [OHM] vs T [K]"))
+  , sTemperaturePlotLabel(QString("T [K] vs t [s]"))
+
 {
   ui->setupUi(this);
 
@@ -59,10 +62,10 @@ MainWindow::MainWindow(QWidget *parent)
   restoreState(settings.value("mainWindowState").toByteArray());
 
   nChartPoints = 3000;
-  pPlotMeasurements = new StripChart(this, QString("Measurements"));
+  pPlotMeasurements = new StripChart(this, sMeasurementPlotLabel);
   pPlotMeasurements->setMaxPoints(nChartPoints);
   pPlotMeasurements->show();
-  pPlotTemperature = new StripChart(this, QString("Temperature"));
+  pPlotTemperature = new StripChart(this, sTemperaturePlotLabel);
   pPlotTemperature->setMaxPoints(nChartPoints);
   pPlotTemperature->show();
 }

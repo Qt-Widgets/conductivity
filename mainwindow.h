@@ -44,6 +44,8 @@ private:
   bool bStartDaq;
   StripChart *pPlotMeasurements;
   StripChart *pPlotTemperature;
+  QString sMeasurementPlotLabel;
+  QString sTemperaturePlotLabel;
   int nChartPoints;
 };
 

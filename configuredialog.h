@@ -22,7 +22,7 @@ public:
   double dSourceValue;
   double dTempStart;
   double dTempEnd;
-  int    iSweepTime;
+  double dTRate;
   QString sSampleInfo;
   QString sBaseDir;
   QString sOutFileName;
@@ -35,7 +35,7 @@ protected:
   void setCaptions(bool bSourceI);
   bool isSourceValueValid();
   bool isTemperatureValueValid(double dTemperature);
-  bool isSweepTimeValid(int iSweep);
+  bool isTRateValid(double dTRate);
 
 private slots:
   void on_radioButtonSourceI_clicked();
@@ -43,10 +43,11 @@ private slots:
   void on_testValueEdit_textChanged(const QString &arg1);
   void on_TStartEdit_textChanged(const QString &arg1);
   void on_TEndEdit_textChanged(const QString &arg1);
-  void on_SweepTimeEdit_textChanged(const QString &arg1);
+  void on_TRateEdit_textChanged(const QString &arg1);
   void on_doneButton_clicked();
   void on_outFilePathButton_clicked();
   void on_outFileEdit_editingFinished();
+
 
 private:
   // QLineEdit styles
@@ -59,8 +60,8 @@ private:
   const double voltageMax;
   const double temperatureMin;
   const double temperatureMax;
-  const int    sweepTimeMin;
-  const int    sweepTimeMax;
+  const double TRateMin;
+  const double TRateMax;
   // Dialog user interace
   Ui::ConfigureDialog *ui;
 };

@@ -18,8 +18,8 @@ ConfigureDialog::ConfigureDialog(QWidget *parent)
   , voltageMax(10.0)
   , temperatureMin(0.0)
   , temperatureMax(450.0)
-  , sweepTimeMin(180)// Three minutes
-  , sweepTimeMax(24*60*60)// A day !
+  , TRateMin(0.01)
+  , TRateMax(10.0)
   , ui(new Ui::ConfigureDialog)
 {
   setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
@@ -51,10 +51,10 @@ ConfigureDialog::ConfigureDialog(QWidget *parent)
   ui->TEndEdit->setText(QString("%1").arg(dTempEnd, 0, 'f', 2));
 
   // Sweep Time parameter
-  if(iSweepTime < 300) {
-    iSweepTime = 300.0;
+  if(!isTRateValid(dTRate)) {
+    dTRate = 1.0;
   }
-  ui->SweepTimeEdit->setText(QString("%1").arg(iSweepTime));
+  ui->TRateEdit->setText(QString("%1").arg(dTRate, 0, 'f', 2));
 
   // Sample information
   ui->sampleInformationEdit->setPlainText(sSampleInfo);
@@ -82,7 +82,7 @@ ConfigureDialog::restoreSettings() {
   dSourceValue = settings.value("configureSourceValue", 0.0).toDouble();
   dTempStart   = settings.value("configureTempertureStart", 300.0).toDouble();
   dTempEnd     = settings.value("configureTempertureEnd", 300.0).toDouble();
-  iSweepTime   = settings.value("configureSweepTime", 300).toInt();
+  dTRate       = settings.value("configureTRate", 1.0).toDouble();
   sSampleInfo  = settings.value("configureSampleInfo", "").toString();
   sBaseDir     = settings.value("configureBaseDir", sBaseDir).toString();
   sOutFileName = settings.value("configureOutFileName", sOutFileName).toString();
@@ -97,7 +97,7 @@ ConfigureDialog::saveSettings() {
   settings.setValue("configureSourceValue", dSourceValue);
   settings.setValue("configureTempertureStart", dTempStart);
   settings.setValue("configureTempertureEnd", dTempEnd);
-  settings.setValue("configureSweepTime", iSweepTime);
+  settings.setValue("configureTRate", dTRate);
   sSampleInfo = ui->sampleInformationEdit->toPlainText();
   settings.setValue("configureSampleInfo", sSampleInfo);
   settings.setValue("configureBaseDir", sBaseDir);
@@ -115,7 +115,7 @@ ConfigureDialog::setToolTips() {
 
   ui->TStartEdit->setToolTip(sHeader.arg(temperatureMin).arg(temperatureMax));
   ui->TEndEdit->setToolTip(sHeader.arg(temperatureMin).arg(temperatureMax));
-  ui->SweepTimeEdit->setToolTip(sHeader.arg(sweepTimeMin).arg(sweepTimeMax));
+  ui->TRateEdit->setToolTip(sHeader.arg(TRateMin).arg(TRateMax));
   ui->sampleInformationEdit->setToolTip(QString("Enter Sample description (multiline)"));
   ui->outPathEdit->setToolTip(QString("Output File Folder"));
   ui->outFileEdit->setToolTip(QString("Enter Output File Name"));
@@ -201,8 +201,8 @@ ConfigureDialog::isTemperatureValueValid(double dTemperature) {
 
 
 bool
-ConfigureDialog::isSweepTimeValid(int iSweep) {
-  return (iSweep >= sweepTimeMin) && (iSweep <= sweepTimeMax);
+ConfigureDialog::isTRateValid(double dTRate) {
+  return (dTRate >= TRateMin) && (dTRate <= TRateMax);
 }
 
 
@@ -264,18 +264,6 @@ ConfigureDialog::on_TEndEdit_textChanged(const QString &arg1) {
 
 
 void
-ConfigureDialog::on_SweepTimeEdit_textChanged(const QString &arg1) {
-  if(isSweepTimeValid(arg1.toInt())){
-    iSweepTime = arg1.toInt();
-    ui->SweepTimeEdit->setStyleSheet(sNormalStyle);
-  }
-  else {
-    ui->SweepTimeEdit->setStyleSheet(sErrorStyle);
-  }
-}
-
-
-void
 ConfigureDialog::on_outFileEdit_editingFinished() {
 }
 
@@ -295,4 +283,16 @@ ConfigureDialog::on_outFilePathButton_clicked() {
     sBaseDir = chooseDirDialog.selectedFiles().at(0);
   }
   ui->outPathEdit->setText(sBaseDir);
+}
+
+
+void
+ConfigureDialog::on_TRateEdit_textChanged(const QString &arg1) {
+    if(isTRateValid(arg1.toDouble())){
+      dTRate = arg1.toDouble();
+      ui->TRateEdit->setStyleSheet(sNormalStyle);
+    }
+    else {
+      ui->TRateEdit->setStyleSheet(sErrorStyle);
+    }
 }
