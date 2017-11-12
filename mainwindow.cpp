@@ -358,7 +358,9 @@ MainWindow::on_startRvsTButton_clicked() {
   pLakeShore->SwitchPowerOn();
 #endif
   waitingTStartTime = QDateTime::currentDateTime();
-  qDebug() << "Starting Time:" << waitingTStartTime.toString();
+  ui->statusBar->showMessage(QString("%1 Waiting Initial T[%2K]")
+                             .arg(waitingTStartTime.toString())
+                             .arg(configureRvsTDialog.dTempStart));
   QApplication::restoreOverrideCursor();
 }
 
@@ -385,6 +387,7 @@ MainWindow::on_startIvsVButton_clicked() {
   QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
   ui->startRvsTButton->setDisabled(true);
   ui->startIvsVButton->setText("Stop I vs V");
+
   // Plot of Condicibility vs Temperature
   if(pPlotMeasurements) delete pPlotMeasurements;
   sMeasurementPlotLabel = QString("I [A] vs V [V]");
