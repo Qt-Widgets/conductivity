@@ -326,16 +326,31 @@ MainWindow::on_startRvsTButton_clicked() {
   ui->statusBar->clearMessage();
 
   if(pPlotMeasurements) delete pPlotMeasurements;
-  sMeasurementPlotLabel = QString("1/R [OHM] vs T [K]");
+  sMeasurementPlotLabel = QString("R^-1 [OHM^-1] vs T [K]");
   pPlotMeasurements = new StripChart(this, sMeasurementPlotLabel);
   pPlotMeasurements->setMaxPoints(maxChartPoints);
-  pPlotMeasurements->ClearChart();
+  pPlotMeasurements->NewDataSet(1,//Id
+                                3, //Pen Width
+                                QColor(255, 255, 0),// Color
+                                StripChart::ipoint,// Symbol
+                                "R"// Title
+                                );
+  pPlotMeasurements->SetShowDataSet(1, true);
+  pPlotMeasurements->SetShowTitle(1, true);
+  pPlotMeasurements->UpdateChart();
 
   if(pPlotTemperature) delete pPlotTemperature;
   sTemperaturePlotLabel = QString("T [K] vs t [s]");
   pPlotTemperature = new StripChart(this, sTemperaturePlotLabel);
   pPlotTemperature->setMaxPoints(maxChartPoints);
-  pPlotTemperature->ClearChart();
+  pPlotTemperature->NewDataSet(1,//Id
+                               3, //Pen Width
+                               QColor(255, 255, 0),// Color
+                               StripChart::ipoint,// Symbol
+                               "T"// Title
+                               );
+  pPlotTemperature->SetShowDataSet(1, true);
+  pPlotTemperature->SetShowTitle(1, true);
 
   pPlotMeasurements->show();
   pPlotTemperature->show();
