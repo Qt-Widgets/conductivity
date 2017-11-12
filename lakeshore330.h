@@ -27,10 +27,12 @@ class LakeShore330 : public QObject
 public:
   explicit LakeShore330(int gpio, int address, QObject *parent = 0);
   virtual ~LakeShore330();
-  int      Init();
+  int      init();
   void     onGpibCallback(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
-  double   GetTemperature();
-  bool     SetTemperature(double Temperature);
+  double   getTemperature();
+  bool     setTemperature(double Temperature);
+  bool     switchPowerOn();
+  bool     switchPowerOff();
 
 signals:
 

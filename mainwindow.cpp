@@ -366,11 +366,10 @@ MainWindow::InitVvsT() {
   double dVoltageCompliance = 1.0;
   pKeithley->InitVvsT(dAppliedCurrent, dVoltageCompliance);
   pLakeShore->SetTemperature(configureRvsTDialog.dTempStart);
+  pLakeShore->SwitchPowerOn();
 #endif
   startWaitingTime = QDateTime::currentDateTime();
   qDebug() << "Starting Time:" << startWaitingTime.toString();
-//  _ftime_s(&timebuffer);
-//  timeStart = timebuffer.time + timebuffer.millitm/1000.0;
   return 0;
 }
 

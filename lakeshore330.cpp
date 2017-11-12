@@ -23,9 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QThread>
 #include <ni4882.h>
 
-namespace lakeshore330 {
+namespace
+lakeshore330 {
   int RearmMask;
-
 
   int __stdcall
   MyCallback(int LocalUd, unsigned long LocalIbsta, unsigned long LocalIberr, long LocalIbcntl, void* callbackData) {
@@ -33,6 +33,7 @@ namespace lakeshore330 {
     return RearmMask;
   }
 }
+
 
 LakeShore330::LakeShore330(int gpio, int address, QObject *parent)
   : QObject(parent)
@@ -180,3 +181,16 @@ LakeShore330::SetTemperature(double Temperature) {
   return true;
 }
 
+
+bool
+LakeShore330::switchPowerOn() {
+  qCritical() << "Fake switchPowerOn()";
+  return true;
+}
+
+
+bool
+LakeShore330::switchPowerOff() {
+  qCritical() << "Fake switchPowerOff()";
+  return true;
+}
