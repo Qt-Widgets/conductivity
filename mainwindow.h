@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QDateTime>
 #include <NIDAQmx.h>
 
 #include "configureRvsTdialog.h"
@@ -59,9 +60,12 @@ private:
   Ui::MainWindow *ui;
 
 private:
-  QFile* pOutputFile;
-  Keithley236* pKeithley;
+  QFile*        pOutputFile;
+  Keithley236*  pKeithley;
   LakeShore330* pLakeShore;
+  QDateTime     currentTime;
+  QDateTime     startWaitingTime;
+
 
   ConfigureRvsTDialog configureRvsTDialog;
   ConfigureIvsVDialog configureIvsVDialog;

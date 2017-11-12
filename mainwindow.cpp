@@ -354,15 +354,21 @@ MainWindow::on_startRvsTButton_clicked() {
 
   pPlotMeasurements->show();
   pPlotTemperature->show();
+  InitVvsT();
   QApplication::restoreOverrideCursor();
 }
 
 
 int
 MainWindow::InitVvsT() {
+#ifndef SIMULATION
   double dAppliedCurrent = configureRvsTDialog.dSourceValue;
   double dVoltageCompliance = 1.0;
   pKeithley->InitVvsT(dAppliedCurrent, dVoltageCompliance);
+  pLakeShore->SetTemperature(configureRvsTDialog.dTempStart);
+#endif
+  startWaitingTime = QDateTime::currentDateTime();
+  qDebug() << "Starting Time:" << startWaitingTime.toString();
 //  _ftime_s(&timebuffer);
 //  timeStart = timebuffer.time + timebuffer.millitm/1000.0;
   return 0;
