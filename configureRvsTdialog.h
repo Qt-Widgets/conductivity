@@ -21,11 +21,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QDialog>
 
-QT_FORWARD_DECLARE_CLASS(QDoubleValidator)
 
 namespace Ui {
 class ConfigureRvsTDialog;
 }
+
 
 class ConfigureRvsTDialog : public QDialog
 {
@@ -62,11 +62,8 @@ private slots:
   void on_TStartEdit_textChanged(const QString &arg1);
   void on_TEndEdit_textChanged(const QString &arg1);
   void on_TRateEdit_textChanged(const QString &arg1);
-  void on_doneButton_clicked();
   void on_outFilePathButton_clicked();
-  void on_outFileEdit_editingFinished();
-
-
+  void on_doneButton_clicked();
   void on_cancelButton_clicked();
 
 private:

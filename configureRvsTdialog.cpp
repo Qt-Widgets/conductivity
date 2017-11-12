@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileDialog>
 #include <QMessageBox>
 
+
 ConfigureRvsTDialog::ConfigureRvsTDialog(QWidget *parent)
   : QDialog(parent)
   , sBaseDir(QDir::homePath())
@@ -91,19 +92,26 @@ ConfigureRvsTDialog::~ConfigureRvsTDialog() {
 
 
 void
+ConfigureRvsTDialog::closeEvent(QCloseEvent *event) {
+  Q_UNUSED(event)
+  saveSettings();
+}
+
+
+void
 ConfigureRvsTDialog::restoreSettings() {
   QSettings settings;
 
   restoreGeometry(settings.value("ConfigureRvsTDialogGeometry").toByteArray());
 
-  bSourceI     = settings.value("configureSourceI", true).toBool();
-  dSourceValue = settings.value("configureSourceValue", 0.0).toDouble();
-  dTempStart   = settings.value("configureTempertureStart", 300.0).toDouble();
-  dTempEnd     = settings.value("configureTempertureEnd", 300.0).toDouble();
-  dTRate       = settings.value("configureTRate", 1.0).toDouble();
-  sSampleInfo  = settings.value("configureSampleInfo", "").toString();
-  sBaseDir     = settings.value("configureBaseDir", sBaseDir).toString();
-  sOutFileName = settings.value("configureOutFileName", sOutFileName).toString();
+  bSourceI     = settings.value("ConfigureRvsTSourceI", true).toBool();
+  dSourceValue = settings.value("ConfigureRvsTSourceValue", 0.0).toDouble();
+  dTempStart   = settings.value("ConfigureRvsTTempertureStart", 300.0).toDouble();
+  dTempEnd     = settings.value("ConfigureRvsTTempertureEnd", 300.0).toDouble();
+  dTRate       = settings.value("ConfigureRvsTTRate", 1.0).toDouble();
+  sSampleInfo  = settings.value("ConfigureRvsTSampleInfo", "").toString();
+  sBaseDir     = settings.value("ConfigureRvsTBaseDir", sBaseDir).toString();
+  sOutFileName = settings.value("ConfigureRvsTOutFileName", sOutFileName).toString();
 }
 
 
@@ -111,15 +119,15 @@ void
 ConfigureRvsTDialog::saveSettings() {
   QSettings settings;
 
-  settings.setValue("configureSourceI", bSourceI);
-  settings.setValue("configureSourceValue", dSourceValue);
-  settings.setValue("configureTempertureStart", dTempStart);
-  settings.setValue("configureTempertureEnd", dTempEnd);
-  settings.setValue("configureTRate", dTRate);
+  settings.setValue("ConfigureRvsTSourceI", bSourceI);
+  settings.setValue("ConfigureRvsTSourceValue", dSourceValue);
+  settings.setValue("ConfigureRvsTTempertureStart", dTempStart);
+  settings.setValue("ConfigureRvsTTempertureEnd", dTempEnd);
+  settings.setValue("ConfigureRvsTTRate", dTRate);
   sSampleInfo = ui->sampleInformationEdit->toPlainText();
-  settings.setValue("configureSampleInfo", sSampleInfo);
-  settings.setValue("configureBaseDir", sBaseDir);
-  settings.setValue("configureOutFileName", sOutFileName);
+  settings.setValue("ConfigureRvsTSampleInfo", sSampleInfo);
+  settings.setValue("ConfigureRvsTBaseDir", sBaseDir);
+  settings.setValue("ConfigureRvsTOutFileName", sOutFileName);
 }
 
 
@@ -139,13 +147,6 @@ ConfigureRvsTDialog::setToolTips() {
   ui->outFileEdit->setToolTip(QString("Enter Output File Name"));
   ui->outFilePathButton->setToolTip((QString("Press to Change Output File Folder")));
   ui->doneButton->setToolTip(QString("Press when Done"));
-}
-
-
-void
-ConfigureRvsTDialog::closeEvent(QCloseEvent *event) {
-  Q_UNUSED(event)
-  saveSettings();
 }
 
 
@@ -238,26 +239,6 @@ ConfigureRvsTDialog::on_testValueEdit_textChanged(const QString &arg1) {
 
 
 void
-ConfigureRvsTDialog::on_doneButton_clicked() {
-  sOutFileName = ui->outFileEdit->text();
-  if(QDir(sBaseDir).exists(sOutFileName)) {
-    int iAnswer = QMessageBox::question(
-                    this,
-                    QString("File Already exists"),
-                    QString("Overwrite %1 ?").arg(sOutFileName),
-                    QMessageBox::Yes,
-                    QMessageBox::No,
-                    QMessageBox::NoButton);
-    if(iAnswer == QMessageBox::No) {
-      ui->outFileEdit->setFocus();
-      return;
-    }
-  }
-  accept();
-}
-
-
-void
 ConfigureRvsTDialog::on_TStartEdit_textChanged(const QString &arg1) {
   if(isTemperatureValueValid(arg1.toDouble())){
     dTempStart = arg1.toDouble();
@@ -278,11 +259,6 @@ ConfigureRvsTDialog::on_TEndEdit_textChanged(const QString &arg1) {
   else {
     ui->TEndEdit->setStyleSheet(sErrorStyle);
   }
-}
-
-
-void
-ConfigureRvsTDialog::on_outFileEdit_editingFinished() {
 }
 
 
@@ -313,6 +289,26 @@ ConfigureRvsTDialog::on_TRateEdit_textChanged(const QString &arg1) {
     else {
       ui->TRateEdit->setStyleSheet(sErrorStyle);
     }
+}
+
+
+void
+ConfigureRvsTDialog::on_doneButton_clicked() {
+  sOutFileName = ui->outFileEdit->text();
+  if(QDir(sBaseDir).exists(sOutFileName)) {
+    int iAnswer = QMessageBox::question(
+                    this,
+                    QString("File Already exists"),
+                    QString("Overwrite %1 ?").arg(sOutFileName),
+                    QMessageBox::Yes,
+                    QMessageBox::No,
+                    QMessageBox::NoButton);
+    if(iAnswer == QMessageBox::No) {
+      ui->outFileEdit->setFocus();
+      return;
+    }
+  }
+  accept();
 }
 
 

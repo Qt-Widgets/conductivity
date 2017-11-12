@@ -48,10 +48,11 @@ protected:
   bool CheckInstruments();
   bool startDAQ();
   void stopDAQ();
+  int  InitVvsT();
+  int  JunctionCheck();
 
 private slots:
   void on_startRvsTButton_clicked();
-
   void on_startIvsVButton_clicked();
 
 private:
@@ -65,17 +66,19 @@ private:
   ConfigureRvsTDialog configureRvsTDialog;
   ConfigureIvsVDialog configureIvsVDialog;
 
-  int         gpibBoardID;
-  int32       error;
-  TaskHandle  lampTaskHandle;// Digital Output
-  QString     sLampLine;
-  quint8      currentLampStatus;
-  bool        bStartDaq;
-  StripChart *pPlotMeasurements;
-  StripChart *pPlotTemperature;
-  QString     sMeasurementPlotLabel;
-  QString     sTemperaturePlotLabel;
-  int         nChartPoints;
+  const quint8 LAMP_ON;
+  const quint8 LAMP_OFF;
+  int          gpibBoardID;
+  int32        error;
+  TaskHandle   lampTaskHandle;// Digital Output
+  QString      sLampLine;
+  quint8       currentLampStatus;
+  bool         bStartDaq;
+  StripChart  *pPlotMeasurements;
+  StripChart  *pPlotTemperature;
+  QString      sMeasurementPlotLabel;
+  QString      sTemperaturePlotLabel;
+  int          maxChartPoints;
 };
 
 #endif // MAINWINDOW_H

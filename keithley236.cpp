@@ -36,6 +36,20 @@ namespace keithley236 {
 
 Keithley236::Keithley236(int gpio, int address, QObject *parent)
   : QObject(parent)
+  //
+  , NO_JUNCTION(0)
+  , FORWARD_JUNCTION(1)
+  , REVERSE_JUNCTION(-1)
+  //
+  , SRQ_DISABLED(0)
+  , WARNING(1)
+  , SWEEP_DONE(2)
+  , TRIGGER_OUT(4)
+  , READING_DONE(8)
+  , READY_FOR_TRIGGER(16)
+  , K236_ERROR(32)
+  , COMPLIANCE(128)
+  //
   , GPIBNumber(gpio)
   , K236Address(address)
   , K236(-1)
@@ -96,7 +110,86 @@ Keithley236::Init() {
 }
 
 
+int
+Keithley236::InitVvsT(double dAppliedCurrent, double dVoltageCompliance) {
+  gpibWrite(K236, "O1");       // Remote Sense
+  gpibWrite(K236, "Z0");       // Disable Zero suppression
+  gpibWrite(K236, "F1,0");     // Source I Measure V dc
+  sCommand = QString("B%1,0,0").arg(dAppliedCurrent);
+  gpibWrite(K236, sCommand);
+  sCommand = QString("L%g,0").arg(dVoltageCompliance);
+  gpibWrite(K236, sCommand);   // Set Compliance, Autorange Measure
+  gpibWrite(K236, "H0X");      // Enable Comliance
+  gpibWrite(K236, "T1,0,0,0"); // Trigger on GET
+  gpibWrite(K236, "G5,2,0");   // Output Source, Measure, No Prefix, DC
+  gpibWrite(K236, "S3");       // 20ms integration time
+  gpibWrite(K236, "P5X");      // 32 Reading Filter
+  keithley236::RearmMask = 0;
+  sCommand = QString("M%d,0").arg(keithley236::RearmMask);
+  gpibWrite(K236, sCommand);   // SRQ Mask, Interrupt on Compliance
+  gpibWrite(K236, "R1");       // Arm Trigger
+  gpibWrite(K236, "N1X");      // Operate !
+  ibrsp(K236, &SpollByte);     // To Clear SRQ
+  keithley236::RearmMask =
+      COMPLIANCE +
+      K236_ERROR +
+      READY_FOR_TRIGGER +
+      READING_DONE +
+      WARNING;
+  sCommand = QString("M%d,0X").arg(keithley236::RearmMask);
+  gpibWrite(K236, sCommand);   // SRQ Mask, Interrupt on Compliance
+  return 0;
+}
+
+
+int
+Keithley236::JunctionCheck() {// Per sapere se abbiamo una giunzione !
+  gpibWrite(K236, "F0,0");     // Source V Measure I dc
+  gpibWrite(K236, "O0");       // Local Sense
+  gpibWrite(K236, "T1,0,0,0"); // Trigger on GET
+  gpibWrite(K236, "L1.0e-4,0");// Set Compliance, Autorange Measure
+  gpibWrite(K236, "G5,2,0");   // Output Source, Measure, No Prefix, DC
+  gpibWrite(K236, "S3");       // 20ms integration time
+  gpibWrite(K236, "P5");       // 32 Reading Filter
+  keithley236::RearmMask = SRQ_DISABLED;
+  sCommand = QString("M%d,0").arg(iMask);
+  gpibWrite(K236, sCommand);   // SRQ Disabled
+  gpibWrite(K236, "B1.0,0,0"); // Source 1.0V Measure I Autorange
+  gpibWrite(K236, "R1");       // Arm Trigger
+  gpibWrite(K236, "Z0");       // Disable suppression
+  gpibWrite(K236, "N1X");      // Operate !
+  ibrsp(K236, &SpollByte);
+  while(!(SpollByte & 16)) {// Ready for trigger
+    ibrsp(K236, &SpollByte);
+    QThread::msleep(100);
+  }
+  ibtrg(K236);
+  ibrsp(K236, &SpollByte);
+  while(!(SpollByte & 8)) {// Reading Done
+    ibrsp(K236, &SpollByte);
+    QThread::msleep(100);
+  }
+  sCommand = gpibRead(K236);
+  double I_Forward = sCommand.toDouble();
+  qDebug() << QString("Forward Current [A]= ") + sCommand;
+  gpibWrite(K236, "B-1.0,0,0X"); // Source -1.0V Measure I Autorange
+  QThread::msleep(1000);
+  sCommand = gpibRead(K236);
+  double I_Reverse = sCommand.toDouble();
+  qDebug() << QString("Reverse Current [A]= ") + sCommand;
+  gpibWrite(K236, "B0.0,0,0"); // Source 0.0V Measure I Autorange
+  gpibWrite(K236, "N0X");      // Stand By !
+  int deltaI = abs(qRound(log10(abs(I_Forward))) - qRound(log10(abs(I_Reverse))));
+  if(deltaI < 2) return NO_JUNCTION;// No Junctions in DUT
+  if(abs(I_Forward) > abs(I_Reverse)) return FORWARD_JUNCTION;
+  return REVERSE_JUNCTION;
+}
+
+
 void
 Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long LocalIberr, long LocalIbcntl) {
-
+  Q_UNUSED(LocalUd)
+  Q_UNUSED(LocalIbsta)
+  Q_UNUSED(LocalIberr)
+  Q_UNUSED(LocalIbcntl)
 }

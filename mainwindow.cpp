@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
+
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -35,19 +36,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define GPIB_COMMAND_ERROR      -1001
 #define SPOLL_ERR               -1000
 
-#define NO_JUNCTION         0
-#define FORWARD_JUNCTION    1
-#define REVERSE_JUNCTION   -1
-
-#define SRQ_DISABLED        0
-#define WARNING             1
-#define SWEEP_DONE          2
-#define TRIGGER_OUT         4
-#define READING_DONE        8
-#define READY_FOR_TRIGGER  16
-#define K236_ERROR         32
-#define COMPLIANCE        128
-
 #define READING_TIMER       1
 #define TIMER_TO_START      2
 #define TIMER_TO_WAIT       3
@@ -58,9 +46,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define TIMEOUT_TIMER      10
 */
 
-#define LAMP_ON  1
-#define LAMP_OFF 0
-//#define SIMULATION
 
 
 #define DAQmxErrChk(functionCall) if( DAQmxFailed(error=(functionCall)) ) goto Error;
@@ -72,6 +57,8 @@ MainWindow::MainWindow(QWidget *parent)
   , pOutputFile(Q_NULLPTR)
   , pKeithley(Q_NULLPTR)
   , pLakeShore(Q_NULLPTR)
+  , LAMP_ON(1)
+  , LAMP_OFF(0)
   , gpibBoardID(0)
   , lampTaskHandle(0)
 #ifdef SIMULATION
@@ -82,8 +69,7 @@ MainWindow::MainWindow(QWidget *parent)
   , currentLampStatus(LAMP_OFF)
   , pPlotMeasurements(Q_NULLPTR)
   , pPlotTemperature(Q_NULLPTR)
-  , sMeasurementPlotLabel(QString("1/R [OHM] vs T [K]"))
-  , sTemperaturePlotLabel(QString("T [K] vs t [s]"))
+  , maxChartPoints(3000)
 {
   ui->setupUi(this);
 
@@ -93,12 +79,6 @@ MainWindow::MainWindow(QWidget *parent)
   QSettings settings;
   restoreGeometry(settings.value("mainWindowGeometry").toByteArray());
   restoreState(settings.value("mainWindowState").toByteArray());
-
-  nChartPoints = 3000;
-  pPlotMeasurements = new StripChart(this, sMeasurementPlotLabel);
-  pPlotMeasurements->setMaxPoints(nChartPoints);
-  pPlotTemperature = new StripChart(this, sTemperaturePlotLabel);
-  pPlotTemperature->setMaxPoints(nChartPoints);
 }
 
 
@@ -273,10 +253,12 @@ MainWindow::stopDAQ() {
 void
 MainWindow::on_startRvsTButton_clicked() {
   if(ui->startRvsTButton->text().contains("Stop")) {
+    stopDAQ();
     ui->startRvsTButton->setText("Start R vs T");
     ui->startIvsVButton->setEnabled(true);
     return;
   }
+  // else
   if(configureRvsTDialog.exec() == QDialog::Rejected) return;
 
   QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
@@ -343,11 +325,32 @@ MainWindow::on_startRvsTButton_clicked() {
 
   ui->statusBar->clearMessage();
 
+  if(pPlotMeasurements) delete pPlotMeasurements;
+  sMeasurementPlotLabel = QString("1/R [OHM] vs T [K]");
+  pPlotMeasurements = new StripChart(this, sMeasurementPlotLabel);
+  pPlotMeasurements->setMaxPoints(maxChartPoints);
   pPlotMeasurements->ClearChart();
+
+  if(pPlotTemperature) delete pPlotTemperature;
+  sTemperaturePlotLabel = QString("T [K] vs t [s]");
+  pPlotTemperature = new StripChart(this, sTemperaturePlotLabel);
+  pPlotTemperature->setMaxPoints(maxChartPoints);
   pPlotTemperature->ClearChart();
+
   pPlotMeasurements->show();
   pPlotTemperature->show();
   QApplication::restoreOverrideCursor();
+}
+
+
+int
+MainWindow::InitVvsT() {
+  double dAppliedCurrent = configureRvsTDialog.dSourceValue;
+  double dVoltageCompliance = 1.0;
+  pKeithley->InitVvsT(dAppliedCurrent, dVoltageCompliance);
+//  _ftime_s(&timebuffer);
+//  timeStart = timebuffer.time + timebuffer.millitm/1000.0;
+  return 0;
 }
 
 
@@ -358,7 +361,7 @@ MainWindow::on_startIvsVButton_clicked() {
     ui->startRvsTButton->setEnabled(true);
     return;
   }
-
+  //else
   QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
   if(configureIvsVDialog.exec() == QDialog::Rejected) return;
@@ -373,3 +376,10 @@ MainWindow::on_startIvsVButton_clicked() {
   pPlotTemperature->show();
   QApplication::restoreOverrideCursor();
 }
+
+
+int
+MainWindow::JunctionCheck() {// Per sapere se abbiamo una giunzione !
+  return pKeithley->JunctionCheck();
+}
+
