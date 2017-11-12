@@ -52,7 +52,7 @@ LakeShore330::~LakeShore330() {
 }
 
 int
-LakeShore330::Init() {
+LakeShore330::init() {
   LS330 = ibdev(GPIBNumber, LS330Address, 0, T100ms, 1, 0x1c0A);
   if(LS330 < 0) {
     qDebug() << "ibdev() Failed";
@@ -141,12 +141,15 @@ LakeShore330::Init() {
 
 void
 LakeShore330::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long LocalIberr, long LocalIbcntl) {
-
+  Q_UNUSED(LocalUd)
+  Q_UNUSED(LocalIbsta)
+  Q_UNUSED(LocalIberr)
+  Q_UNUSED(LocalIbcntl)
 }
 
 
 double
-LakeShore330::GetTemperature() {
+LakeShore330::getTemperature() {
   gpibWrite(LS330, "SDAT?\r\n");
   if(ThreadIbsta() & ERR) {
     qDebug() << "SDAT?\r\nInit(LakeShore): Failed";
@@ -167,7 +170,7 @@ LakeShore330::GetTemperature() {
 
 
 bool
-LakeShore330::SetTemperature(double Temperature) {
+LakeShore330::setTemperature(double Temperature) {
   if(Temperature < 0.0 || Temperature > 900.0) return false;
   gpibWrite(LS330, "TUNE 3\r\n");
   sCommand = QString("SETP %1\r\n").arg(Temperature, 0, 'f', 2);

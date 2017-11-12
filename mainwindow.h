@@ -64,7 +64,7 @@ private:
   Keithley236*  pKeithley;
   LakeShore330* pLakeShore;
   QDateTime     currentTime;
-  QDateTime     startWaitingTime;
+  QDateTime     waitingTStartTime;
 
 
   ConfigureRvsTDialog configureRvsTDialog;

@@ -28,9 +28,9 @@ class Keithley236 : public QObject
 public:
   explicit Keithley236(int gpio, int address, QObject *parent = 0);
   virtual ~Keithley236();
-  int      Init();
-  int      InitVvsT(double dAppliedCurrent, double dVoltageCompliance);
-  int      JunctionCheck();
+  int      init();
+  int      initVvsT(double dAppliedCurrent, double dVoltageCompliance);
+  int      junctionCheck();
   void     onGpibCallback(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
 
 signals:
@@ -52,10 +52,10 @@ public:
   const int COMPLIANCE;
 
 private:
-  int GPIBNumber;
-  int K236Address;
-  int K236;
-  char SpollByte;
+  int gpibNumber;
+  int k236Address;
+  int k236;
+  char spollByte;
   bool bStop;
   int iMask;
   int iComplianceEvents;

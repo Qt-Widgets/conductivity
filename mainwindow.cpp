@@ -324,7 +324,7 @@ MainWindow::on_startRvsTButton_clicked() {
   ui->startRvsTButton->setText("Stop R vs T");
 
   ui->statusBar->clearMessage();
-
+  // Plot of Condicibility vs Temperature
   if(pPlotMeasurements) delete pPlotMeasurements;
   sMeasurementPlotLabel = QString("R^-1 [OHM^-1] vs T [K]");
   pPlotMeasurements = new StripChart(this, sMeasurementPlotLabel);
@@ -338,7 +338,8 @@ MainWindow::on_startRvsTButton_clicked() {
   pPlotMeasurements->SetShowDataSet(1, true);
   pPlotMeasurements->SetShowTitle(1, true);
   pPlotMeasurements->UpdateChart();
-
+  pPlotMeasurements->show();
+  // Plot of Temperature vs Time
   if(pPlotTemperature) delete pPlotTemperature;
   sTemperaturePlotLabel = QString("T [K] vs t [s]");
   pPlotTemperature = new StripChart(this, sTemperaturePlotLabel);
@@ -351,25 +352,23 @@ MainWindow::on_startRvsTButton_clicked() {
                                );
   pPlotTemperature->SetShowDataSet(1, true);
   pPlotTemperature->SetShowTitle(1, true);
-
-  pPlotMeasurements->show();
   pPlotTemperature->show();
+#ifndef SIMULATION
   InitVvsT();
+  pLakeShore->SwitchPowerOn();
+#endif
+  waitingTStartTime = QDateTime::currentDateTime();
+  qDebug() << "Starting Time:" << waitingTStartTime.toString();
   QApplication::restoreOverrideCursor();
 }
 
 
 int
 MainWindow::InitVvsT() {
-#ifndef SIMULATION
   double dAppliedCurrent = configureRvsTDialog.dSourceValue;
   double dVoltageCompliance = 1.0;
-  pKeithley->InitVvsT(dAppliedCurrent, dVoltageCompliance);
-  pLakeShore->SetTemperature(configureRvsTDialog.dTempStart);
-  pLakeShore->SwitchPowerOn();
-#endif
-  startWaitingTime = QDateTime::currentDateTime();
-  qDebug() << "Starting Time:" << startWaitingTime.toString();
+  pKeithley->initVvsT(dAppliedCurrent, dVoltageCompliance);
+  pLakeShore->setTemperature(configureRvsTDialog.dTempStart);
   return 0;
 }
 
@@ -382,24 +381,48 @@ MainWindow::on_startIvsVButton_clicked() {
     return;
   }
   //else
-  QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-
   if(configureIvsVDialog.exec() == QDialog::Rejected) return;
+  QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
   ui->startRvsTButton->setDisabled(true);
   ui->startIvsVButton->setText("Stop I vs V");
+  // Plot of Condicibility vs Temperature
+  if(pPlotMeasurements) delete pPlotMeasurements;
+  sMeasurementPlotLabel = QString("I [A] vs V [V]");
+
+  pPlotMeasurements = new StripChart(this, sMeasurementPlotLabel);
+  pPlotMeasurements->setMaxPoints(maxChartPoints);
+  pPlotMeasurements->NewDataSet(1,//Id
+                                3, //Pen Width
+                                QColor(255, 255, 0),// Color
+                                StripChart::ipoint,// Symbol
+                                "I"// Title
+                                );
+  pPlotMeasurements->SetShowDataSet(1, true);
+  pPlotMeasurements->SetShowTitle(1, true);
+  pPlotMeasurements->UpdateChart();
+  pPlotMeasurements->show();
+  // Plot of Temperature vs Time
+  if(pPlotTemperature) delete pPlotTemperature;
+  sTemperaturePlotLabel = QString("T [K] vs t [s]");
+  pPlotTemperature = new StripChart(this, sTemperaturePlotLabel);
+  pPlotTemperature->setMaxPoints(maxChartPoints);
+  pPlotTemperature->NewDataSet(1,//Id
+                               3, //Pen Width
+                               QColor(255, 255, 0),// Color
+                               StripChart::ipoint,// Symbol
+                               "T"// Title
+                               );
+  pPlotTemperature->SetShowDataSet(1, true);
+  pPlotTemperature->SetShowTitle(1, true);
+  pPlotTemperature->show();
 
   ui->statusBar->clearMessage();
-
-  pPlotMeasurements->ClearChart();
-  pPlotTemperature->ClearChart();
-  pPlotMeasurements->show();
-  pPlotTemperature->show();
   QApplication::restoreOverrideCursor();
 }
 
 
 int
 MainWindow::JunctionCheck() {// Per sapere se abbiamo una giunzione !
-  return pKeithley->JunctionCheck();
+  return pKeithley->junctionCheck();
 }
 

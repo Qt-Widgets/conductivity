@@ -24,8 +24,7 @@ DEFINES += SIMULATION
 
 QT += core
 QT += gui
-
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+QT += widgets
 
 TARGET = conductivity
 TEMPLATE = app
@@ -34,8 +33,8 @@ TEMPLATE = app
 INCLUDEPATH += "C:/Program Files (x86)/National Instruments/NI-DAQ/DAQmx ANSI C Dev/include"
 INCLUDEPATH += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/include"
 
-SOURCES += main.cpp \
-    configureIvsVdialog.cpp
+SOURCES += main.cpp
+SOURCES += mainwindow.cpp
 SOURCES += utility.cpp
 SOURCES += keithley236.cpp
 SOURCES += axesdialog.cpp
@@ -46,10 +45,9 @@ SOURCES += cdatastream.cpp
 SOURCES += DataSetProperties.cpp
 SOURCES += lakeshore330.cpp
 SOURCES += configureRvsTdialog.cpp
-SOURCES += mainwindow.cpp
+SOURCES += configureIvsVdialog.cpp
 
-HEADERS += mainwindow.h \
-    configureIvsVdialog.h
+HEADERS += mainwindow.h
 HEADERS += utility.h
 HEADERS += keithley236.h
 HEADERS += axesdialog.h
@@ -60,11 +58,12 @@ HEADERS += cdatastream.h
 HEADERS += DataSetProperties.h
 HEADERS += lakeshore330.h
 HEADERS += configureRvsTdialog.h
+HEADERS += configureIvsVdialog.h
 
-FORMS   += mainwindow.ui \
-    configureIvsVdialog.ui
+FORMS   += mainwindow.ui
 FORMS   += axesdialog.ui
 FORMS   += configureRvsTdialog.ui
+FORMS   += configureIvsVdialog.ui
 
 # For National Instruments DAQ & GPIB Boards
 LIBS += "C:/Program Files (x86)/National Instruments/NI-DAQ/DAQmx ANSI C Dev/lib/msvc/NIDAQmx.lib"
