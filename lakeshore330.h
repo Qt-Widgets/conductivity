@@ -33,6 +33,7 @@ public:
   bool     setTemperature(double Temperature);
   bool     switchPowerOn();
   bool     switchPowerOff();
+  bool     startRamp(double rate);
 
 signals:
 
@@ -47,19 +48,19 @@ private:
   int iMask, iComplianceEvents;
   QString sCommand, sResponse;
   // Status Byte Register
-  const quint8 SRQ;
-  const quint8 ESB;
-  const quint8 OVI;
-  const quint8 CLE;
-  const quint8 CDR;
-  const quint8 SDR;
+  const quint8 SRQ;// Service Request
+  const quint8 ESB;// Standard Event Status
+  const quint8 OVI;// Overload Indicator
+  const quint8 CLE;// Control Limit Error
+  const quint8 CDR;// Control Data Ready
+  const quint8 SDR;// Sample Data Ready
   // Standard Event Status Register
-  const quint8 PON;
-  const quint8 CME;
-  const quint8 EXE;
-  const quint8 DDE;
-  const quint8 QYE;
-  const quint8 OPC;
+  const quint8 PON;// Power On
+  const quint8 CME;// Command Error
+  const quint8 EXE;// Execution Error
+  const quint8 DDE;// Device Dependent Error
+  const quint8 QYE;// Query Error
+  const quint8 OPC;// Operation Complete
 };
 
 #endif // LAKESHORE330_H
