@@ -111,6 +111,7 @@ ConfigureIvsVDialog::on_doneButton_clicked() {
       return;
     }
   }
+  saveSettings();
   accept();
 }
 

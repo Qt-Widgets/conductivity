@@ -46,10 +46,20 @@ private:
   bool bStop;
   int iMask, iComplianceEvents;
   QString sCommand, sResponse;
-
-signals:
-
-public slots:
+  // Status Byte Register
+  const quint8 SRQ;
+  const quint8 ESB;
+  const quint8 OVI;
+  const quint8 CLE;
+  const quint8 CDR;
+  const quint8 SDR;
+  // Standard Event Status Register
+  const quint8 PON;
+  const quint8 CME;
+  const quint8 EXE;
+  const quint8 DDE;
+  const quint8 QYE;
+  const quint8 OPC;
 };
 
 #endif // LAKESHORE330_H

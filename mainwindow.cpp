@@ -70,7 +70,7 @@ MainWindow::MainWindow(QWidget *parent)
   , pPlotMeasurements(Q_NULLPTR)
   , pPlotTemperature(Q_NULLPTR)
   , maxChartPoints(3000)
-  , maxReachingTTime(15*1000)
+  , maxReachingTTime(15)// In seconds
 {
   ui->setupUi(this);
 
@@ -253,6 +253,7 @@ void
 MainWindow::on_startRvsTButton_clicked() {
   if(ui->startRvsTButton->text().contains("Stop")) {
     stopDAQ();
+    pLakeShore->switchPowerOff();
     ui->startRvsTButton->setText("Start R vs T");
     ui->startIvsVButton->setEnabled(true);
     return;
@@ -389,7 +390,7 @@ MainWindow::onTimeToCheckReachedT() {
   }
   else {
     currentTime = QDateTime::currentDateTime();
-    quint64 elapsedMsec = waitingTStartTime.currentMSecsSinceEpoch();
+    quint64 elapsedMsec = waitingTStartTime.secsTo(currentTime);
     qDebug() << "Elapsed:" << elapsedMsec;
     if(elapsedMsec > maxReachingTTime) {
       disconnect(&waitingTStartTimer, 0, 0, 0);
@@ -406,7 +407,8 @@ MainWindow::onTimeToCheckReachedT() {
 void
 MainWindow::onTimerStabilizeT() {
   stabilizingTimer.stop();
-  qDebug() << " Thermal Stabilization Reached: Start of the Measure";
+  qDebug() << "Thermal Stabilization Reached: Start of the Measure";
+  ui->statusBar->showMessage(QString("Thermal Stabilization Reached: Start of the Measure"));
 }
 
 
