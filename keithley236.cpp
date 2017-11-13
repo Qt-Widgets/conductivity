@@ -117,7 +117,7 @@ Keithley236::initVvsT(double dAppliedCurrent, double dVoltageCompliance) {
   gpibWrite(k236, "F1,0");     // Source I Measure V dc
   sCommand = QString("B%1,0,0").arg(dAppliedCurrent);
   gpibWrite(k236, sCommand);
-  sCommand = QString("L%g,0").arg(dVoltageCompliance);
+  sCommand = QString("L%1,0").arg(dVoltageCompliance);
   gpibWrite(k236, sCommand);   // Set Compliance, Autorange Measure
   gpibWrite(k236, "H0X");      // Enable Comliance
   gpibWrite(k236, "T1,0,0,0"); // Trigger on GET
@@ -125,7 +125,7 @@ Keithley236::initVvsT(double dAppliedCurrent, double dVoltageCompliance) {
   gpibWrite(k236, "S3");       // 20ms integration time
   gpibWrite(k236, "P5X");      // 32 Reading Filter
   keithley236::rearmMask = 0;
-  sCommand = QString("M%d,0").arg(keithley236::rearmMask);
+  sCommand = QString("M%1,0").arg(keithley236::rearmMask);
   gpibWrite(k236, sCommand);   // SRQ Mask, Interrupt on Compliance
   gpibWrite(k236, "R1");       // Arm Trigger
   gpibWrite(k236, "N1X");      // Operate !
@@ -136,7 +136,7 @@ Keithley236::initVvsT(double dAppliedCurrent, double dVoltageCompliance) {
       READY_FOR_TRIGGER +
       READING_DONE +
       WARNING;
-  sCommand = QString("M%d,0X").arg(keithley236::rearmMask);
+  sCommand = QString("M%1,0X").arg(keithley236::rearmMask);
   gpibWrite(k236, sCommand);   // SRQ Mask, Interrupt on Compliance
   return 0;
 }
@@ -152,7 +152,7 @@ Keithley236::junctionCheck() {// Per sapere se abbiamo una giunzione !
   gpibWrite(k236, "S3");       // 20ms integration time
   gpibWrite(k236, "P5");       // 32 Reading Filter
   keithley236::rearmMask = SRQ_DISABLED;
-  sCommand = QString("M%d,0").arg(iMask);
+  sCommand = QString("M%1,0").arg(iMask);
   gpibWrite(k236, sCommand);   // SRQ Disabled
   gpibWrite(k236, "B1.0,0,0"); // Source 1.0V Measure I Autorange
   gpibWrite(k236, "R1");       // Arm Trigger

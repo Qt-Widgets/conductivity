@@ -62,14 +62,15 @@ MainWindow::MainWindow(QWidget *parent)
   , gpibBoardID(0)
   , lampTaskHandle(0)
 #ifdef SIMULATION
-  , sLampLine(QString("Fake2/port0/line0"))
+  , sLampLine(QString("Fake2/port1/line0"))
 #else
-  , sLampLine(QString("NiUSB-6211/port0/line0"))
+  , sLampLine(QString("NiUSB-6211/port1/line0"))
 #endif
   , currentLampStatus(LAMP_OFF)
   , pPlotMeasurements(Q_NULLPTR)
   , pPlotTemperature(Q_NULLPTR)
   , maxChartPoints(3000)
+  , maxReachingTTime(15*1000)
 {
   ui->setupUi(this);
 
@@ -207,12 +208,10 @@ MainWindow::startDAQ() {
         "Lamp Switch",
         DAQmx_Val_ChanPerLine)
   );
-  DAQmxErrChk (
-    DAQmxSetDOOutputDriveType(
-      lampTaskHandle,
-      sLampLine.toLatin1().constData(),
-      DAQmx_Val_ActiveDrive)
-  );
+  DAQmxSetDOOutputDriveType(
+    lampTaskHandle,
+    sLampLine.toLatin1().constData(),
+    DAQmx_Val_ActiveDrive);
   // DAQmx Start Code
   DAQmxErrChk (
     DAQmxStartTask(lampTaskHandle)
@@ -281,7 +280,7 @@ MainWindow::on_startRvsTButton_clicked() {
   int initError;
   if(pKeithley  != Q_NULLPTR)  {
     ui->statusBar->showMessage("Initializing Keithley 236...");
-    initError = pKeithley->Init();
+    initError = pKeithley->init();
     if(initError) {
       ui->statusBar->showMessage("Unable to Initialize Keithley 236...");
       QApplication::restoreOverrideCursor();
@@ -290,13 +289,13 @@ MainWindow::on_startRvsTButton_clicked() {
   }
   if(pLakeShore != Q_NULLPTR) {
     ui->statusBar->showMessage("Initializing LakeShore 330...");
-    initError = pLakeShore->Init();
+    initError = pLakeShore->init();
     if(initError) {
       ui->statusBar->showMessage("Unable to Initialize LakeShore 330...");
       QApplication::restoreOverrideCursor();
       return;
     }
-    pLakeShore->SetTemperature(100.0);
+    pLakeShore->setTemperature(100.0);
   }
 
   // Open the Output file
@@ -353,25 +352,61 @@ MainWindow::on_startRvsTButton_clicked() {
   pPlotTemperature->SetShowDataSet(1, true);
   pPlotTemperature->SetShowTitle(1, true);
   pPlotTemperature->show();
+  // Configure Source-Measure Unit & Thermostat
 #ifndef SIMULATION
-  InitVvsT();
-  pLakeShore->SwitchPowerOn();
-#endif
-  waitingTStartTime = QDateTime::currentDateTime();
-  ui->statusBar->showMessage(QString("%1 Waiting Initial T[%2K]")
-                             .arg(waitingTStartTime.toString())
-                             .arg(configureRvsTDialog.dTempStart));
-  QApplication::restoreOverrideCursor();
-}
-
-
-int
-MainWindow::InitVvsT() {
   double dAppliedCurrent = configureRvsTDialog.dSourceValue;
   double dVoltageCompliance = 1.0;
   pKeithley->initVvsT(dAppliedCurrent, dVoltageCompliance);
   pLakeShore->setTemperature(configureRvsTDialog.dTempStart);
-  return 0;
+  pLakeShore->switchPowerOn();
+#endif
+  // Start waiting for reaching the initial temperature
+  waitingTStartTime = QDateTime::currentDateTime();
+  ui->statusBar->showMessage(QString("%1 Waiting Initial T[%2K]")
+                             .arg(waitingTStartTime.toString())
+                             .arg(configureRvsTDialog.dTempStart));
+  connect(&waitingTStartTimer, SIGNAL(timeout()),
+          this, SLOT(onTimeToCheckReachedT()));
+  waitingTStartTimer.start(5000);
+  QApplication::restoreOverrideCursor();
+}
+
+
+void
+MainWindow::onTimeToCheckReachedT() {
+  double T = pLakeShore->getTemperature();
+  qDebug() << "Current Temperature: " << T;
+  if(fabs(T-configureRvsTDialog.dTempStart) <
+     1.0)//configureRvsTDialog->dTolerance)
+  {
+    disconnect(&waitingTStartTimer, 0, 0, 0);
+    waitingTStartTimer.stop();
+    connect(&stabilizingTimer, SIGNAL(timeout()),
+            this, SLOT(onTimerStabilizeT()));
+    stabilizingTimer.start(5000);
+    qDebug() << QString("Starting T Reached: Thermal Stabilization...");
+    ui->statusBar->showMessage(QString("Starting T Reached: Thermal Stabilization..."));
+  }
+  else {
+    currentTime = QDateTime::currentDateTime();
+    quint64 elapsedMsec = waitingTStartTime.currentMSecsSinceEpoch();
+    qDebug() << "Elapsed:" << elapsedMsec;
+    if(elapsedMsec > maxReachingTTime) {
+      disconnect(&waitingTStartTimer, 0, 0, 0);
+      waitingTStartTimer.stop();
+      connect(&stabilizingTimer, SIGNAL(timeout()),
+              this, SLOT(onTimerStabilizeT()));
+      stabilizingTimer.start(5000);
+      qDebug() << QString("Max Reaching Time Exceed...Thermal Stabilization...");
+      ui->statusBar->showMessage(QString("Max Reaching Time Exceed...Thermal Stabilization..."));
+    }
+  }
+}
+
+void
+MainWindow::onTimerStabilizeT() {
+  stabilizingTimer.stop();
+  qDebug() << " Thermal Stabilization Reached: Start of the Measure";
 }
 
 

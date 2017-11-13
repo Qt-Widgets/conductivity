@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QMainWindow>
 #include <QDateTime>
+#include <QTimer>
 #include <NIDAQmx.h>
 
 #include "configureRvsTdialog.h"
@@ -49,12 +50,13 @@ protected:
   bool CheckInstruments();
   bool startDAQ();
   void stopDAQ();
-  int  InitVvsT();
   int  JunctionCheck();
 
 private slots:
   void on_startRvsTButton_clicked();
   void on_startIvsVButton_clicked();
+  void onTimeToCheckReachedT();
+  void onTimerStabilizeT();
 
 private:
   Ui::MainWindow *ui;
@@ -65,7 +67,8 @@ private:
   LakeShore330* pLakeShore;
   QDateTime     currentTime;
   QDateTime     waitingTStartTime;
-
+  QTimer        waitingTStartTimer;
+  QTimer        stabilizingTimer;
 
   ConfigureRvsTDialog configureRvsTDialog;
   ConfigureIvsVDialog configureIvsVDialog;
@@ -83,6 +86,7 @@ private:
   QString      sMeasurementPlotLabel;
   QString      sTemperaturePlotLabel;
   int          maxChartPoints;
+  quint64      maxReachingTTime;
 };
 
 #endif // MAINWINDOW_H

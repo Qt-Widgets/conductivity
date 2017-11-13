@@ -20,7 +20,7 @@
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # To avoid DAQmx and GPIB errors
-DEFINES += SIMULATION
+#DEFINES += SIMULATION
 
 QT += core
 QT += gui
