@@ -29,32 +29,31 @@ public:
   CDataStream(int Id, int PenWidth, QColor Color, int Symbol, QString Title);
   CDataStream(CDataSetProperties Properties);
   virtual ~CDataStream(void);
+  // Operations
+  void setMaxPoints(int nPoints);
+  int  getMaxPoints();
+  void AddPoint(double point);
+  void RemoveAllPoints();
+  int  GetId();
+  QString GetTitle();
+  CDataSetProperties GetProperties();
+  void SetProperties(CDataSetProperties newProperties);
+  void SetColor(QColor Color);
+  void SetShowTitle(bool show);
+  void SetTitle(QString myTitle);
+  void SetShow(bool);
 
  // Attributes
  public:
    QVector<double> m_pointArray;
+   double miny;
+   double maxy;
+   bool bShowCurveTitle;
+   bool isShown;
 
- private:
+ protected:
    CDataSetProperties Properties;
    int maxPoints;
-
- // Operations
- public:
-   void setMaxPoints(int nPoints);
-   int  getMaxPoints();
-   QString GetTitle();
-   CDataSetProperties GetProperties();
-   void SetProperties(CDataSetProperties newProperties);
-   void RemoveAllPoints();
-   int  GetId();
-   void SetColor(QColor Color);
-   void AddPoint(double point);
-   bool isShown;
-   void SetShow(bool);
-   void SetShowTitle(bool show);
-   void SetTitle(QString myTitle);
-   double miny, maxy;
-   bool bShowCurveTitle;
 };
 
 #endif // CDATASTREAM_H

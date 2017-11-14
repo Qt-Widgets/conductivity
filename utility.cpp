@@ -19,7 +19,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utility.h"
 #include <QDebug>
 
+
+namespace gpibUtilities {
 char readBuf[2001];
+}
+
+
+bool
+isGpibError(QString sErrorString) {
+  if(ThreadIbsta() & ERR) {
+    qCritical() << sErrorString;
+    QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
+    qCritical() << sError;
+    return true;
+  }
+  return false;
+}
+
 
 QString
 ErrMsg(int sta, int err, long cntl) {
@@ -71,9 +87,9 @@ gpibWrite(int ud, QString sCmd) {
   if(iRes & ERR) {
     QString sError;
     sError = QString("GPIB Error Writing: %1 - Status= %2").arg(sCmd).arg(ThreadIbsta(), 4, 16, QChar('0'));
-    qDebug() <<  sError;
+    qCritical() <<  sError;
     sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() <<  sError;
+    qCritical() <<  sError;
   }
   return iRes;
 }
@@ -82,15 +98,15 @@ gpibWrite(int ud, QString sCmd) {
 QString
 gpibRead(int ud) {
   QString sString;
-  if(ibrd(ud, readBuf, sizeof(readBuf)-1) & ERR) {
+  if(ibrd(ud, gpibUtilities::readBuf, sizeof(gpibUtilities::readBuf)-1) & ERR) {
     QString sError;
     sError = QString("GPIB Reading Error - Status= %1").arg(ThreadIbsta(), 4, 16, QChar('0'));
-    qDebug() << sError;
+    qCritical() << sError;
     sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+    qCritical() << sError;
   }
-  readBuf[ThreadIbcntl()] = 0;
-  sString = QString(readBuf);
+  gpibUtilities::readBuf[ThreadIbcntl()] = 0;
+  sString = QString(gpibUtilities::readBuf);
   return sString;
 }
 

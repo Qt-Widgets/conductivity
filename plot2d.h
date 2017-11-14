@@ -1,3 +1,5 @@
+#ifndef PLOT2D_H
+#define PLOT2D_H
 /*
  *
 Copyright (C) 2016  Gabriele Salvato
@@ -16,52 +18,49 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
-#ifndef STRIPCHART_H
-#define STRIPCHART_H
 
-#include <QWidget>
+#include "stripchart.h"
+#include "cdatastream2d.h"
+#include "AxisLimits.h"
+#include "AxisFrame.h"
+
 #include <QDialog>
 #include <QPen>
 
-#include "AxisLimits.h"
-#include "AxisFrame.h"
-#include "cdatastream.h"
 
-class StripChart : public QDialog
+class Plot2D : public QDialog
 {
   Q_OBJECT
 public:
-  explicit StripChart(QWidget *parent=0, QString Title="Strip Chart");
-  ~StripChart();
+  explicit Plot2D(QWidget *parent=0, QString Title="Plot 2D");
+  ~Plot2D();
   QSize minimumSizeHint() const;
   QSize sizeHint() const;
-
-public:
   void SetLimits (double XMin, double XMax, double YMin, double YMax,
                   bool AutoX, bool AutoY, bool LogX, bool LogY);
-  CDataStream* NewDataSet(int Id, int PenWidth, QColor Color, int Symbol, QString Title);
+  CDataStream2D* NewDataSet(int Id, int PenWidth, QColor Color, int Symbol, QString Title);
   bool DelDataSet(int Id);
-  void NewPoint(int Id, double y);
+  void NewPoint(int Id, double x, double y);
   void SetShowDataSet(int Id, bool Show);
   void SetShowTitle(int Id, bool show);
-  void UpdateChart();
-  void ClearChart();
+  void UpdatePlot();
+  void ClearPlot();
   void setMaxPoints(int nPoints);
   int  getMaxPoints();
-
-public:
-  static const int iline;
-  static const int ipoint;
-  static const int iplus;
-  static const int iper;
-  static const int istar;
-  static const int iuptriangle;
-  static const int idntriangle;
-  static const int icircle;
 
 signals:
 
 public slots:
+
+public:
+  const int iline;
+  const int ipoint;
+  const int iplus;
+  const int iper;
+  const int istar;
+  const int iuptriangle;
+  const int idntriangle;
+  const int icircle;
 
 protected:
   void closeEvent(QCloseEvent *event);
@@ -73,19 +72,19 @@ protected:
   void YTicLin(QPainter* painter, QFontMetrics fontMetrics);
   void YTicLog(QPainter* painter, QFontMetrics fontMetrics);
   void DrawData(QPainter* painter, QFontMetrics fontMetrics);
-  void LinePlot(QPainter* painter, CDataStream *pData);
-  void PointPlot(QPainter* painter, CDataStream* pData);
-  void ScatterPlot(QPainter* painter, CDataStream* pData);
-  void DrawLastPoint(QPainter* painter, CDataStream* pData);
-  void ShowTitle(QPainter* painter, QFontMetrics fontMetrics, CDataStream* pData);
+  void LinePlot(QPainter* painter, CDataStream2D *pData);
+  void PointPlot(QPainter* painter, CDataStream2D* pData);
+  void ScatterPlot(QPainter* painter, CDataStream2D* pData);
+  void DrawLastPoint(QPainter* painter, CDataStream2D* pData);
+  void ShowTitle(QPainter* painter, QFontMetrics fontMetrics, CDataStream2D* pData);
   void mousePressEvent(QMouseEvent *event);
   void mouseReleaseEvent(QMouseEvent *event);
   void mouseMoveEvent(QMouseEvent *event);
   void mouseDoubleClickEvent(QMouseEvent *event);
 //  void wheelEvent(QWheelEvent* event);
 
-
 protected:
+  QList<CDataStream2D*> dataSetList;
   QPen labelPen;
   QPen gridPen;
   QPen framePen;
@@ -94,7 +93,6 @@ protected:
   bool bZooming;
   bool bShowMarker;
   double xMarker, yMarker;
-  QList<CDataStream*> dataSetList;
   CAxisLimits Ax;
   CAxisFrame Pf;
   QString sTitle;
@@ -103,4 +101,4 @@ protected:
   QPoint lastPos, zoomStart, zoomEnd;
 };
 
-#endif // STRIPCHART_H
+#endif // PLOT2D_H

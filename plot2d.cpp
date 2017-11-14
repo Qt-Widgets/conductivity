@@ -1,46 +1,22 @@
-/*
- *
-Copyright (C) 2016  Gabriele Salvato
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
-#include <QPainter>
-#include <QPaintEvent>
-#include <QSettings>
-#include <cmath>
-#include <math.h>
-#include <float.h>
-
+#include "plot2d.h"
 #include "axesdialog.h"
-#include "stripchart.h"
+
+#include <float.h>
+#include <QSettings>
+#include <QPainter>
+#include <QCloseEvent>
 
 
-#define NINT(x) ((x) > 0.0 ? (int)floor((x)+0.5) : (int)ceil((x)-0.5))
-
-const int StripChart::iline       = 0;
-const int StripChart::ipoint      = 1;
-const int StripChart::iplus       = 2;
-const int StripChart::iper        = 3;
-const int StripChart::istar       = 4;
-const int StripChart::iuptriangle = 5;
-const int StripChart::idntriangle = 6;
-const int StripChart::icircle     = 7;
-
-
-StripChart::StripChart(QWidget *parent, QString Title)
+Plot2D::Plot2D(QWidget *parent, QString Title)
   : QDialog(parent)
+  , iline      (0)
+  , ipoint     (1)
+  , iplus      (2)
+  , iper       (3)
+  , istar      (4)
+  , iuptriangle(5)
+  , idntriangle(6)
+  , icircle    (7)
   , sTitle(Title)
 {
   setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
@@ -48,7 +24,7 @@ StripChart::StripChart(QWidget *parent, QString Title)
   setWindowFlags(windowFlags() | Qt::WindowMinMaxButtonsHint);
 //  setAttribute(Qt::WA_AlwaysShowToolTips);
   QSettings settings;
-  restoreGeometry(settings.value(sTitle+QString("Plot")).toByteArray());
+  restoreGeometry(settings.value(sTitle+QString("Plot2D")).toByteArray());
   xMarker      = 0.0;
   yMarker      = 0.0;
   bShowMarker  = false;
@@ -70,9 +46,9 @@ StripChart::StripChart(QWidget *parent, QString Title)
 }
 
 
-StripChart::~StripChart() {
+Plot2D::~Plot2D() {
   QSettings settings;
-  settings.setValue(sTitle+QString("Plot"), saveGeometry());
+  settings.setValue(sTitle+QString("Plot2D"), saveGeometry());
   while(!dataSetList.isEmpty()) {
     delete dataSetList.takeFirst();
   }
@@ -80,7 +56,37 @@ StripChart::~StripChart() {
 
 
 void
-StripChart::setMaxPoints(int nPoints) {
+Plot2D::closeEvent(QCloseEvent *event) {
+  QSettings settings;
+  settings.setValue(sTitle+QString("Plot2D"), saveGeometry());
+  event->ignore();
+}
+
+
+void
+Plot2D::paintEvent(QPaintEvent *event) {
+  QPainter painter;
+  painter.begin(this);
+  //painter.setRenderHint(QPainter::Antialiasing);
+  DrawPlot(&painter, event);
+  painter.end();
+}
+
+
+QSize
+Plot2D::minimumSizeHint() const {
+  return QSize(50, 50);
+}
+
+
+QSize
+Plot2D::sizeHint() const {
+  return QSize(330, 330);
+}
+
+
+void
+Plot2D::setMaxPoints(int nPoints) {
   if(nPoints > 0) maxDataPoints = nPoints;
   for(int pos=0; pos<dataSetList.count(); pos++) {
     dataSetList.at(pos)->setMaxPoints(maxDataPoints);
@@ -89,46 +95,8 @@ StripChart::setMaxPoints(int nPoints) {
 
 
 void
-StripChart::NewPoint(int Id, double y) {
-  if(std::isnan(y)) return;
-  if(dataSetList.isEmpty())  return;
-  CDataStream* pData = NULL;
-  for(int pos=0; pos<dataSetList.count(); pos++) {
-    if(dataSetList.at(pos)->GetId() == Id) {
-      pData = dataSetList.at(pos);
-      break;
-    }
-  }
-  if(pData) {
-    pData->AddPoint(y);
-  }
-}
-
-
-QSize
-StripChart::minimumSizeHint() const {
-  return QSize(50, 50);
-}
-
-
-QSize
-StripChart::sizeHint() const {
-  return QSize(330, 330);
-}
-
-
-
-void
-StripChart::closeEvent(QCloseEvent *event) {
-  QSettings settings;
-  settings.setValue(sTitle+QString("Plot"), saveGeometry());
-  event->ignore();
-}
-
-
-void
-StripChart::SetLimits (double XMin, double XMax, double YMin, double YMax,
-                       bool AutoX, bool AutoY, bool LogX, bool LogY)
+Plot2D::SetLimits (double XMin, double XMax, double YMin, double YMax,
+                   bool AutoX, bool AutoY, bool LogX, bool LogY)
 {
   Ax.XMin  = XMin;
   Ax.XMax  = XMax;
@@ -160,18 +128,18 @@ StripChart::SetLimits (double XMin, double XMax, double YMin, double YMax,
           YMax =-FLT_MAX;
         }
       }
-      CDataStream* pData;
+      CDataStream2D* pData;
       for(int pos=0; pos<dataSetList.count(); pos++) {
         pData = dataSetList.at(pos);
         if(pData->isShown) {
-          if(pData->m_pointArray.count() != 0) {
+          if(pData->m_pointArrayX.count() != 0) {
             EmptyData = false;
             if(Ax.AutoX) {
-              if(XMin > 0) {
-                XMin = 0;
+              if(XMin > pData->minx) {
+                XMin = pData->minx;
               }
-              if(XMax < pData->m_pointArray.count()) {
-                XMax = pData->m_pointArray.count();
+              if(XMax < pData->maxx) {
+                XMax = pData->maxx;
               }
             }// if(Ax.AutoX)
             if(Ax.AutoY) {
@@ -226,50 +194,90 @@ StripChart::SetLimits (double XMin, double XMax, double YMin, double YMax,
 }
 
 
-void
-StripChart::UpdateChart() {
-  update();
+CDataStream2D*
+Plot2D::NewDataSet(int Id, int PenWidth, QColor Color, int Symbol, QString Title) {
+  CDataStream2D* pDataItem = new CDataStream2D(Id, PenWidth, Color, Symbol, Title);
+  pDataItem->setMaxPoints(maxDataPoints);
+  dataSetList.append(pDataItem);
+  return pDataItem;
 }
 
 
 void
-StripChart::ClearChart() {
-  while(!dataSetList.isEmpty()) {
-    delete dataSetList.takeFirst();
+Plot2D::SetShowDataSet(int Id, bool Show) {
+  if(!dataSetList.isEmpty()) {
+    for(int pos=0; pos<dataSetList.count(); pos++) {
+      CDataStream2D* pData = dataSetList.at(pos);
+      if(pData->GetId() == Id) {
+        pData->SetShow(Show);
+        break;
+      }
+    }
   }
-  update();
 }
 
 
-bool
-StripChart::DelDataSet(int Id) {
-  bool result = false;
-  if(dataSetList.isEmpty()) return result;
-  CDataStream* pData;
-  for(int i=0; i<dataSetList.count(); i++) {
-    pData = dataSetList.at(i);
-    if(pData->GetId() == Id) {
-      dataSetList.removeAt(i);
-      result = true;
+void
+Plot2D::NewPoint(int Id, double x, double y) {
+  if(std::isnan(y)) return;
+  if(dataSetList.isEmpty())  return;
+  CDataStream2D* pData = NULL;
+  for(int pos=0; pos<dataSetList.count(); pos++) {
+    if(dataSetList.at(pos)->GetId() == Id) {
+      pData = dataSetList.at(pos);
       break;
     }
   }
-  return result;
+  if(pData) {
+    pData->AddPoint(x, y);
+  }
 }
 
 
 void
-StripChart::paintEvent(QPaintEvent *event) {
-  QPainter painter;
-  painter.begin(this);
-  //painter.setRenderHint(QPainter::Antialiasing);
-  DrawPlot(&painter, event);
-  painter.end();
+Plot2D::DrawData(QPainter* painter, QFontMetrics fontMetrics) {
+  if(dataSetList.isEmpty()) return;
+  CDataStream2D* pData;
+  for(int pos=0; pos<dataSetList.count(); pos++) {
+    pData = dataSetList.at(pos);
+    if(pData->isShown) {
+      if(pData->GetProperties().Symbol == iline) {
+        LinePlot(painter, pData);
+      } else if(pData->GetProperties().Symbol == ipoint) {
+        PointPlot(painter, pData);
+      } else {
+        ScatterPlot(painter, pData);
+      }
+      if(pData->bShowCurveTitle) ShowTitle(painter, fontMetrics, pData);
+    }
+  }
 }
 
 
 void
-StripChart::XTicLin(QPainter* painter, QFontMetrics fontMetrics) {
+Plot2D::SetShowTitle(int Id, bool show) {
+  if(dataSetList.isEmpty()) return;
+  CDataStream2D* pData;
+  for(int pos=0; pos<dataSetList.count(); pos++) {
+    pData = dataSetList.at(pos);
+    if(pData->GetId() == Id) {
+      pData->SetShowTitle(show);
+      return;
+    }
+  }
+}
+
+
+void
+Plot2D::ShowTitle(QPainter* painter, QFontMetrics fontMetrics, CDataStream2D *pData) {
+  QPen titlePen = QPen(pData->GetProperties().Color);
+  painter->setPen(titlePen);
+  painter->drawText(int(Pf.right+4), int(Pf.top+fontMetrics.height()*(pData->GetId())), pData->GetTitle());
+}
+
+
+void
+Plot2D::XTicLin(QPainter* painter, QFontMetrics fontMetrics) {
   double xmax, xmin;
   double dx, dxx, b, fmant;
   int isx, ic, iesp, jy, isig, ix, ix0, iy0;
@@ -282,8 +290,8 @@ StripChart::XTicLin(QPainter* painter, QFontMetrics fontMetrics) {
   }
   dx = xmax - xmin;
   b = log10(dx);
-  ic = NINT(b) - 2;
-  dx = (double)NINT(pow(10.0, (b-ic-1.0)));
+  ic = qRound(b) - 2;
+  dx = (double)qRound(pow(10.0, (b-ic-1.0)));
 
   if(dx < 11.0) dx = 10.0;
   else if(dx < 28.0) dx = 20.0;
@@ -335,7 +343,7 @@ StripChart::XTicLin(QPainter* painter, QFontMetrics fontMetrics) {
 
 
 void
-StripChart::YTicLin(QPainter* painter, QFontMetrics fontMetrics) {
+Plot2D::YTicLin(QPainter* painter, QFontMetrics fontMetrics) {
   double ymax, ymin;
   double dy, dyy, b, fmant;
   int isy, icc, iesp, jx, isig, iy, ix0, iy0;
@@ -348,8 +356,8 @@ StripChart::YTicLin(QPainter* painter, QFontMetrics fontMetrics) {
   }
   dy = ymax - ymin;
   b = log10(dy);
-  icc = NINT(b) - 2;
-  dy = (double)NINT(pow(10.0, (b-icc-1.0)));
+  icc = qRound(b) - 2;
+  dy = (double)qRound(pow(10.0, (b-icc-1.0)));
 
   if(dy < 11.0) dy = 10.0;
   else if(dy < 28.0) dy = 20.0;
@@ -402,7 +410,7 @@ StripChart::YTicLin(QPainter* painter, QFontMetrics fontMetrics) {
 
 
 void
-StripChart::XTicLog(QPainter* painter, QFontMetrics fontMetrics) {
+Plot2D::XTicLog(QPainter* painter, QFontMetrics fontMetrics) {
   int i, ix, ix0, iy0, jy, j;
   double dx;
   QString Label;
@@ -483,7 +491,7 @@ StripChart::XTicLog(QPainter* painter, QFontMetrics fontMetrics) {
 
 
 void
-StripChart::YTicLog(QPainter* painter, QFontMetrics fontMetrics) {
+Plot2D::YTicLog(QPainter* painter, QFontMetrics fontMetrics) {
   int i, iy, ix0, iy0, j;
   double dy;
   QString Label;
@@ -566,7 +574,7 @@ StripChart::YTicLog(QPainter* painter, QFontMetrics fontMetrics) {
 
 
 void
-StripChart::DrawFrame(QPainter* painter, QFontMetrics fontMetrics) {
+Plot2D::DrawFrame(QPainter* painter, QFontMetrics fontMetrics) {
   if(Ax.LogX) XTicLog(painter, fontMetrics); else XTicLin(painter, fontMetrics);
   if(Ax.LogY) YTicLog(painter, fontMetrics); else YTicLin(painter, fontMetrics);
 
@@ -583,29 +591,35 @@ StripChart::DrawFrame(QPainter* painter, QFontMetrics fontMetrics) {
 
 
 void
-StripChart::DrawData(QPainter* painter, QFontMetrics fontMetrics) {
-  if(dataSetList.isEmpty()) return;
-  CDataStream* pData;
-  for(int pos=0; pos<dataSetList.count(); pos++) {
-    pData = dataSetList.at(pos);
-    if(pData->isShown) {
-      if(pData->GetProperties().Symbol == iline) {
-        LinePlot(painter, pData);
-      } else if(pData->GetProperties().Symbol == ipoint) {
-        PointPlot(painter, pData);
-      } else {
-        ScatterPlot(painter, pData);
-      }
-      if(pData->bShowCurveTitle) ShowTitle(painter, fontMetrics, pData);
-    }
+Plot2D::DrawPlot(QPainter* painter, QPaintEvent *event) {
+  if(Ax.AutoX || Ax.AutoY) {
+    SetLimits (Ax.XMin, Ax.XMax, Ax.YMin, Ax.YMax, Ax.AutoX, Ax.AutoY, Ax.LogX, Ax.LogY);
+  }
+  painter->fillRect(event->rect(), QBrush(QColor(0, 0, 0)));
+  painter->setFont(QFont("Helvetica", 8, QFont::Normal));
+  QFontMetrics fontMetrics = painter->fontMetrics();
+
+  Pf.left = fontMetrics.width("-0.00000") + 2.0;
+  Pf.right = width() - fontMetrics.width("x10-999") - 5.0;
+  Pf.top = 2.0 * fontMetrics.height();
+  Pf.bottom = height() - 3.0*fontMetrics.height();
+
+  DrawFrame(painter, fontMetrics);
+  DrawData(painter, fontMetrics);
+  if(bZooming) {
+    QPen zoomPen(Qt::yellow);
+    painter->setPen(zoomPen);
+    int ix0 = zoomStart.rx() < zoomEnd.rx() ? zoomStart.rx() : zoomEnd.rx();
+    int iy0 = zoomStart.ry() < zoomEnd.ry() ? zoomStart.ry() : zoomEnd.ry();
+    painter->drawRect(ix0, iy0, abs(zoomStart.rx()-zoomEnd.rx()), abs(zoomStart.ry()-zoomEnd.ry()));
   }
 }
 
 
 void
-StripChart::LinePlot(QPainter* painter, CDataStream* pData) {
+Plot2D::LinePlot(QPainter* painter, CDataStream2D* pData) {
   if(!pData->isShown) return;
-  int iMax = int(pData->m_pointArray.count());
+  int iMax = int(pData->m_pointArrayX.count());
   if(iMax == 0) return;
   QPen dataPen = QPen(pData->GetProperties().Color);
   dataPen.setWidth(pData->GetProperties().PenWidth);
@@ -621,29 +635,33 @@ StripChart::LinePlot(QPainter* painter, CDataStream* pData) {
   else ylmin = FLT_MIN;
 
   if(Ax.LogX) {
-    ix0 = int(((log10(1.0) - xlmin)*xfact) + Pf.left);
+    if(pData->m_pointArrayX[0] > 0.0)
+      ix0 = int((Pf.left + (log10(pData->m_pointArrayX[0]) - xlmin)*xfact));
+    else
+      ix0 =-INT_MAX; // Solo per escludere il punto
   } else
-    ix0 = int(((1.0 - Ax.XMin)*xfact) + Pf.left);
+    ix0 = int((Pf.left + (pData->m_pointArrayX[0] - Ax.XMin)*xfact));
+
   if(Ax.LogY) {
-    if(pData->m_pointArray[0] > 0.0)
-      iy0 = int((Pf.bottom + (log10(pData->m_pointArray[0]) - ylmin)*yfact));
+    if(pData->m_pointArrayY[0] > 0.0)
+      iy0 = int((Pf.bottom + (log10(pData->m_pointArrayY[0]) - ylmin)*yfact));
     else
       iy0 =-INT_MAX; // Solo per escludere il punto
   } else
-    iy0 = int((Pf.bottom + (pData->m_pointArray[0] - Ax.YMin)*yfact));
+    iy0 = int((Pf.bottom + (pData->m_pointArrayY[0] - Ax.YMin)*yfact));
 
   for(int i=1; i<iMax; i++) {
     if(Ax.LogX)
-      ix1 = int(((log10(i+1) - xlmin)*xfact) + Pf.left);
+      ix1 = int(((log10(pData->m_pointArrayX[i]) - xlmin)*xfact) + Pf.left);
     else
-      ix1 = int(((i+1 - Ax.XMin)*xfact) + Pf.left);
+      ix1 = int(((pData->m_pointArrayX[i] - Ax.XMin)*xfact) + Pf.left);
     if(Ax.LogY)
-      if(pData->m_pointArray[i] > 0.0)
-        iy1 = int((Pf.bottom + (log10(pData->m_pointArray[i]) - ylmin)*yfact));
+      if(pData->m_pointArrayY[i] > 0.0)
+        iy1 = int((Pf.bottom + (log10(pData->m_pointArrayY[i]) - ylmin)*yfact));
       else
         iy1 =-INT_MAX; // Solo per escludere il punto
     else
-      iy1 = int((Pf.bottom + (pData->m_pointArray[i] - Ax.YMin)*yfact));
+      iy1 = int((Pf.bottom + (pData->m_pointArrayY[i] - Ax.YMin)*yfact));
 
     if(!(ix1<Pf.left || iy1<Pf.top || iy1>Pf.bottom)) {
       painter->drawLine(ix0, iy0, ix1, iy1);
@@ -659,10 +677,10 @@ StripChart::LinePlot(QPainter* painter, CDataStream* pData) {
 
 
 void
-StripChart::DrawLastPoint(QPainter* painter, CDataStream* pData) {
+Plot2D::DrawLastPoint(QPainter* painter, CDataStream2D* pData) {
   if(!pData->isShown) return;
   int ix, iy, i;
-  i = int(pData->m_pointArray.count()-1);
+  i = int(pData->m_pointArrayX.count()-1);
 
   double xlmin, ylmin;
   if(Ax.XMin > 0.0)
@@ -674,16 +692,17 @@ StripChart::DrawLastPoint(QPainter* painter, CDataStream* pData) {
   else ylmin = FLT_MIN;
 
   if(Ax.LogX) {
-    ix = int(((log10(pData->m_pointArray.count()) - xlmin)*xfact) + Pf.left);
+    if(pData->m_pointArrayX[i] > 0.0)
+    ix = int(((log10(pData->m_pointArrayX[i]) - xlmin)*xfact) + Pf.left);
   } else
-    ix = int(((pData->m_pointArray.count() - Ax.XMin)*xfact) + Pf.left);
+    ix = int(((pData->m_pointArrayX[i] - Ax.XMin)*xfact) + Pf.left);
   if(Ax.LogY) {
-    if(pData->m_pointArray[i] > 0.0)
-      iy = int((Pf.bottom + (log10(pData->m_pointArray[i]) - ylmin)*yfact));
+    if(pData->m_pointArrayY[i] > 0.0)
+      iy = int((Pf.bottom + (log10(pData->m_pointArrayY[i]) - ylmin)*yfact));
     else
       return;
   } else
-    iy = int((Pf.bottom + (pData->m_pointArray[i] - Ax.YMin)*yfact));
+    iy = int((Pf.bottom + (pData->m_pointArrayY[i] - Ax.YMin)*yfact));
     if(ix<=Pf.right && ix>=Pf.left && iy>=Pf.top && iy<=Pf.bottom)
       painter->drawPoint(ix, iy);
   return;
@@ -691,8 +710,8 @@ StripChart::DrawLastPoint(QPainter* painter, CDataStream* pData) {
 
 
 void
-StripChart::PointPlot(QPainter* painter, CDataStream* pData) {
-  int iMax = int(pData->m_pointArray.count());
+Plot2D::PointPlot(QPainter* painter, CDataStream2D* pData) {
+  int iMax = int(pData->m_pointArrayX.count());
   if(iMax == 0) return;
   QPen dataPen = QPen(pData->GetProperties().Color);
   dataPen.setWidth(pData->GetProperties().PenWidth);
@@ -708,28 +727,34 @@ StripChart::PointPlot(QPainter* painter, CDataStream* pData) {
   else ylmin = FLT_MIN;
 
   for (int i=0; i < iMax; i++) {
-    if(!(pData->m_pointArray[i] < Ax.YMin || pData->m_pointArray[i] > Ax.YMax )) {
+    if(!(pData->m_pointArrayX[i] < Ax.XMin ||
+         pData->m_pointArrayX[i] > Ax.XMax ||
+         pData->m_pointArrayY[i] < Ax.YMin ||
+         pData->m_pointArrayY[i] > Ax.YMax ))
+    {
       if(Ax.LogX) {
-        ix = int(((log10(i+1) - xlmin)*xfact) + Pf.left);
+        if(pData->m_pointArrayX[i] > 0.0)
+          ix = int(((pData->m_pointArrayX[i] - xlmin)*xfact) + Pf.left);
+        else
+          ix = -INT_MAX;
       } else
-        ix = int(((i+1 - Ax.XMin)*xfact) + Pf.left);
+        ix = int(((pData->m_pointArrayX[i] - Ax.XMin)*xfact) + Pf.left);
       if(Ax.LogY) {
-        if(pData->m_pointArray[i] > 0.0)
-          iy = int((Pf.bottom + (log10(pData->m_pointArray[i]) - ylmin)*yfact));
+        if(pData->m_pointArrayY[i] > 0.0)
+          iy = int((Pf.bottom + (log10(pData->m_pointArrayY[i]) - ylmin)*yfact));
         else
           iy =-INT_MAX; // Solo per escludere il punto
       } else
-        iy = int((Pf.bottom + (pData->m_pointArray[i] - Ax.YMin)*yfact));
+        iy = int((Pf.bottom + (pData->m_pointArrayY[i] - Ax.YMin)*yfact));
       painter->drawPoint(ix, iy);
     }
   }//for (int i=0; i <= iMax; i++)
-
 }
 
 
 void
-StripChart::ScatterPlot(QPainter* painter, CDataStream* pData) {
-  int iMax = int(pData->m_pointArray.count());
+Plot2D::ScatterPlot(QPainter* painter, CDataStream2D* pData) {
+  int iMax = int(pData->m_pointArrayX.count());
   if(iMax == 0) return;
   QPen dataPen = QPen(pData->GetProperties().Color);
   dataPen.setWidth(pData->GetProperties().PenWidth);
@@ -749,19 +774,25 @@ StripChart::ScatterPlot(QPainter* painter, CDataStream* pData) {
   QSize Size(SYMBOLS_DIM, SYMBOLS_DIM);
 
   for (int i=0; i < iMax; i++) {
-    if(pData->m_pointArray[i] >= Ax.YMin &&
-       pData->m_pointArray[i] <= Ax.YMax) {
+    if(pData->m_pointArrayX[i] >= Ax.XMin &&
+       pData->m_pointArrayX[i] <= Ax.XMax &&
+       pData->m_pointArrayY[i] >= Ax.YMin &&
+       pData->m_pointArrayY[i] <= Ax.YMax)
+    {
       if(Ax.LogX)
-        ix = int(((log10(i+1) - xlmin)*xfact) + Pf.left);
+        if(pData->m_pointArrayX[i] > 0.0)
+          ix = int(((log10(pData->m_pointArrayX[i]) - xlmin)*xfact) + Pf.left);
+        else
+          ix = -INT_MAX;
       else//Asse X Lineare
-        ix= int(((i+1 - Ax.XMin)*xfact) + Pf.left);
+        ix= int(((pData->m_pointArrayX[i] - Ax.XMin)*xfact) + Pf.left);
       if(Ax.LogY) {
-        if(pData->m_pointArray[i] > 0.0)
-          iy = int(((log10(pData->m_pointArray[i]) - ylmin)*yfact) + Pf.bottom);
+        if(pData->m_pointArrayY[i] > 0.0)
+          iy = int(((log10(pData->m_pointArrayY[i]) - ylmin)*yfact) + Pf.bottom);
         else
           iy =-INT_MAX; // Solo per escludere il punto
       } else
-        iy = int(((pData->m_pointArray[i] - Ax.YMin)*yfact) + Pf.bottom);
+        iy = int(((pData->m_pointArrayY[i] - Ax.YMin)*yfact) + Pf.bottom);
 
       if(pData->GetProperties().Symbol == iplus) {
         painter->drawLine(ix, iy-Size.height()/2, ix, iy+Size.height()/2+1);
@@ -794,78 +825,7 @@ StripChart::ScatterPlot(QPainter* painter, CDataStream* pData) {
 
 
 void
-StripChart::ShowTitle(QPainter* painter, QFontMetrics fontMetrics, CDataStream *pData) {
-  QPen titlePen = QPen(pData->GetProperties().Color);
-  painter->setPen(titlePen);
-  painter->drawText(int(Pf.right+4), int(Pf.top+fontMetrics.height()*(pData->GetId())), pData->GetTitle());
-}
-
-
-void
-StripChart::SetShowDataSet(int Id, bool Show) {
-  if(!dataSetList.isEmpty()) {
-    for(int pos=0; pos<dataSetList.count(); pos++) {
-      CDataStream* pData = dataSetList.at(pos);
-      if(pData->GetId() == Id) {
-        pData->SetShow(Show);
-        break;
-      }
-    }
-  }
-}
-
-
-void
-StripChart::SetShowTitle(int Id, bool show) {
-  if(dataSetList.isEmpty()) return;
-  CDataStream* pData;
-  for(int pos=0; pos<dataSetList.count(); pos++) {
-    pData = dataSetList.at(pos);
-    if(pData->GetId() == Id) {
-      pData->SetShowTitle(show);
-      return;
-    }
-  }
-}
-
-
-CDataStream*
-StripChart::NewDataSet(int Id, int PenWidth, QColor Color, int Symbol, QString Title) {
-  CDataStream* pDataItem = new CDataStream(Id, PenWidth, Color, Symbol, Title);
-  pDataItem->setMaxPoints(maxDataPoints);
-  dataSetList.append(pDataItem);
-  return pDataItem;
-}
-
-
-void
-StripChart::DrawPlot(QPainter* painter, QPaintEvent *event) {
-  if(Ax.AutoX || Ax.AutoY) {
-    SetLimits (Ax.XMin, Ax.XMax, Ax.YMin, Ax.YMax, Ax.AutoX, Ax.AutoY, Ax.LogX, Ax.LogY);
-  }
-  painter->fillRect(event->rect(), QBrush(QColor(0, 0, 0)));
-  painter->setFont(QFont("Helvetica", 8, QFont::Normal));
-  QFontMetrics fontMetrics = painter->fontMetrics();
-
-  Pf.left = fontMetrics.width("-0.00000") + 2.0;
-  Pf.right = width() - fontMetrics.width("x10-999") - 5.0;
-  Pf.top = 2.0 * fontMetrics.height();
-  Pf.bottom = height() - 3.0*fontMetrics.height();
-
-  DrawFrame(painter, fontMetrics);
-  DrawData(painter, fontMetrics);
-  if(bZooming) {
-    QPen zoomPen(Qt::yellow);
-    painter->setPen(zoomPen);
-    int ix0 = zoomStart.rx() < zoomEnd.rx() ? zoomStart.rx() : zoomEnd.rx();
-    int iy0 = zoomStart.ry() < zoomEnd.ry() ? zoomStart.ry() : zoomEnd.ry();
-    painter->drawRect(ix0, iy0, abs(zoomStart.rx()-zoomEnd.rx()), abs(zoomStart.ry()-zoomEnd.ry()));
-  }
-}
-
-
-void
-StripChart::mousePressEvent(QMouseEvent *event) {
+Plot2D::mousePressEvent(QMouseEvent *event) {
   if (event->buttons() & Qt::RightButton) {
 
 
@@ -884,7 +844,7 @@ StripChart::mousePressEvent(QMouseEvent *event) {
 
 
 void
-StripChart::mouseReleaseEvent(QMouseEvent *event) {
+Plot2D::mouseReleaseEvent(QMouseEvent *event) {
   if (event->button() & Qt::RightButton) {
 
     event->accept();
@@ -922,13 +882,13 @@ StripChart::mouseReleaseEvent(QMouseEvent *event) {
     }
     event->accept();
   }
-  UpdateChart();
+  UpdatePlot();
   setCursor(Qt::CrossCursor);
 }
 
 
 void
-StripChart::mouseMoveEvent(QMouseEvent *event) {
+Plot2D::mouseMoveEvent(QMouseEvent *event) {
   if (event->buttons() & Qt::LeftButton) {
     if(!bZooming) {
       double xmin, xmax, ymin, ymax;
@@ -952,10 +912,10 @@ StripChart::mouseMoveEvent(QMouseEvent *event) {
       }
       lastPos = event->pos();
       SetLimits (xmin, xmax, ymin, ymax, Ax.AutoX, Ax.AutoY, Ax.LogX, Ax.LogY);
-      UpdateChart();
+      UpdatePlot();
     } else {// is Zooming
       zoomEnd = event->pos();
-      UpdateChart();
+      UpdatePlot();
     }
   } else {
     double xval, yval;
@@ -979,7 +939,7 @@ StripChart::mouseMoveEvent(QMouseEvent *event) {
 
 
 void
-StripChart::mouseDoubleClickEvent(QMouseEvent *event) {
+Plot2D::mouseDoubleClickEvent(QMouseEvent *event) {
   Q_UNUSED(event);
   AxesDialog axesDialog(this);
   axesDialog.initDialog(Ax);
@@ -987,7 +947,24 @@ StripChart::mouseDoubleClickEvent(QMouseEvent *event) {
   if(iRes==QDialog::Accepted) {
     Ax = axesDialog.newLimits;
     SetLimits (Ax.XMin, Ax.XMax, Ax.YMin, Ax.YMax, Ax.AutoX, Ax.AutoY, Ax.LogX, Ax.LogY);
-    UpdateChart();
+    UpdatePlot();
   }
 }
+
+
+void
+Plot2D::UpdatePlot() {
+  update();
+}
+
+
+void
+Plot2D::ClearPlot() {
+  while(!dataSetList.isEmpty()) {
+    delete dataSetList.takeFirst();
+  }
+  update();
+}
+
+
 

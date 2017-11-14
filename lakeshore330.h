@@ -40,11 +40,9 @@ signals:
 public slots:
 
 private:
-  int GPIBNumber;
-  int LS330Address;
-  int LS330;
-  char SpollByte;
-  bool bStop;
+  int gpibNumber;
+  int ls330Address;
+  int ls330;
   int iMask, iComplianceEvents;
   QString sCommand, sResponse;
   // Status Byte Register

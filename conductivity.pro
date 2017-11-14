@@ -34,6 +34,8 @@ INCLUDEPATH += "C:/Program Files (x86)/National Instruments/NI-DAQ/DAQmx ANSI C 
 INCLUDEPATH += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/include"
 
 SOURCES += main.cpp
+SOURCES += cdatastream2d.cpp
+SOURCES += plot2d.cpp
 SOURCES += mainwindow.cpp
 SOURCES += utility.cpp
 SOURCES += keithley236.cpp
@@ -48,6 +50,8 @@ SOURCES += configureRvsTdialog.cpp
 SOURCES += configureIvsVdialog.cpp
 
 HEADERS += mainwindow.h
+HEADERS += cdatastream2d.h
+HEADERS += plot2d.h
 HEADERS += utility.h
 HEADERS += keithley236.h
 HEADERS += axesdialog.h

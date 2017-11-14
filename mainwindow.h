@@ -35,7 +35,7 @@ class MainWindow;
 QT_FORWARD_DECLARE_CLASS(QFile)
 QT_FORWARD_DECLARE_CLASS(Keithley236)
 QT_FORWARD_DECLARE_CLASS(LakeShore330)
-QT_FORWARD_DECLARE_CLASS(StripChart)
+QT_FORWARD_DECLARE_CLASS(Plot2D)
 
 class MainWindow : public QMainWindow
 {
@@ -57,6 +57,7 @@ private slots:
   void on_startIvsVButton_clicked();
   void onTimeToCheckReachedT();
   void onTimerStabilizeT();
+  void onTimeToReadT();
 
 private:
   Ui::MainWindow *ui;
@@ -67,8 +68,10 @@ private:
   LakeShore330* pLakeShore;
   QDateTime     currentTime;
   QDateTime     waitingTStartTime;
+  QDateTime     temperatureReadingTime;
   QTimer        waitingTStartTimer;
   QTimer        stabilizingTimer;
+  QTimer        readingTTimer;
 
   ConfigureRvsTDialog configureRvsTDialog;
   ConfigureIvsVDialog configureIvsVDialog;
@@ -81,8 +84,8 @@ private:
   QString      sLampLine;
   quint8       currentLampStatus;
   bool         bStartDaq;
-  StripChart  *pPlotMeasurements;
-  StripChart  *pPlotTemperature;
+  Plot2D      *pPlotMeasurements;
+  Plot2D      *pPlotTemperature;
   QString      sMeasurementPlotLabel;
   QString      sTemperaturePlotLabel;
   int          maxChartPoints;

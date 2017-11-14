@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utility.h"
 #include "keithley236.h"
 #include "lakeshore330.h"
-#include "stripchart.h"
+#include "plot2d.h"
 
 #include <QMessageBox>
 #include <QDebug>
@@ -70,7 +70,7 @@ MainWindow::MainWindow(QWidget *parent)
   , pPlotMeasurements(Q_NULLPTR)
   , pPlotTemperature(Q_NULLPTR)
   , maxChartPoints(3000)
-  , maxReachingTTime(15)// In seconds
+  , maxReachingTTime(120)// In seconds
 {
   ui->setupUi(this);
 
@@ -86,6 +86,9 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow() {
   if(pKeithley != Q_NULLPTR) delete pKeithley;
   pKeithley = Q_NULLPTR;
+  if(pLakeShore != Q_NULLPTR) delete pLakeShore;
+  pLakeShore = Q_NULLPTR;
+
   if(pPlotMeasurements) delete pPlotMeasurements;
   pPlotMeasurements = Q_NULLPTR;
   if(pPlotTemperature) delete pPlotTemperature;
@@ -125,22 +128,12 @@ MainWindow::CheckInstruments() {
   Addr4882_t addrlist;
   addrlist = NOADDR;
   DevClearList(gpibBoardID, &addrlist);
-
-  if(ThreadIbsta() & ERR) {
-    qDebug() << "In DevClearList: ";
-    qDebug() << "Errore IEEE 488\nControllare che gli Strumenti Siano Connessi e Accesi !\n";
-    QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+  if(isGpibError("MainWindow::CheckInstruments() - DevClearList() failed. Are the Instruments Connected and Switced On ?"))
     return false;
-  }
 
   FindLstn(gpibBoardID, padlist, resultlist, 30);
-  if(ThreadIbsta() & ERR) {
-    qDebug() << "Errore IEEE 488\nControllare che gli Strumenti Siano Connessi e Accesi !\n";
-    QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+  if(isGpibError("MainWindow::CheckInstruments() - FindLstn() failed. Are the Instruments Connected and Switced On ?"))
     return false;
-  }
   int nDevices = ThreadIbcntl();
 
   // Identify the instruments connected to the GPIB Bus
@@ -148,19 +141,11 @@ MainWindow::CheckInstruments() {
   QString sCommand = "*IDN?\r\n";
   for(int i=0; i<nDevices; i++) {
     Send(gpibBoardID, resultlist[i], sCommand.toUtf8().constData(), sCommand.length(), DABend);
-    if(ThreadIbsta() & ERR) {
-      qDebug() << "In Send: ";
-      QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-      qDebug() << sError;
+    if(isGpibError("MainWindow::CheckInstruments() - *IDN? Failed"))
       return false;
-    }
     Receive(gpibBoardID, resultlist[i], readBuf, 256, STOPend);
-    if(ThreadIbsta() & ERR) {
-      qDebug() << "In Receive: ";
-      QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-      qDebug() << sError;
+    if(isGpibError("MainWindow::CheckInstruments() - Receive() Failed"))
       return false;
-    }
     QString sInstrumentID = QString(readBuf);
     // La source Measure Unit K236 non risponde al comando di identificazione !!!!
     if(sInstrumentID.contains("NSDCI", Qt::CaseInsensitive)) {
@@ -327,7 +312,7 @@ MainWindow::on_startRvsTButton_clicked() {
   // Plot of Condicibility vs Temperature
   if(pPlotMeasurements) delete pPlotMeasurements;
   sMeasurementPlotLabel = QString("R^-1 [OHM^-1] vs T [K]");
-  pPlotMeasurements = new StripChart(this, sMeasurementPlotLabel);
+  pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
   pPlotMeasurements->setMaxPoints(maxChartPoints);
   pPlotMeasurements->NewDataSet(1,//Id
                                 3, //Pen Width
@@ -337,12 +322,12 @@ MainWindow::on_startRvsTButton_clicked() {
                                 );
   pPlotMeasurements->SetShowDataSet(1, true);
   pPlotMeasurements->SetShowTitle(1, true);
-  pPlotMeasurements->UpdateChart();
+  pPlotMeasurements->UpdatePlot();
   pPlotMeasurements->show();
   // Plot of Temperature vs Time
   if(pPlotTemperature) delete pPlotTemperature;
   sTemperaturePlotLabel = QString("T [K] vs t [s]");
-  pPlotTemperature = new StripChart(this, sTemperaturePlotLabel);
+  pPlotTemperature = new Plot2D(this, sTemperaturePlotLabel);
   pPlotTemperature->setMaxPoints(maxChartPoints);
   pPlotTemperature->NewDataSet(1,//Id
                                3, //Pen Width
@@ -352,6 +337,8 @@ MainWindow::on_startRvsTButton_clicked() {
                                );
   pPlotTemperature->SetShowDataSet(1, true);
   pPlotTemperature->SetShowTitle(1, true);
+  pPlotTemperature->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
+  pPlotTemperature->UpdatePlot();
   pPlotTemperature->show();
   // Configure Source-Measure Unit & Thermostat
 #ifndef SIMULATION
@@ -369,6 +356,9 @@ MainWindow::on_startRvsTButton_clicked() {
   connect(&waitingTStartTimer, SIGNAL(timeout()),
           this, SLOT(onTimeToCheckReachedT()));
   waitingTStartTimer.start(5000);
+  connect(&readingTTimer, SIGNAL(timeout()),
+          this, SLOT(onTimeToReadT()));
+  readingTTimer.start(5000);
   QApplication::restoreOverrideCursor();
 }
 
@@ -376,7 +366,7 @@ MainWindow::on_startRvsTButton_clicked() {
 void
 MainWindow::onTimeToCheckReachedT() {
   double T = pLakeShore->getTemperature();
-  qDebug() << "Current Temperature: " << T;
+//  qDebug() << "Current Temperature: " << T;
   if(fabs(T-configureRvsTDialog.dTempStart) <
      1.0)//configureRvsTDialog->dTolerance)
   {
@@ -385,7 +375,7 @@ MainWindow::onTimeToCheckReachedT() {
     connect(&stabilizingTimer, SIGNAL(timeout()),
             this, SLOT(onTimerStabilizeT()));
     stabilizingTimer.start(5000);
-    qDebug() << QString("Starting T Reached: Thermal Stabilization...");
+//    qDebug() << QString("Starting T Reached: Thermal Stabilization...");
     ui->statusBar->showMessage(QString("Starting T Reached: Thermal Stabilization..."));
   }
   else {
@@ -413,6 +403,18 @@ MainWindow::onTimerStabilizeT() {
 
 
 void
+MainWindow::onTimeToReadT() {
+  double currentTemperature = pLakeShore->getTemperature();
+  currentTime = QDateTime::currentDateTime();
+//  qDebug()<< "T = " << currentTemperature;
+  pPlotTemperature->NewPoint(1,
+                             double(waitingTStartTime.secsTo(currentTime)),
+                             currentTemperature);
+  pPlotTemperature->UpdatePlot();
+}
+
+
+void
 MainWindow::on_startIvsVButton_clicked() {
   if(ui->startIvsVButton->text().contains("Stop")) {
     ui->startIvsVButton->setText("Start I vs V");
@@ -429,7 +431,7 @@ MainWindow::on_startIvsVButton_clicked() {
   if(pPlotMeasurements) delete pPlotMeasurements;
   sMeasurementPlotLabel = QString("I [A] vs V [V]");
 
-  pPlotMeasurements = new StripChart(this, sMeasurementPlotLabel);
+  pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
   pPlotMeasurements->setMaxPoints(maxChartPoints);
   pPlotMeasurements->NewDataSet(1,//Id
                                 3, //Pen Width
@@ -439,12 +441,12 @@ MainWindow::on_startIvsVButton_clicked() {
                                 );
   pPlotMeasurements->SetShowDataSet(1, true);
   pPlotMeasurements->SetShowTitle(1, true);
-  pPlotMeasurements->UpdateChart();
+  pPlotMeasurements->UpdatePlot();
   pPlotMeasurements->show();
   // Plot of Temperature vs Time
   if(pPlotTemperature) delete pPlotTemperature;
   sTemperaturePlotLabel = QString("T [K] vs t [s]");
-  pPlotTemperature = new StripChart(this, sTemperaturePlotLabel);
+  pPlotTemperature = new Plot2D(this, sTemperaturePlotLabel);
   pPlotTemperature->setMaxPoints(maxChartPoints);
   pPlotTemperature->NewDataSet(1,//Id
                                3, //Pen Width
@@ -454,6 +456,7 @@ MainWindow::on_startIvsVButton_clicked() {
                                );
   pPlotTemperature->SetShowDataSet(1, true);
   pPlotTemperature->SetShowTitle(1, true);
+  pPlotTemperature->UpdatePlot();
   pPlotTemperature->show();
 
   ui->statusBar->clearMessage();
