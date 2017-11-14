@@ -72,22 +72,22 @@ LakeShore330::init() {
   qDebug() << "LakeShore330::init()";
   LS330 = ibdev(GPIBNumber, LS330Address, 0, T100ms, 1, 0x1c0A);
   if(LS330 < 0) {
-    qDebug() << "LakeShore330::init() ibdev() Failed";
+    qCritical() << "LakeShore330::init() ibdev() Failed";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+    qCritical() << sError;
     return GPIB_DEVICE_NOT_PRESENT;
   }
   short listen;
   ibln(LS330, LS330Address, NO_SAD, &listen);
   if(ThreadIbsta() & ERR) {
-    qDebug() << "LakeShore330::init() LakeShore 330 Not Respondig";
+    qCritical() << "LakeShore330::init() LakeShore 330 Not Respondig";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+    qCritical() << sError;
     return GPIB_DEVICE_NOT_PRESENT;
   }
   if(listen == 0) {
     ibonl(LS330, 0);
-    qDebug() << "LakeShore330::init() Nolistener at Addr";
+    qCritical() << "LakeShore330::init() Nolistener at Addr";
     return GPIB_DEVICE_NOT_PRESENT;
   }
   // set up the asynchronous event notification routine on RQS
@@ -96,60 +96,60 @@ LakeShore330::init() {
            (GpibNotifyCallback_t) lakeshore330::MyCallback,
            this);
   if(ThreadIbsta() & ERR) {
-    qDebug() << "LakeShore330::init() ibnotify call failed.";
+    qCritical() << "LakeShore330::init() ibnotify call failed.";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+    qCritical() << sError;
   }
   ibclr(LS330);
   QThread::sleep(1);
   ibrsp(LS330, &SpollByte);
   if(ThreadIbsta() & ERR)  {
-    qDebug() << "LakeShore330::init() ibrsp failed";
+    qCritical() << "LakeShore330::init() ibrsp failed";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+    qCritical() << sError;
     return -1;
   }
   gpibWrite(LS330, "*sre 0\n");// Set Service Request Enable
   if(ThreadIbsta() & ERR) {
-    qDebug() << "LakeShore330::init(): Failed";
+    qCritical() << "LakeShore330::init(): *sre Failed";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+    qCritical() << sError;
     return -1;
   }
 
   gpibWrite(LS330, "RANG 0\r\n");// Sets heater status: 0 = off
   if(ThreadIbsta() & ERR) {
-    qDebug() << "LakeShore330::init(): Failed";
+    qCritical() << "LakeShore330::init(): RANG 0 Failed";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+    qCritical() << sError;
     return -1;
   }
   gpibWrite(LS330, "CUNI K\r\n");// Set Units (Kelvin) for the Control Channel
   if(ThreadIbsta() & ERR) {
-    qDebug() << "LakeShore330::init(): Failed";
+    qCritical() << "LakeShore330::init(): CUNI Failed";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+    qCritical() << sError;
     return -1;
   }
   gpibWrite(LS330, "SUNI K\r\n");// Set Units (Kelvin) for the Sample Channel.
   if(ThreadIbsta() & ERR) {
-    qDebug() << "LakeShore330::init(): Failed";
+    qCritical() << "LakeShore330::init(): SUNI Failed";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+    qCritical() << sError;
     return -1;
   }
   gpibWrite(LS330, "RAMP 0\r\n");// Disables the ramping function
   if(ThreadIbsta() & ERR) {
-    qDebug() << "LakeShore330::init(): Failed";
+    qCritical() << "LakeShore330::init(): RAMP 0 Failed";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+    qCritical() << sError;
     return -1;
   }
   gpibWrite(LS330, "TUNE 4\r\n");// Sets Autotuning Status to "Zone"
   if(ThreadIbsta() & ERR) {
-    qDebug() << "LakeShore330::init(): Failed";
+    qCritical() << "LakeShore330::init(): TUNE 4 Failed";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+    qCritical() << sError;
     return -1;
   }
   return 0;
@@ -167,27 +167,58 @@ LakeShore330::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned lon
   quint8 spollByte;
   ibrsp(LS330, (char *)&spollByte);
   if(ThreadIbsta() & ERR) {
-    qDebug() << "LakeShore330::onGpibCallback(): ibrsp() Failed";
+    qCritical() << "LakeShore330::onGpibCallback(): ibrsp() Failed";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+    qCritical() << sError;
     return;
   }
   qDebug() << "spollByte=" << spollByte;
   if(spollByte & ESB) {
     qDebug() << "LakeShore330::onGpibCallback(): Standard Event Status";
-    // *ESR? Query Std. Event Status Register
+    gpibWrite(LS330, "*ESR?");// Query Std. Event Status Register
+    if(ThreadIbsta() & ERR) {
+      qCritical() << "LakeShore330::onGpibCallback(): Query of Std. Event Status Register Failed";
+      QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
+      qCritical() << sError;
+      return;
+    }
+    quint8 esr = quint8(gpibRead(LS330).toInt());
+    if(ThreadIbsta() & ERR) {
+      qCritical() << "LakeShore330::onGpibCallback(): Read of Std. Event Status Register Failed";
+      QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
+      qCritical() << sError;
+      return;
+    }
+    if(esr & PON) {
+
+    }
+    if(esr & CME) {
+
+    }
+    if(esr & EXE) {
+
+    }
+    if(esr &DDE) {
+
+    }
+    if(esr & QYE) {
+
+    }
+    if(esr & OPC) {
+
+    }
   }
   if(spollByte & OVI) {
-    qDebug() << "LakeShore330::onGpibCallback(): Overload Indicator";
+    qCritical() << "LakeShore330::onGpibCallback(): Overload Indicator";
   }
   if(spollByte & CLE) {
-    qDebug() << "LakeShore330::onGpibCallback(): Control Limit Error";
+    qCritical() << "LakeShore330::onGpibCallback(): Control Limit Error";
   }
   if(spollByte & CDR) {
-    qDebug() << "LakeShore330::onGpibCallback(): Control Data Ready";
+    qCritical() << "LakeShore330::onGpibCallback(): Control Data Ready";
   }
   if(spollByte & SDR) {
-    qDebug() << "LakeShore330::onGpibCallback(): Sample Data Ready";
+    qCritical() << "LakeShore330::onGpibCallback(): Sample Data Ready";
   }
 }
 
@@ -197,16 +228,16 @@ LakeShore330::getTemperature() {
   qDebug() << "LakeShore330::getTemperature()";
   gpibWrite(LS330, "SDAT?\r\n");// Query the Sample Sensor Data.
   if(ThreadIbsta() & ERR) {
-    qDebug() << "LakeShore330::getTemperature(): SDAT? Failed";
+    qCritical() << "LakeShore330::getTemperature(): SDAT? Failed";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+    qCritical() << sError;
     return 0.0;
   }
   sResponse = gpibRead(LS330);
   if(ThreadIbsta() & ERR) {
-    qDebug() << "LakeShore330::getTemperature(): ibrd() Failed";
+    qCritical() << "LakeShore330::getTemperature(): ibrd() Failed";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+    qCritical() << sError;
     return 0.0;
   }
   return sResponse.toDouble();
@@ -220,9 +251,9 @@ LakeShore330::setTemperature(double Temperature) {
   sCommand = QString("SETP %1\r\n").arg(Temperature, 0, 'f', 2);
   gpibWrite(LS330, sCommand);// Sets the Setpoint
   if(ThreadIbsta() & ERR) {
-    qDebug() << "setTemperature(LakeShore): SETP Failed";
+    qCritical() << "setTemperature(LakeShore): SETP Failed";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+    qCritical() << sError;
     return false;
   }
   return true;
@@ -237,9 +268,9 @@ LakeShore330::switchPowerOn() {
   // Sets heater status: 1 = low, 2 = medium, 3 = high.
   gpibWrite(LS330, "RANG 1\r\n");
   if(ThreadIbsta() & ERR) {
-    qDebug() << "LakeShore330::init(): Failed";
+    qCritical() << "LakeShore330::init(): Failed";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+    qCritical() << sError;
     return false;
   }
   return true;
@@ -253,9 +284,9 @@ LakeShore330::switchPowerOff() {
   // Sets heater status: 0 = off.
   gpibWrite(LS330, "RANG 0\r\n");
   if(ThreadIbsta() & ERR) {
-    qDebug() << "LakeShore330::switchPowerOff(): Failed";
+    qCritical() << "LakeShore330::switchPowerOff(): Failed";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+    qCritical() << sError;
     return false;
   }
   return true;
@@ -264,6 +295,6 @@ LakeShore330::switchPowerOff() {
 
 bool
 LakeShore330::startRamp(double rate) {
-  qDebug() << QString("Fake LakeShore330::switchPowerOff(%1)").arg(rate);
+  qDebug() << QString("Fake LakeShore330::startRamp(%1)").arg(rate);
   return true;
 }
