@@ -101,7 +101,7 @@ ConfigureRvsTDialog::ConfigureRvsTDialog(QWidget *parent)
 
 
 ConfigureRvsTDialog::~ConfigureRvsTDialog() {
-  qDebug() << "ConfigureRvsTDialog::~ConfigureRvsTDialog()";
+//  qDebug() << "ConfigureRvsTDialog::~ConfigureRvsTDialog()";
   delete ui;
 }
 
@@ -116,7 +116,7 @@ ConfigureRvsTDialog::closeEvent(QCloseEvent *event) {
 void
 ConfigureRvsTDialog::restoreSettings() {
   QSettings settings;
-  qDebug() << "ConfigureRvsTDialog::restoreSettings()";
+//  qDebug() << "ConfigureRvsTDialog::restoreSettings()";
   restoreGeometry(settings.value("ConfigureRvsTDialogGeometry").toByteArray());
 
   bSourceI         = settings.value("ConfigureRvsTSourceI", true).toBool();
@@ -135,7 +135,7 @@ ConfigureRvsTDialog::restoreSettings() {
 void
 ConfigureRvsTDialog::saveSettings() {
   QSettings settings;
-  qDebug() << "ConfigureRvsTDialog::saveSettings()";
+//  qDebug() << "ConfigureRvsTDialog::saveSettings()";
   settings.setValue("ConfigureRvsTSourceI", bSourceI);
   settings.setValue("ConfigureRvsTSourceValue", dSourceValue);
   settings.setValue("ConfigureRvsTTempertureStart", dTempStart);

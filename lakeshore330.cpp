@@ -95,7 +95,7 @@ LakeShore330::init() {
     return -1;
   ibclr(ls330);
   QThread::sleep(1);
-  gpibWrite(ls330, "*sre 0\n");// Set Service Request Enable
+  gpibWrite(ls330, "*sre 0\r\n");// Set Service Request Enable
     if(isGpibError("LakeShore330::init(): *sre Failed"))
       return -1;
   gpibWrite(ls330, "RANG 0\r\n");// Sets heater status: 0 = off
@@ -132,7 +132,7 @@ LakeShore330::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned lon
 //  qDebug() << "spollByte=" << spollByte;
   if(spollByte & ESB) {
 //    qDebug() << "LakeShore330::onGpibCallback(): Standard Event Status";
-    gpibWrite(ls330, "*ESR?");// Query Std. Event Status Register
+    gpibWrite(ls330, "*ESR?\r\n");// Query Std. Event Status Register
     if(isGpibError("LakeShore330::onGpibCallback(): *ESR? Failed"))
       return;
     quint8 esr = quint8(gpibRead(ls330).toInt());
@@ -198,17 +198,17 @@ LakeShore330::setTemperature(double Temperature) {
 
 
 bool
-LakeShore330::switchPowerOn() {
-//  qDebug() << "LakeShore330::switchPowerOn()";
-  sCommand = QString("*SRE%1\r\n").arg(SRQ | ESB | OVI | CLE | CDR | SDR);
-  gpibWrite(ls330, sCommand);
+LakeShore330::switchPowerOn(int iRange) {
+//  qDebug() << QString("LakeShore330::switchPowerOn(%1)").arg(iRange);
+//  sCommand = QString("*SRE %1\r\n").arg(SRQ | ESB | OVI | CLE | CDR | SDR);
+//  gpibWrite(ls330, sCommand);
   // Sets heater status: 1 = low, 2 = medium, 3 = high.
-  gpibWrite(ls330, "RANG 1\r\n");
-  if(ThreadIbsta() & ERR) {
-    qCritical() << "LakeShore330::init(): Failed";
-    QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qCritical() << sError;
-    return false;
+  gpibWrite(ls330, QString("RANG %1\r\n").arg(iRange));
+  if(isGpibError(QString("LakeShore330::switchPowerOn(%1): Failed").arg(iRange)))
+     return false;
+  gpibWrite(ls330, "RANG?\r\n");
+  if(iRange != gpibRead(ls330).toInt()) {
+    qCritical() << "Error setting Heater Range";
   }
   return true;
 }
@@ -216,33 +216,42 @@ LakeShore330::switchPowerOn() {
 
 bool
 LakeShore330::switchPowerOff() {
-//  qDebug() << "Fake LakeShore330::switchPowerOff()";
-  gpibWrite(ls330, "*sre 0\n");// Set Service Request Enable to No SRQ
+//  qDebug() << "LakeShore330::switchPowerOff()";
+  gpibWrite(ls330, "*SRE 0\r\n");// Set Service Request Enable to No SRQ
   // Sets heater status: 0 = off.
   gpibWrite(ls330, "RANG 0\r\n");
-  if(ThreadIbsta() & ERR) {
-    qCritical() << "LakeShore330::switchPowerOff(): Failed";
-    QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qCritical() << sError;
-    return false;
-  }
+  if(isGpibError(QString("LakeShore330::switchPowerOff(): Failed")) )
+     return false;
   return true;
 }
 
 
 bool
 LakeShore330::startRamp(double targetT, double rate) {
-  sCommand = QString("RAMPR%1\r\n").arg(rate);
+  sCommand = QString("RAMPR %1\r\n").arg(rate);
   gpibWrite(ls330, sCommand);
   if(isGpibError("Unable to set Ramp Rate"))
     return false;
   if(!setTemperature(targetT))
     return false;
-  sCommand = QString("RAMP1\r\n");
+  sCommand = QString("RAMP 1\r\n");
   gpibWrite(ls330, sCommand);
+  QThread::sleep(1);
   if(isGpibError("Unable to Start Ramp"))
     return false;
-  qDebug() << QString("LakeShore330::startRamp(%1)").arg(rate);
+//  qDebug() << QString("LakeShore330::startRamp(%1)").arg(rate);
   return true;
 }
 
+
+bool
+LakeShore330::isRamping() {
+  sCommand = QString("RAMPS?\r\n");
+  gpibWrite(ls330, sCommand);
+  if(isGpibError("Unable to query Ramp Status"))
+    return false;
+  int iRamping = gpibRead(ls330).toInt();
+  if(isGpibError("Unable to get Ramp Status"))
+    return false;
+  return (iRamping == 1);
+}

@@ -50,6 +50,7 @@ protected:
   bool CheckInstruments();
   bool startDAQ();
   void stopDAQ();
+  bool getNewSigmaMeasure();
   int  JunctionCheck();
 
 private slots:
@@ -58,6 +59,7 @@ private slots:
   void onTimeToCheckReachedT();
   void onTimerStabilizeT();
   void onTimeToReadT();
+  void onTimeToGetNewMeasure();
 
 private:
   Ui::MainWindow *ui;
@@ -93,6 +95,7 @@ private:
   QString      sTemperaturePlotLabel;
   int          maxChartPoints;
   quint64      maxReachingTTime;
+  double       timeBetweenMeasurements;
 };
 
 #endif // MAINWINDOW_H

@@ -67,6 +67,7 @@ MainWindow::MainWindow(QWidget *parent)
   , pPlotTemperature(Q_NULLPTR)
   , maxChartPoints(3000)
   , maxReachingTTime(120)// In seconds
+  , timeBetweenMeasurements(5000)
 {
   ui->setupUi(this);
 
@@ -276,7 +277,6 @@ MainWindow::on_startRvsTButton_clicked() {
       QApplication::restoreOverrideCursor();
       return;
     }
-    pLakeShore->setTemperature(100.0);
   }
 
   // Open the Output file
@@ -301,8 +301,8 @@ MainWindow::on_startRvsTButton_clicked() {
 
   ui->startIvsVButton->setDisabled(true);
   ui->startRvsTButton->setText("Stop R vs T");
-
   ui->statusBar->clearMessage();
+
   // Plot of Condicibility vs Temperature
   if(pPlotMeasurements) delete pPlotMeasurements;
   sMeasurementPlotLabel = QString("R^-1 [OHM^-1] vs T [K]");
@@ -318,6 +318,7 @@ MainWindow::on_startRvsTButton_clicked() {
   pPlotMeasurements->SetShowTitle(1, true);
   pPlotMeasurements->UpdatePlot();
   pPlotMeasurements->show();
+
   // Plot of Temperature vs Time
   if(pPlotTemperature) delete pPlotTemperature;
   sTemperaturePlotLabel = QString("T [K] vs t [s]");
@@ -336,24 +337,27 @@ MainWindow::on_startRvsTButton_clicked() {
   pPlotTemperature->show();
   iCurrentTPlot = 1;
 
-  // Configure Source-Measure Unit & Thermostat
+  // Configure Source-Measure Unit
   double dAppliedCurrent = configureRvsTDialog.dSourceValue;
   double dVoltageCompliance = 1.0;
   pKeithley->initVvsT(dAppliedCurrent, dVoltageCompliance);
+  // Configure Thermostat
   pLakeShore->setTemperature(configureRvsTDialog.dTempStart);
-  pLakeShore->switchPowerOn();
+  pLakeShore->switchPowerOn(3);
 
-  // Start waiting for reaching the initial temperature
   connect(&waitingTStartTimer, SIGNAL(timeout()),
           this, SLOT(onTimeToCheckReachedT()));
   connect(&readingTTimer, SIGNAL(timeout()),
           this, SLOT(onTimeToReadT()));
   waitingTStartTime = QDateTime::currentDateTime();
+
+  // Read and plot initial value of Temperature
   startReadingTTime = waitingTStartTime;
-  iCurrentTPlot = 1;
   onTimeToReadT();
-  waitingTStartTimer.start(5000);
   readingTTimer.start(5000);
+
+  // Start Reaching the Initial Temperature
+  waitingTStartTimer.start(5000);
   ui->statusBar->showMessage(QString("%1 Waiting Initial T[%2K]")
                              .arg(waitingTStartTime.toString())
                              .arg(configureRvsTDialog.dTempStart));
@@ -394,11 +398,8 @@ MainWindow::onTimeToCheckReachedT() {
 void
 MainWindow::onTimerStabilizeT() {
   stabilizingTimer.stop();
+  disconnect(&stabilizingTimer, 0, 0, 0);
   startMeasuringTime = QDateTime::currentDateTime();
-  if(!pLakeShore->startRamp(configureRvsTDialog.dTempEnd, configureRvsTDialog.dTRate)) {
-    ui->statusBar->showMessage(QString("Error Starting the Measure"));
-    return;
-  }
   pPlotTemperature->NewDataSet(2,//Id
                                3, //Pen Width
                                QColor(255, 255, 0),// Color
@@ -411,6 +412,31 @@ MainWindow::onTimerStabilizeT() {
   iCurrentTPlot = 2;
   qDebug() << "Thermal Stabilization Reached: Start of the Measure";
   ui->statusBar->showMessage(QString("Thermal Stabilization Reached: Start of the Measure"));
+  connect(&measuringTimer, SIGNAL(timeout()),
+          this, SLOT(onTimeToGetNewMeasure()));
+  if(!pLakeShore->startRamp(configureRvsTDialog.dTempEnd, configureRvsTDialog.dTRate)) {
+    ui->statusBar->showMessage(QString("Error Starting the Measure"));
+    return;
+  }
+  getNewSigmaMeasure();
+  measuringTimer.start(timeBetweenMeasurements);
+}
+
+
+void
+MainWindow::onTimeToGetNewMeasure() {
+  getNewSigmaMeasure();
+  if(!pLakeShore->isRamping()) {// Ramp is Done
+    measuringTimer.stop();
+    disconnect(&measuringTimer, 0, 0, 0);
+    stopDAQ();
+    pLakeShore->switchPowerOff();
+    ui->startRvsTButton->setText("Start R vs T");
+    ui->startIvsVButton->setEnabled(true);
+    qDebug() << "Ramp is Done";
+    ui->statusBar->showMessage(QString("Measurements Completed !"));
+    return;
+  }
 }
 
 
@@ -473,6 +499,13 @@ MainWindow::on_startIvsVButton_clicked() {
 
   ui->statusBar->clearMessage();
   QApplication::restoreOverrideCursor();
+}
+
+
+bool
+MainWindow::getNewSigmaMeasure() {
+  qDebug() << "Fake Sigma Measure";
+  return true;
 }
 
 

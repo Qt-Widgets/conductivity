@@ -31,9 +31,10 @@ public:
   void     onGpibCallback(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
   double   getTemperature();
   bool     setTemperature(double Temperature);
-  bool     switchPowerOn();
+  bool     switchPowerOn(int iRange);
   bool     switchPowerOff();
   bool     startRamp(double targetT, double rate);
+  bool     isRamping();
 
 signals:
 
