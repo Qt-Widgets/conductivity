@@ -349,16 +349,17 @@ MainWindow::on_startRvsTButton_clicked() {
   pLakeShore->switchPowerOn();
 #endif
   // Start waiting for reaching the initial temperature
-  waitingTStartTime = QDateTime::currentDateTime();
-  startReadingTTime = waitingTStartTime;
   ui->statusBar->showMessage(QString("%1 Waiting Initial T[%2K]")
                              .arg(waitingTStartTime.toString())
                              .arg(configureRvsTDialog.dTempStart));
   connect(&waitingTStartTimer, SIGNAL(timeout()),
           this, SLOT(onTimeToCheckReachedT()));
-  waitingTStartTimer.start(5000);
   connect(&readingTTimer, SIGNAL(timeout()),
           this, SLOT(onTimeToReadT()));
+  waitingTStartTime = QDateTime::currentDateTime();
+  startReadingTTime = waitingTStartTime;
+  onTimeToReadT();
+  waitingTStartTimer.start(5000);
   readingTTimer.start(5000);
   QApplication::restoreOverrideCursor();
 }
