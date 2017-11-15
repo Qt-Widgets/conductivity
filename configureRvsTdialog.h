@@ -66,6 +66,8 @@ private slots:
   void on_TStartEdit_textChanged(const QString &arg1);
   void on_TEndEdit_textChanged(const QString &arg1);
   void on_TRateEdit_textChanged(const QString &arg1);
+  void on_MaxTimeToTStartEdit_textChanged(const QString &arg1);
+  void on_TimeForStabilizingTStartEdit_textChanged(const QString &arg1);
   void on_outFilePathButton_clicked();
   void on_doneButton_clicked();
   void on_cancelButton_clicked();

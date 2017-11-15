@@ -19,8 +19,6 @@
 #You should have received a copy of the GNU General Public License
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# To avoid DAQmx and GPIB errors
-#DEFINES += SIMULATION
 
 QT += core
 QT += gui
@@ -65,9 +63,9 @@ HEADERS += configureRvsTdialog.h
 HEADERS += configureIvsVdialog.h
 
 FORMS   += mainwindow.ui
-FORMS   += axesdialog.ui
 FORMS   += configureRvsTdialog.ui
 FORMS   += configureIvsVdialog.ui
+FORMS   += axesdialog.ui
 
 # For National Instruments DAQ & GPIB Boards
 LIBS += "C:/Program Files (x86)/National Instruments/NI-DAQ/DAQmx ANSI C Dev/lib/msvc/NIDAQmx.lib"

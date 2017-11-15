@@ -61,11 +61,7 @@ MainWindow::MainWindow(QWidget *parent)
   , LAMP_OFF(0)
   , gpibBoardID(0)
   , lampTaskHandle(0)
-#ifdef SIMULATION
-  , sLampLine(QString("Fake2/port1/line0"))
-#else
   , sLampLine(QString("NiUSB-6211/port1/line0"))
-#endif
   , currentLampStatus(LAMP_OFF)
   , pPlotMeasurements(Q_NULLPTR)
   , pPlotTemperature(Q_NULLPTR)
@@ -255,7 +251,6 @@ MainWindow::on_startRvsTButton_clicked() {
     QApplication::restoreOverrideCursor();
     return;
   }
-#ifndef SIMULATION
   // Are the instruments connectd and ready to start ?
   ui->statusBar->showMessage("Checking for the GPIB Instruments");
   if(!CheckInstruments()) {
@@ -292,7 +287,6 @@ MainWindow::on_startRvsTButton_clicked() {
     pOutputFile->deleteLater();
     pOutputFile = Q_NULLPTR;
   }
-#endif
   pOutputFile = new QFile(configureRvsTDialog.sBaseDir + "/" + configureRvsTDialog.sOutFileName);
   if(!pOutputFile->open(QIODevice::Text|QIODevice::WriteOnly)) {
     QMessageBox::critical(this,
@@ -340,18 +334,15 @@ MainWindow::on_startRvsTButton_clicked() {
   pPlotTemperature->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
   pPlotTemperature->UpdatePlot();
   pPlotTemperature->show();
+
   // Configure Source-Measure Unit & Thermostat
-#ifndef SIMULATION
   double dAppliedCurrent = configureRvsTDialog.dSourceValue;
   double dVoltageCompliance = 1.0;
   pKeithley->initVvsT(dAppliedCurrent, dVoltageCompliance);
   pLakeShore->setTemperature(configureRvsTDialog.dTempStart);
   pLakeShore->switchPowerOn();
-#endif
+
   // Start waiting for reaching the initial temperature
-  ui->statusBar->showMessage(QString("%1 Waiting Initial T[%2K]")
-                             .arg(waitingTStartTime.toString())
-                             .arg(configureRvsTDialog.dTempStart));
   connect(&waitingTStartTimer, SIGNAL(timeout()),
           this, SLOT(onTimeToCheckReachedT()));
   connect(&readingTTimer, SIGNAL(timeout()),
@@ -361,6 +352,9 @@ MainWindow::on_startRvsTButton_clicked() {
   onTimeToReadT();
   waitingTStartTimer.start(5000);
   readingTTimer.start(5000);
+  ui->statusBar->showMessage(QString("%1 Waiting Initial T[%2K]")
+                             .arg(waitingTStartTime.toString())
+                             .arg(configureRvsTDialog.dTempStart));
   QApplication::restoreOverrideCursor();
 }
 
@@ -376,20 +370,20 @@ MainWindow::onTimeToCheckReachedT() {
     waitingTStartTimer.stop();
     connect(&stabilizingTimer, SIGNAL(timeout()),
             this, SLOT(onTimerStabilizeT()));
-    stabilizingTimer.start(5000);
-//    qDebug() << QString("Starting T Reached: Thermal Stabilization...");
+    stabilizingTimer.start(configureRvsTDialog.iStabilizingTime*60*1000);
+    qDebug() << QString("Starting T Reached: Thermal Stabilization...");
     ui->statusBar->showMessage(QString("Starting T Reached: Thermal Stabilization..."));
   }
   else {
     currentTime = QDateTime::currentDateTime();
     quint64 elapsedMsec = waitingTStartTime.secsTo(currentTime);
-    qDebug() << "Elapsed:" << elapsedMsec;
-    if(elapsedMsec > maxReachingTTime) {
+    qDebug() << "Elapsed:" << elapsedMsec << "Maximum:" << quint64(configureRvsTDialog.iReachingTime)*60*1000;
+    if(elapsedMsec > quint64(configureRvsTDialog.iReachingTime)*60*1000) {
       disconnect(&waitingTStartTimer, 0, 0, 0);
       waitingTStartTimer.stop();
       connect(&stabilizingTimer, SIGNAL(timeout()),
               this, SLOT(onTimerStabilizeT()));
-      stabilizingTimer.start(5000);
+      stabilizingTimer.start(configureRvsTDialog.iStabilizingTime*60*1000);
       qDebug() << QString("Max Reaching Time Exceed...Thermal Stabilization...");
       ui->statusBar->showMessage(QString("Max Reaching Time Exceed...Thermal Stabilization..."));
     }

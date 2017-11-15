@@ -161,8 +161,8 @@ ConfigureRvsTDialog::setToolTips() {
   ui->TStartEdit->setToolTip(sHeader.arg(temperatureMin).arg(temperatureMax));
   ui->TEndEdit->setToolTip(sHeader.arg(temperatureMin).arg(temperatureMax));
   ui->TRateEdit->setToolTip(sHeader.arg(TRateMin).arg(TRateMax));
-  ui->MaxTimeToTStartEdit->setToolTip(QString("Enter the max time to wait for reaching Starting Temperature"));
-  ui->TimeForStabilizingTStartEdit->setToolTip(QString("Enter the time to wait after reaching Starting Temperature"));
+  ui->MaxTimeToTStartEdit->setToolTip(sHeader.arg(reachingTTimeMin).arg(reachingTTimeMax));
+  ui->TimeForStabilizingTStartEdit->setToolTip(QString(sHeader.arg(stabilizingTTimeMin).arg(stabilizingTTimeMax)));
   ui->sampleInformationEdit->setToolTip(QString("Enter Sample description (multiline)"));
   ui->outPathEdit->setToolTip(QString("Output File Folder"));
   ui->outFileEdit->setToolTip(QString("Enter Output File Name"));
@@ -287,12 +287,36 @@ ConfigureRvsTDialog::on_TStartEdit_textChanged(const QString &arg1) {
 
 void
 ConfigureRvsTDialog::on_TEndEdit_textChanged(const QString &arg1) {
-  if(isTemperatureValueValid(arg1.toDouble())){
+  if(isTemperatureValueValid(arg1.toDouble())) {
     dTempEnd = arg1.toDouble();
     ui->TEndEdit->setStyleSheet(sNormalStyle);
   }
   else {
     ui->TEndEdit->setStyleSheet(sErrorStyle);
+  }
+}
+
+
+void
+ConfigureRvsTDialog::on_MaxTimeToTStartEdit_textChanged(const QString &arg1) {
+  if(isReachingTimeValid(arg1.toInt())) {
+    iReachingTime = arg1.toInt();
+    ui->MaxTimeToTStartEdit->setStyleSheet(sNormalStyle);
+  }
+  else {
+    ui->MaxTimeToTStartEdit->setStyleSheet(sErrorStyle);
+  }
+}
+
+
+void
+ConfigureRvsTDialog::on_TimeForStabilizingTStartEdit_textChanged(const QString &arg1) {
+  if(isStabilizingTimeValid(arg1.toInt())) {
+    iStabilizingTime = arg1.toInt();
+    ui->TimeForStabilizingTStartEdit->setStyleSheet(sNormalStyle);
+  }
+  else {
+    ui->TimeForStabilizingTStartEdit->setStyleSheet(sErrorStyle);
   }
 }
 
