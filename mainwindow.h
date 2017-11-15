@@ -68,7 +68,7 @@ private:
   LakeShore330* pLakeShore;
   QDateTime     currentTime;
   QDateTime     waitingTStartTime;
-  QDateTime     temperatureReadingTime;
+  QDateTime     startReadingTTime;
   QTimer        waitingTStartTimer;
   QTimer        stabilizingTimer;
   QTimer        readingTTimer;

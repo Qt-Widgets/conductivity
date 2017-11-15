@@ -350,6 +350,7 @@ MainWindow::on_startRvsTButton_clicked() {
 #endif
   // Start waiting for reaching the initial temperature
   waitingTStartTime = QDateTime::currentDateTime();
+  startReadingTTime = waitingTStartTime;
   ui->statusBar->showMessage(QString("%1 Waiting Initial T[%2K]")
                              .arg(waitingTStartTime.toString())
                              .arg(configureRvsTDialog.dTempStart));
@@ -408,7 +409,7 @@ MainWindow::onTimeToReadT() {
   currentTime = QDateTime::currentDateTime();
 //  qDebug()<< "T = " << currentTemperature;
   pPlotTemperature->NewPoint(1,
-                             double(waitingTStartTime.secsTo(currentTime)),
+                             double(startReadingTTime.secsTo(currentTime)),
                              currentTemperature);
   pPlotTemperature->UpdatePlot();
 }
