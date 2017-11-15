@@ -80,6 +80,7 @@ private:
 
   const quint8 LAMP_ON;
   const quint8 LAMP_OFF;
+  int          iCurrentTPlot;
   int          gpibBoardID;
   int32        error;
   TaskHandle   lampTaskHandle;// Digital Output

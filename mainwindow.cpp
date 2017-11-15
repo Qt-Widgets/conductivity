@@ -325,7 +325,7 @@ MainWindow::on_startRvsTButton_clicked() {
   pPlotTemperature->setMaxPoints(maxChartPoints);
   pPlotTemperature->NewDataSet(1,//Id
                                3, //Pen Width
-                               QColor(255, 255, 0),// Color
+                               QColor(255, 0, 0),// Color
                                StripChart::ipoint,// Symbol
                                "T"// Title
                                );
@@ -334,6 +334,7 @@ MainWindow::on_startRvsTButton_clicked() {
   pPlotTemperature->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
   pPlotTemperature->UpdatePlot();
   pPlotTemperature->show();
+  iCurrentTPlot = 1;
 
   // Configure Source-Measure Unit & Thermostat
   double dAppliedCurrent = configureRvsTDialog.dSourceValue;
@@ -349,6 +350,7 @@ MainWindow::on_startRvsTButton_clicked() {
           this, SLOT(onTimeToReadT()));
   waitingTStartTime = QDateTime::currentDateTime();
   startReadingTTime = waitingTStartTime;
+  iCurrentTPlot = 1;
   onTimeToReadT();
   waitingTStartTimer.start(5000);
   readingTTimer.start(5000);
@@ -375,7 +377,7 @@ MainWindow::onTimeToCheckReachedT() {
   else {
     currentTime = QDateTime::currentDateTime();
     quint64 elapsedMsec = waitingTStartTime.secsTo(currentTime);
-    qDebug() << "Elapsed:" << elapsedMsec << "Maximum:" << quint64(configureRvsTDialog.iReachingTime)*60*1000;
+//    qDebug() << "Elapsed:" << elapsedMsec << "Maximum:" << quint64(configureRvsTDialog.iReachingTime)*60*1000;
     if(elapsedMsec > quint64(configureRvsTDialog.iReachingTime)*60*1000) {
       disconnect(&waitingTStartTimer, 0, 0, 0);
       waitingTStartTimer.stop();
@@ -397,6 +399,16 @@ MainWindow::onTimerStabilizeT() {
     ui->statusBar->showMessage(QString("Error Starting the Measure"));
     return;
   }
+  pPlotTemperature->NewDataSet(2,//Id
+                               3, //Pen Width
+                               QColor(255, 255, 0),// Color
+                               StripChart::ipoint,// Symbol
+                               "Tm"// Title
+                               );
+  pPlotTemperature->SetShowDataSet(2, true);
+  pPlotTemperature->SetShowTitle(2, true);
+  pPlotTemperature->UpdatePlot();
+  iCurrentTPlot = 2;
   qDebug() << "Thermal Stabilization Reached: Start of the Measure";
   ui->statusBar->showMessage(QString("Thermal Stabilization Reached: Start of the Measure"));
 }
@@ -407,7 +419,7 @@ MainWindow::onTimeToReadT() {
   double currentTemperature = pLakeShore->getTemperature();
   currentTime = QDateTime::currentDateTime();
 //  qDebug()<< "T = " << currentTemperature;
-  pPlotTemperature->NewPoint(1,
+  pPlotTemperature->NewPoint(iCurrentTPlot,
                              double(startReadingTTime.secsTo(currentTime)),
                              currentTemperature);
   pPlotTemperature->UpdatePlot();
