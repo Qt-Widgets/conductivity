@@ -41,6 +41,8 @@ public:
   double dTempStart;
   double dTempEnd;
   double dTRate;
+  int    iReachingTime;
+  int    iStabilizingTime;
   QString sSampleInfo;
   QString sBaseDir;
   QString sOutFileName;
@@ -54,6 +56,8 @@ protected:
   bool isSourceValueValid();
   bool isTemperatureValueValid(double dTemperature);
   bool isTRateValid(double dTRate);
+  bool isReachingTimeValid(int iReachingTime);
+  bool isStabilizingTimeValid(int iStabilizingTime);
 
 private slots:
   void on_radioButtonSourceI_clicked();
@@ -79,6 +83,11 @@ private:
   const double temperatureMax;
   const double TRateMin;
   const double TRateMax;
+  const int    reachingTTimeMin;
+  const int    reachingTTimeMax;
+  const int    stabilizingTTimeMin;
+  const int    stabilizingTTimeMax;
+
   // Dialog user interace
   Ui::ConfigureRvsTDialog *ui;
 };

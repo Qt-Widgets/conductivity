@@ -236,7 +236,7 @@ LakeShore330::switchPowerOff() {
 
 bool
 LakeShore330::startRamp(double rate) {
-//  qDebug() << QString("Fake LakeShore330::startRamp(%1)").arg(rate);
+  qDebug() << QString("Fake LakeShore330::startRamp(%1)").arg(rate);
   return true;
 }
 

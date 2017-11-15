@@ -39,6 +39,10 @@ ConfigureRvsTDialog::ConfigureRvsTDialog(QWidget *parent)
   , temperatureMax(450.0)
   , TRateMin(0.01)
   , TRateMax(10.0)
+  , reachingTTimeMin(0)// In minutes
+  , reachingTTimeMax(5)// In minutes
+  , stabilizingTTimeMin(0)// In minutes
+  , stabilizingTTimeMax(3)// In minutes
   , ui(new Ui::ConfigureRvsTDialog)
 {
   setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
@@ -75,6 +79,16 @@ ConfigureRvsTDialog::ConfigureRvsTDialog(QWidget *parent)
   }
   ui->TRateEdit->setText(QString("%1").arg(dTRate, 0, 'f', 2));
 
+  // Timing parameters
+  if(!isReachingTimeValid(iReachingTime)) {
+    iReachingTime = reachingTTimeMin;
+  }
+  ui->MaxTimeToTStartEdit->setText(QString("%1").arg(iReachingTime));
+  if(!isStabilizingTimeValid(iStabilizingTime)) {
+    iStabilizingTime = stabilizingTTimeMin;
+  }
+  ui->TimeForStabilizingTStartEdit->setText(QString("%1").arg(iStabilizingTime));
+
   // Sample information
   ui->sampleInformationEdit->setPlainText(sSampleInfo);
 
@@ -105,14 +119,16 @@ ConfigureRvsTDialog::restoreSettings() {
   qDebug() << "ConfigureRvsTDialog::restoreSettings()";
   restoreGeometry(settings.value("ConfigureRvsTDialogGeometry").toByteArray());
 
-  bSourceI     = settings.value("ConfigureRvsTSourceI", true).toBool();
-  dSourceValue = settings.value("ConfigureRvsTSourceValue", 0.0).toDouble();
-  dTempStart   = settings.value("ConfigureRvsTTempertureStart", 300.0).toDouble();
-  dTempEnd     = settings.value("ConfigureRvsTTempertureEnd", 300.0).toDouble();
-  dTRate       = settings.value("ConfigureRvsTTRate", 1.0).toDouble();
-  sSampleInfo  = settings.value("ConfigureRvsTSampleInfo", "").toString();
-  sBaseDir     = settings.value("ConfigureRvsTBaseDir", sBaseDir).toString();
-  sOutFileName = settings.value("ConfigureRvsTOutFileName", sOutFileName).toString();
+  bSourceI         = settings.value("ConfigureRvsTSourceI", true).toBool();
+  dSourceValue     = settings.value("ConfigureRvsTSourceValue", 0.0).toDouble();
+  dTempStart       = settings.value("ConfigureRvsTTempertureStart", 300.0).toDouble();
+  dTempEnd         = settings.value("ConfigureRvsTTempertureEnd", 300.0).toDouble();
+  dTRate           = settings.value("ConfigureRvsTTRate", 1.0).toDouble();
+  sSampleInfo      = settings.value("ConfigureRvsTSampleInfo", "").toString();
+  sBaseDir         = settings.value("ConfigureRvsTBaseDir", sBaseDir).toString();
+  sOutFileName     = settings.value("ConfigureRvsTOutFileName", sOutFileName).toString();
+  iReachingTime    = settings.value("ConfigureRvsTReachingTime", reachingTTimeMin).toInt();
+  iStabilizingTime = settings.value("ConfigureRvsTStabilizingTime", stabilizingTTimeMin).toInt();
 }
 
 
@@ -125,6 +141,8 @@ ConfigureRvsTDialog::saveSettings() {
   settings.setValue("ConfigureRvsTTempertureStart", dTempStart);
   settings.setValue("ConfigureRvsTTempertureEnd", dTempEnd);
   settings.setValue("ConfigureRvsTTRate", dTRate);
+  settings.setValue("ConfigureRvsTReachingTime", iReachingTime);
+  settings.setValue("ConfigureRvsTStabilizingTime", iStabilizingTime);
   sSampleInfo = ui->sampleInformationEdit->toPlainText();
   settings.setValue("ConfigureRvsTSampleInfo", sSampleInfo);
   settings.setValue("ConfigureRvsTBaseDir", sBaseDir);
@@ -143,6 +161,8 @@ ConfigureRvsTDialog::setToolTips() {
   ui->TStartEdit->setToolTip(sHeader.arg(temperatureMin).arg(temperatureMax));
   ui->TEndEdit->setToolTip(sHeader.arg(temperatureMin).arg(temperatureMax));
   ui->TRateEdit->setToolTip(sHeader.arg(TRateMin).arg(TRateMax));
+  ui->MaxTimeToTStartEdit->setToolTip(QString("Enter the max time to wait for reaching Starting Temperature"));
+  ui->TimeForStabilizingTStartEdit->setToolTip(QString("Enter the time to wait after reaching Starting Temperature"));
   ui->sampleInformationEdit->setToolTip(QString("Enter Sample description (multiline)"));
   ui->outPathEdit->setToolTip(QString("Output File Folder"));
   ui->outFileEdit->setToolTip(QString("Enter Output File Name"));
@@ -223,6 +243,20 @@ ConfigureRvsTDialog::isTemperatureValueValid(double dTemperature) {
 bool
 ConfigureRvsTDialog::isTRateValid(double dTRate) {
   return (dTRate >= TRateMin) && (dTRate <= TRateMax);
+}
+
+
+bool
+ConfigureRvsTDialog::isReachingTimeValid(int iReachingTime) {
+  return (iReachingTime >= reachingTTimeMin) &&
+         (iReachingTime <= reachingTTimeMax);
+}
+
+
+bool
+ConfigureRvsTDialog::isStabilizingTimeValid(int iStabilizingTime) {
+  return (iStabilizingTime >= stabilizingTTimeMin) &&
+         (iStabilizingTime <= stabilizingTTimeMax);
 }
 
 
