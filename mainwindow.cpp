@@ -396,6 +396,7 @@ MainWindow::onTimeToCheckReachedT() {
   }
 }
 
+
 void
 MainWindow::onTimerStabilizeT() {
   stabilizingTimer.stop();
