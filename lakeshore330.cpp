@@ -191,12 +191,8 @@ LakeShore330::setTemperature(double Temperature) {
   if(Temperature < 0.0 || Temperature > 900.0) return false;
   sCommand = QString("SETP %1\r\n").arg(Temperature, 0, 'f', 2);
   gpibWrite(ls330, sCommand);// Sets the Setpoint
-  if(ThreadIbsta() & ERR) {
-    qCritical() << "LakeShore330::onGpibCallback(): setTemperature(LakeShore): SETP Failed";
-    QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qCritical() << sError;
-    return false;
-  }
+  if(isGpibError("LakeShore330::onGpibCallback(): setTemperature(LakeShore): SETP Failed"))
+     return false;
   return true;
 }
 
@@ -235,8 +231,18 @@ LakeShore330::switchPowerOff() {
 
 
 bool
-LakeShore330::startRamp(double rate) {
-  qDebug() << QString("Fake LakeShore330::startRamp(%1)").arg(rate);
+LakeShore330::startRamp(double targetT, double rate) {
+  sCommand = QString("RAMPR%1\r\n").arg(rate);
+  gpibWrite(ls330, sCommand);
+  if(isGpibError("Unable to set Ramp Rate"))
+    return false;
+  if(!setTemperature(targetT))
+    return false;
+  sCommand = QString("RAMP1\r\n");
+  gpibWrite(ls330, sCommand);
+  if(isGpibError("Unable to Start Ramp"))
+    return false;
+  qDebug() << QString("LakeShore330::startRamp(%1)").arg(rate);
   return true;
 }
 

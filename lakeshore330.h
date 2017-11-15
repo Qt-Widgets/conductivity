@@ -33,7 +33,7 @@ public:
   bool     setTemperature(double Temperature);
   bool     switchPowerOn();
   bool     switchPowerOff();
-  bool     startRamp(double rate);
+  bool     startRamp(double targetT, double rate);
 
 signals:
 

@@ -69,9 +69,11 @@ private:
   QDateTime     currentTime;
   QDateTime     waitingTStartTime;
   QDateTime     startReadingTTime;
+  QDateTime     startMeasuringTime;
   QTimer        waitingTStartTimer;
   QTimer        stabilizingTimer;
   QTimer        readingTTimer;
+  QTimer        measuringTimer;
 
   ConfigureRvsTDialog configureRvsTDialog;
   ConfigureIvsVDialog configureIvsVDialog;

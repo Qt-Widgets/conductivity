@@ -70,3 +70,5 @@ FORMS   += axesdialog.ui
 # For National Instruments DAQ & GPIB Boards
 LIBS += "C:/Program Files (x86)/National Instruments/NI-DAQ/DAQmx ANSI C Dev/lib/msvc/NIDAQmx.lib"
 LIBS += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/lib32/msvc/gpib-32.obj"
+
+DISTFILES +=

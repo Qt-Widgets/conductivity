@@ -2,7 +2,6 @@
 #include <float.h>
 
 CDataStream2D::CDataStream2D(int Id, int PenWidth, QColor Color, int Symbol, QString Title)
-  : CDataStream(Id, PenWidth, Color, Symbol, Title)
 {
   Properties.SetId(Id);
   Properties.Color    = Color;
@@ -18,9 +17,7 @@ CDataStream2D::CDataStream2D(int Id, int PenWidth, QColor Color, int Symbol, QSt
 }
 
 
-CDataStream2D::CDataStream2D(CDataSetProperties myProperties)
-  : CDataStream(myProperties)
-{
+CDataStream2D::CDataStream2D(CDataSetProperties myProperties) {
   Properties = myProperties;
   if(myProperties.Title == QString())
     Properties.Title.sprintf("Data Set %d", Properties.GetId());
@@ -57,7 +54,7 @@ CDataStream2D::AddPoint(double x, double y) {
     maxx = x+FLT_MIN;
     miny = y-FLT_MIN;
     maxy = y+FLT_MIN;
-    for(int i=0; i< m_pointArray.count(); i++) {
+    for(int i=0; i< m_pointArrayX.count(); i++) {
       if(m_pointArrayX.at(i) < minx) minx = m_pointArrayX.at(i);
       if(m_pointArrayX.at(i) > maxx) maxx = m_pointArrayX.at(i);
       if(m_pointArrayY.at(i) < miny) miny = m_pointArrayY.at(i);
@@ -75,13 +72,13 @@ CDataStream2D::AddPoint(double x, double y) {
 
 void
 CDataStream2D::SetColor(QColor Color) {
-  CDataStream::SetColor(Color);
+  Properties.Color = Color;
 }
 
 
 int
 CDataStream2D::GetId() {
-  return CDataStream::GetId();
+  return Properties.GetId();
 }
 
 
@@ -94,43 +91,43 @@ CDataStream2D::RemoveAllPoints() {
 
 void
 CDataStream2D::SetTitle(QString myTitle) {
-  CDataStream::SetTitle(myTitle);
+  Properties.Title = myTitle;
 }
 
 
 void
 CDataStream2D::SetShowTitle(bool show) {
-  CDataStream::SetShowTitle(show);
+  bShowCurveTitle = show;
 }
 
 
 CDataSetProperties
 CDataStream2D::GetProperties() {
-  return CDataStream::GetProperties();
+  return Properties;
 }
 
 
 void
 CDataStream2D::SetProperties(CDataSetProperties newProperties) {
-  CDataStream::SetProperties(newProperties);
+  Properties = newProperties;
 }
 
 
 
 QString
 CDataStream2D::GetTitle() {
-  return CDataStream::GetTitle();
+  return Properties.Title;
 }
 
 
 void
 CDataStream2D::setMaxPoints(int nPoints) {
-  CDataStream::setMaxPoints(nPoints);
+  maxPoints = nPoints;
 }
 
 
 int
 CDataStream2D::getMaxPoints() {
-  return CDataStream::getMaxPoints();
+  return maxPoints;
 }
 

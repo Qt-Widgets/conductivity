@@ -362,9 +362,7 @@ MainWindow::on_startRvsTButton_clicked() {
 void
 MainWindow::onTimeToCheckReachedT() {
   double T = pLakeShore->getTemperature();
-//  qDebug() << "Current Temperature: " << T;
-  if(fabs(T-configureRvsTDialog.dTempStart) <
-     1.0)//configureRvsTDialog->dTolerance)
+  if(fabs(T-configureRvsTDialog.dTempStart) < 0.1)//configureRvsTDialog->dTolerance)
   {
     disconnect(&waitingTStartTimer, 0, 0, 0);
     waitingTStartTimer.stop();
@@ -372,7 +370,7 @@ MainWindow::onTimeToCheckReachedT() {
             this, SLOT(onTimerStabilizeT()));
     stabilizingTimer.start(configureRvsTDialog.iStabilizingTime*60*1000);
     qDebug() << QString("Starting T Reached: Thermal Stabilization...");
-    ui->statusBar->showMessage(QString("Starting T Reached: Thermal Stabilization..."));
+    ui->statusBar->showMessage(QString("Starting T Reached: Thermal Stabilization for %1 min.").arg(configureRvsTDialog.iStabilizingTime));
   }
   else {
     currentTime = QDateTime::currentDateTime();
@@ -385,7 +383,7 @@ MainWindow::onTimeToCheckReachedT() {
               this, SLOT(onTimerStabilizeT()));
       stabilizingTimer.start(configureRvsTDialog.iStabilizingTime*60*1000);
       qDebug() << QString("Max Reaching Time Exceed...Thermal Stabilization...");
-      ui->statusBar->showMessage(QString("Max Reaching Time Exceed...Thermal Stabilization..."));
+      ui->statusBar->showMessage(QString("Max Reaching Time Exceed...Thermal Stabilization for %1 min.").arg(configureRvsTDialog.iStabilizingTime));
     }
   }
 }
@@ -394,6 +392,11 @@ MainWindow::onTimeToCheckReachedT() {
 void
 MainWindow::onTimerStabilizeT() {
   stabilizingTimer.stop();
+  startMeasuringTime = QDateTime::currentDateTime();
+  if(!pLakeShore->startRamp(configureRvsTDialog.dTempEnd, configureRvsTDialog.dTRate)) {
+    ui->statusBar->showMessage(QString("Error Starting the Measure"));
+    return;
+  }
   qDebug() << "Thermal Stabilization Reached: Start of the Measure";
   ui->statusBar->showMessage(QString("Thermal Stabilization Reached: Start of the Measure"));
 }
