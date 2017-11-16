@@ -429,6 +429,12 @@ void
 MainWindow::onTimeToGetNewMeasure() {
   getNewSigmaMeasure();
   if(!pLakeShore->isRamping()) {// Ramp is Done
+    if(pOutputFile) {
+      if(pOutputFile->isOpen())
+        pOutputFile->close();
+      pOutputFile->deleteLater();
+      pOutputFile = Q_NULLPTR;
+    }
     measuringTimer.stop();
     disconnect(&measuringTimer, 0, 0, 0);
     stopDAQ();
