@@ -372,6 +372,7 @@ MainWindow::onTimeToCheckReachedT() {
   {
     disconnect(&waitingTStartTimer, 0, 0, 0);
     waitingTStartTimer.stop();
+
     connect(&stabilizingTimer, SIGNAL(timeout()),
             this, SLOT(onTimerStabilizeT()));
     stabilizingTimer.start(configureRvsTDialog.iStabilizingTime*60*1000);
@@ -397,6 +398,7 @@ MainWindow::onTimeToCheckReachedT() {
 
 void
 MainWindow::onTimerStabilizeT() {
+  // It's time to start measurements
   stabilizingTimer.stop();
   disconnect(&stabilizingTimer, 0, 0, 0);
   startMeasuringTime = QDateTime::currentDateTime();

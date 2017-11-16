@@ -62,6 +62,7 @@ LakeShore330::LakeShore330(int gpio, int address, QObject *parent)
 LakeShore330::~LakeShore330() {
 //  qDebug() << "LakeShore330::~LakeShore330()";
   if(ls330 != -1) {
+    switchPowerOff();
     ibnotify (ls330, 0, NULL, NULL);// disable notification
     ibonl(ls330, 0);// Disable hardware and software.
   }

@@ -64,6 +64,7 @@ Keithley236::~Keithley236() {
   }
 }
 
+
 int
 Keithley236::init() {
   k236 = ibdev(gpibNumber, k236Address, 0, T100ms, 1, 0);
@@ -75,12 +76,8 @@ Keithley236::init() {
   }
   short listen;
   ibln(k236, k236Address, NO_SAD, &listen);
-  if(ibsta & ERR) {
-    qDebug() << "Keithley 236 Not Respondig";
-    QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+  if(isGpibError("Keithley 236 Not Respondig"))
     return GPIB_DEVICE_NOT_PRESENT;
-  }
   if(listen == 0) {
     ibonl(k236, 0);
     qDebug() << "Nolistener at Addr";
@@ -91,19 +88,12 @@ Keithley236::init() {
            RQS,
            (GpibNotifyCallback_t) keithley236::myCallback,
            this);
-  if(ibsta & ERR) {
-    qDebug() << "ibnotify call failed.";
-    QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
-  }
-  ibclr(k236);
-  QThread::sleep(1);
+  isGpibError("ibnotify call failed.");
+//  ibclr(k236);
+//  qDebug() << "."; QThread::sleep(3);
+//  QThread::sleep(1);
   ibrsp(k236, &spollByte);
-  if(ibsta & ERR)  {
-    sCommand = QString("ibrsp failed");
-    qDebug() << sCommand;
-    QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+  if(isGpibError("brsp failed"))  {
     return -1;
   }
   return 0;
@@ -112,6 +102,7 @@ Keithley236::init() {
 
 int
 Keithley236::initVvsT(double dAppliedCurrent, double dVoltageCompliance) {
+  qDebug() << QString("initVvsT(%1,%2)").arg(dAppliedCurrent).arg(dVoltageCompliance);
   gpibWrite(k236, "O1");       // Remote Sense
   gpibWrite(k236, "Z0");       // Disable Zero suppression
   gpibWrite(k236, "F1,0");     // Source I Measure V dc
@@ -119,7 +110,9 @@ Keithley236::initVvsT(double dAppliedCurrent, double dVoltageCompliance) {
   gpibWrite(k236, sCommand);
   sCommand = QString("L%1,0").arg(dVoltageCompliance);
   gpibWrite(k236, sCommand);   // Set Compliance, Autorange Measure
-  gpibWrite(k236, "H0X");      // Enable Comliance
+  gpibWrite(k236, "H0X");      // Enable Compliance
+  qDebug() << "initVvsT"; QThread::sleep(3);
+
   gpibWrite(k236, "T1,0,0,0"); // Trigger on GET
   gpibWrite(k236, "G5,2,0");   // Output Source, Measure, No Prefix, DC
   gpibWrite(k236, "S3");       // 20ms integration time
