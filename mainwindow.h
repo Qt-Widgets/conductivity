@@ -60,6 +60,9 @@ private slots:
   void onTimerStabilizeT();
   void onTimeToReadT();
   void onTimeToGetNewMeasure();
+  void onComplianceEvent();
+  void onKeithleyReadyForTrigger();
+  void onNewKeithleyReading(QDateTime dataTime, QString sDataRead);
 
 private:
   Ui::MainWindow *ui;
@@ -76,6 +79,7 @@ private:
   QTimer        stabilizingTimer;
   QTimer        readingTTimer;
   QTimer        measuringTimer;
+  bool          isK236ReadyForTrigger;
 
   ConfigureRvsTDialog configureRvsTDialog;
   ConfigureIvsVDialog configureIvsVDialog;

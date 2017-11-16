@@ -146,8 +146,16 @@ MainWindow::CheckInstruments() {
     QString sInstrumentID = QString(readBuf);
     // La source Measure Unit K236 non risponde al comando di identificazione !!!!
     if(sInstrumentID.contains("NSDCI", Qt::CaseInsensitive)) {
-      if(pKeithley == Q_NULLPTR)
+      if(pKeithley == Q_NULLPTR) {
         pKeithley = new Keithley236(gpibBoardID, resultlist[i], this);
+        isK236ReadyForTrigger = false;
+        connect(pKeithley, SIGNAL(complianceEvent()),
+                this, SLOT(onComplianceEvent()));
+        connect(pKeithley, SIGNAL(readyForTrigger()),
+                this, SLOT(onKeithleyReadyForTrigger()));
+        connect(pKeithley, SIGNAL(newReading(QDateTime, QString)),
+                this, SLOT(onNewKeithleyReading(QDateTime, QString)));
+      }
     } else if(sInstrumentID.contains("MODEL330", Qt::CaseInsensitive)) {
       if(pLakeShore == NULL)
         pLakeShore = new LakeShore330(gpibBoardID, resultlist[i], this);
@@ -256,6 +264,7 @@ MainWindow::on_startRvsTButton_clicked() {
   ui->statusBar->showMessage("Checking for the GPIB Instruments");
   if(!CheckInstruments()) {
     ui->statusBar->showMessage("GPIB Instruments not found");
+    stopDAQ();
     QApplication::restoreOverrideCursor();
     return;
   }
@@ -265,6 +274,7 @@ MainWindow::on_startRvsTButton_clicked() {
     initError = pKeithley->init();
     if(initError) {
       ui->statusBar->showMessage("Unable to Initialize Keithley 236...");
+      stopDAQ();
       QApplication::restoreOverrideCursor();
       return;
     }
@@ -274,6 +284,7 @@ MainWindow::on_startRvsTButton_clicked() {
     initError = pLakeShore->init();
     if(initError) {
       ui->statusBar->showMessage("Unable to Initialize LakeShore 330...");
+      stopDAQ();
       QApplication::restoreOverrideCursor();
       return;
     }
@@ -339,7 +350,7 @@ MainWindow::on_startRvsTButton_clicked() {
 
   // Configure Source-Measure Unit
   double dAppliedCurrent = configureRvsTDialog.dSourceValue;
-  double dVoltageCompliance = 1.0;
+  double dVoltageCompliance = 10.0;
   pKeithley->initVvsT(dAppliedCurrent, dVoltageCompliance);
   // Configure Thermostat
   pLakeShore->setTemperature(configureRvsTDialog.dTempStart);
@@ -510,9 +521,31 @@ MainWindow::on_startIvsVButton_clicked() {
 }
 
 
+void
+MainWindow::onComplianceEvent() {
+  qCritical() << "MainWindow::onComplianceEvent()";
+  on_startRvsTButton_clicked();
+}
+
+
+void
+MainWindow::onKeithleyReadyForTrigger() {
+//  qDebug() << "MainWindow::onKeithleyReadyForTrigger()";
+  isK236ReadyForTrigger = true;
+}
+
+
+void
+MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
+  qDebug() << dataTime.secsTo(startMeasuringTime) << sDataRead;
+}
+
+
 bool
 MainWindow::getNewSigmaMeasure() {
-  qDebug() << "Fake Sigma Measure";
+  qDebug() << "Sigma Measure";
+  pKeithley->sendTrigger();
+  isK236ReadyForTrigger = false;
   return true;
 }
 

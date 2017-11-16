@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define KEITHLEY236_H
 
 #include <QObject>
+#include <QDateTime>
 
 class Keithley236 : public QObject
 {
@@ -32,8 +33,12 @@ public:
   int      initVvsT(double dAppliedCurrent, double dVoltageCompliance);
   int      junctionCheck();
   void     onGpibCallback(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
+  bool     sendTrigger();
 
 signals:
+  void complianceEvent();
+  void readyForTrigger();
+  void newReading(QDateTime currentTime, QString sReading);
 
 public slots:
 
@@ -61,6 +66,7 @@ private:
   int iComplianceEvents;
   QString sCommand;
   QString sResponse;
+  double lastReading;
 };
 
 #endif // KEITHLEY236_H
