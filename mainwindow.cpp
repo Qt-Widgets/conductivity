@@ -278,6 +278,9 @@ MainWindow::on_startRvsTButton_clicked() {
       pOutputFile->deleteLater();
       pOutputFile = Q_NULLPTR;
     }
+    pOutputFile->write(configureRvsTDialog.sSampleInfo.toLocal8Bit());
+    pOutputFile->write("\n");
+    pOutputFile->flush();
     if(pKeithley) pKeithley->endVvsT();
     stopDAQ();
     if(pLakeShore) pLakeShore->switchPowerOff();
@@ -605,6 +608,14 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
   Q_UNUSED(t)
   double current = sMeasures.at(0).toDouble();
   double voltage = sMeasures.at(1).toDouble();
+  pOutputFile->write(QString("%1,%2,%3,%4,%5\n")
+                     .arg(current)
+                     .arg(voltage)
+                     .arg(currentTemperature)
+                     .arg(t)
+                     .arg(currentLampStatus)
+                     .toLocal8Bit());
+  pOutputFile->flush();
   if(currentLampStatus == LAMP_OFF) {
     pPlotMeasurements->NewPoint(iPlotDark, currentTemperature, current/voltage);
     pPlotMeasurements->UpdatePlot();
