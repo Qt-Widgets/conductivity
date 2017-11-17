@@ -120,13 +120,14 @@ MainWindow::CheckInstruments() {
   for(short i=0; i<30; i++) padlist[i] = i+1;
   padlist[30] = NOADDR;
 
-  SendIFC(gpibBoardID);
-  if(ThreadIbsta() & ERR) {
-    qDebug() << "In SendIFC: ";
-    QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qDebug() << sError;
+  // Enable assertion of REN when System Controller
+  // This is required by the Keithley 236
+  ibconfig(gpibBoardID, IbcSRE, 1);
+  if(isGpibError("MainWindow::CheckInstruments(): ibconfig() Unable to set REN When SC"))
     return false;
-  }
+  SendIFC(gpibBoardID);
+  if(isGpibError("MainWindow::CheckInstruments(): SendIFC Error"))
+    return false;
 
   // If addrlist contains only the constant NOADDR,
   // the Universal Device Clear (DCL) message is sent
@@ -495,6 +496,7 @@ MainWindow::onTimeToGetNewMeasure() {
   getNewSigmaMeasure();
   if(!pLakeShore->isRamping()) {// Ramp is Done
     measuringTimer.stop();
+    bRunning = false;
     disconnect(&measuringTimer, 0, 0, 0);
     if(pOutputFile) {
       if(pOutputFile->isOpen())

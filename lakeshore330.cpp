@@ -71,7 +71,7 @@ LakeShore330::~LakeShore330() {
 int
 LakeShore330::init() {
 //  qDebug() << "LakeShore330::init()";
-  ls330 = ibdev(gpibNumber, ls330Address, 0, T100ms, 1, 0x1c0A);
+  ls330 = ibdev(gpibNumber, ls330Address, 0, T3s, 1, 0x1c0A);
   if(ls330 < 0) {
     qCritical() << "LakeShore330::init() ibdev() Failed";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());

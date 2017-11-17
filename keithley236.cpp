@@ -70,7 +70,7 @@ Keithley236::~Keithley236() {
 
 int
 Keithley236::init() {
-  k236 = ibdev(gpibNumber, k236Address, 0, T100ms, 1, 0);
+  k236 = ibdev(gpibNumber, k236Address, 0, T3s, 1, 0);
   if(k236 < 0) {
     qDebug() << "ibdev() Failed";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
