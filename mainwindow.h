@@ -50,7 +50,7 @@ protected:
   bool CheckInstruments();
   bool startDAQ();
   void stopDAQ();
-  bool getNewSigmaDarkMeasure();
+  bool getNewSigmaMeasure();
   int  JunctionCheck();
   void initPlots();
 
@@ -84,26 +84,26 @@ private:
   ConfigureRvsTDialog configureRvsTDialog;
   ConfigureIvsVDialog configureIvsVDialog;
 
-  const quint8 LAMP_ON;
-  const quint8 LAMP_OFF;
-  int          iCurrentTPlot;
-  int          gpibBoardID;
-  int32        error;
-  TaskHandle   lampTaskHandle;// Digital Output
-  QString      sLampLine;
-  quint8       currentLampStatus;
-  bool         bStartDaq;
-  Plot2D      *pPlotMeasurements;
-  Plot2D      *pPlotTemperature;
-  QString      sMeasurementPlotLabel;
-  QString      sTemperaturePlotLabel;
-  int          maxPlotPoints;
-  quint64      maxReachingTTime;
-  double       timeBetweenMeasurements;
-  int          iPlotDark;
-  int          iPlotPhoto;
-  int          iCurrentPlot;
-  bool         isK236ReadyForTrigger;
+  const quint8  LAMP_ON;
+  const quint8  LAMP_OFF;
+  int           iCurrentTPlot;
+  int           gpibBoardID;
+  int32         error;
+  TaskHandle    lampTaskHandle;// Digital Output
+  QString       sLampLine;
+  quint8        currentLampStatus;
+  bool          bStartDaq;
+  Plot2D       *pPlotMeasurements;
+  Plot2D       *pPlotTemperature;
+  QString       sMeasurementPlotLabel;
+  QString       sTemperaturePlotLabel;
+  int           maxPlotPoints;
+  quint64       maxReachingTTime;
+  double        timeBetweenMeasurements;
+  int           iPlotDark;
+  int           iPlotPhoto;
+  volatile bool isK236ReadyForTrigger;
+  bool          bRunning;
 };
 
 #endif // MAINWINDOW_H

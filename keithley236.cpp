@@ -94,47 +94,48 @@ Keithley236::init() {
   isGpibError("ibnotify call failed.");
   ibclr(k236);
   QThread::sleep(1);
-  ibrsp(k236, &spollByte);
-  if(isGpibError("ibrsp failed"))  {
-    return -1;
-  }
   return 0;
 }
 
 
 int
 Keithley236::initVvsT(double dAppliedCurrent, double dVoltageCompliance) {
-  ibrsp(k236, &spollByte);     // To Clear SRQ
-  gpibWrite(k236, "M0,0X");    // SRQ Disabled, SRQ on Compliance
-  gpibWrite(k236, "F1,0");     // Source I Measure V dc
-  gpibWrite(k236, "O1");       // Remote Sense
-  gpibWrite(k236, "P5");       // 32 Reading Filter
-  gpibWrite(k236, "Z0");       // Disable Zero suppression
-  gpibWrite(k236, "S3");       // 20ms integration time
+  gpibWrite(k236, "M0,0X");     // SRQ Disabled, SRQ on Compliance
+  gpibWrite(k236, "F1,0");      // Source I Measure V dc
+  gpibWrite(k236, "O1");        // Remote Sense
+  gpibWrite(k236, "P5");        // 32 Reading Filter
+  gpibWrite(k236, "Z0");        // Disable Zero suppression
+  gpibWrite(k236, "S3");        // 20ms integration time
   sCommand = QString("L%1,0").arg(dVoltageCompliance);
-  gpibWrite(k236, sCommand);   // Set Compliance, Autorange Measure
+  gpibWrite(k236, sCommand);    // Set Compliance, Autorange Measure
   sCommand = QString("B%1,0,0").arg(dAppliedCurrent);
-  gpibWrite(k236, sCommand);   // Set Applied Current
-  gpibWrite(k236, "R0X");      // Disarm Trigger
+  gpibWrite(k236, sCommand);    // Set Applied Current
+  gpibWrite(k236, "R0X");       // Disarm Trigger
   gpibWrite(k236, "T0,1,0,0X"); // Trigger on X ^SRC DLY MSR
-  gpibWrite(k236, "U3X");
-  qDebug() << "Status =" << gpibRead(k236);
-  gpibWrite(k236, "R1");       // Arm Trigger
-  gpibWrite(k236, "N1");       // Operate !
-  gpibWrite(k236, "G5,2,0X");  // Output Source, Measure, No Prefix, DC
+  gpibWrite(k236, "R1");        // Arm Trigger
+  gpibWrite(k236, "N1");        // Operate !
+  gpibWrite(k236, "G5,2,0X");   // Output Source, Measure, No Prefix, DC
   // Give the instrument time to execute commands
-  QThread::sleep(3);
-  ibrsp(k236, &spollByte);     // To Clear SRQ
-  keithley236::rearmMask =
+  int srqMask =
       COMPLIANCE +
       K236_ERROR +
       READY_FOR_TRIGGER +
       READING_DONE +
       WARNING;
-  sCommand = QString("M%1,0X").arg(keithley236::rearmMask);
+  sCommand = QString("M%1,0X").arg(srqMask);
   gpibWrite(k236, sCommand);   // SRQ Mask, Interrupt on Compliance
   if(isGpibError(QString("Keithley236::initVvsT: %1").arg(sCommand)))
     exit(-1);
+  return 0;
+}
+
+
+int
+Keithley236::endVvsT() {
+  ibnotify (k236, 0, NULL, NULL);// disable notification
+  gpibWrite(k236, "R0");         // Disarm Trigger
+  gpibWrite(k236, "N0X");        // Place in Stand By
+  gpibWrite(k236, "M0,0X");      // SRQ Disabled, SRQ on Compliance
   return 0;
 }
 
@@ -190,25 +191,18 @@ Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long
   Q_UNUSED(LocalIberr)
   Q_UNUSED(LocalIbcntl)
 
-  ibrsp(LocalUd, &spollByte);
-  if(isGpibError("Keithley236::onGpibCallback: ERR on Serial Poll")) {
-    keithley236::rearmMask =
-        COMPLIANCE +
-        K236_ERROR +
-        READY_FOR_TRIGGER +
-        READING_DONE +
-        WARNING;
-    return;
+  if(ibrsp(LocalUd, &spollByte) & ERR) {
+    qCritical() << QString("GPIB error %1").arg(LocalIberr);
   }
 
   if(spollByte & WARNING) {// Warning
     gpibWrite(LocalUd, "U9X");
     sCommand = gpibRead(LocalUd);
-    qDebug() << "Keithley236::onGpibCallback: Warning" << sCommand;
+    qCritical() << "Keithley236::onGpibCallback: Warning" << sCommand;
   }
 
   if(spollByte & TRIGGER_OUT) {// Trigger Out
-    qDebug() << "Keithley236::onGpibCallback: Trigger Out ?";
+    qCritical() << "Keithley236::onGpibCallback: Trigger Out ?";
   }
 
   if(spollByte & COMPLIANCE) {// Compliance
@@ -217,17 +211,9 @@ Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long
                    .arg(iComplianceEvents)
                    .arg(lastReading);
     QThread::msleep(300);
-//    ibrsp(LocalUd, &spollByte);
     if(iComplianceEvents > MAX_COMPLIANCE_EVENTS) {
       qCritical() << QString("Keithley236::onGpibCallback:  Measure Stopped");
       emit complianceEvent();
-      keithley236::rearmMask =
-          COMPLIANCE +
-          K236_ERROR +
-          READY_FOR_TRIGGER +
-          READING_DONE +
-          WARNING;
-      return;
     }
   }
 
@@ -235,32 +221,19 @@ Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long
     gpibWrite(LocalUd, "U1X");
     sCommand = gpibRead(LocalUd);
     qCritical() << "Keithley236::onGpibCallback: Error" << sCommand;
-    keithley236::rearmMask =
-        COMPLIANCE +
-        K236_ERROR +
-        READY_FOR_TRIGGER +
-        READING_DONE +
-        WARNING;
-    return;
   }
 
   if(spollByte & READY_FOR_TRIGGER) {// Ready for trigger
-//    qDebug() << "Keithley236::onGpibCallback: Ready for trigger";
     emit readyForTrigger();
  }
 
   if(spollByte & READING_DONE) {// Reading Done
-    qDebug() << "Keithley236::onGpibCallback: Reading Done";
     QDateTime currentTime = QDateTime::currentDateTime();
     sResponse = gpibRead(LocalUd);
     emit newReading(currentTime, sResponse);
   }
-  keithley236::rearmMask =
-      COMPLIANCE +
-      K236_ERROR +
-      READY_FOR_TRIGGER +
-      READING_DONE +
-      WARNING;
+
+  keithley236::rearmMask = RQS;
 }
 
 bool

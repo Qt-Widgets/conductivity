@@ -31,6 +31,7 @@ public:
   virtual ~Keithley236();
   int      init();
   int      initVvsT(double dAppliedCurrent, double dVoltageCompliance);
+  int      endVvsT();
   int      junctionCheck();
   void     onGpibCallback(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
   bool     sendTrigger();

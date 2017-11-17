@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDebug>
 #include <QSettings>
 #include <QFile>
+#include <QThread>
 #include <ni4882.h>
 #include <NIDAQmx.h>
 
@@ -55,6 +56,8 @@ MainWindow::MainWindow(QWidget *parent)
   , timeBetweenMeasurements(5000)
   , iPlotDark(1)
   , iPlotPhoto(2)
+  , isK236ReadyForTrigger(false)
+  , bRunning(false)
 {
   ui->setupUi(this);
 
@@ -88,6 +91,25 @@ MainWindow::closeEvent(QCloseEvent *event) {
   QSettings settings;
   settings.setValue("mainWindowGeometry", saveGeometry());
   settings.setValue("mainWindowState", saveState());
+  if(bRunning) {
+    waitingTStartTimer.stop();
+    stabilizingTimer.stop();
+    readingTTimer.stop();
+    measuringTimer.stop();
+    disconnect(&waitingTStartTimer, 0, 0, 0);
+    disconnect(&stabilizingTimer, 0, 0, 0);
+    disconnect(&readingTTimer, 0, 0, 0);
+    disconnect(&measuringTimer, 0, 0, 0);
+    if(pOutputFile) {
+      if(pOutputFile->isOpen())
+        pOutputFile->close();
+      pOutputFile->deleteLater();
+      pOutputFile = Q_NULLPTR;
+    }
+    if(pKeithley) pKeithley->endVvsT();
+    stopDAQ();
+    if(pLakeShore) pLakeShore->switchPowerOff();
+  }
 }
 
 
@@ -220,8 +242,20 @@ Error:
 
 void
 MainWindow::stopDAQ() {
-  DAQmxStopTask(lampTaskHandle);
-  DAQmxClearTask(lampTaskHandle);
+  if(lampTaskHandle) {
+    currentLampStatus  = LAMP_OFF;
+    DAQmxWriteDigitalLines(
+      lampTaskHandle,
+      1,                       // numSampsPerChan
+      1,                       // autoStart
+      1.0,                     // timeout [s]
+      DAQmx_Val_GroupByChannel,// dataLayout
+      &currentLampStatus,      // writeArray[]
+      NULL,                    // *sampsPerChanWritten
+      NULL);                   // *reserved
+    DAQmxStopTask(lampTaskHandle);
+    DAQmxClearTask(lampTaskHandle);
+  }
   lampTaskHandle = Q_NULLPTR;
 }
 
@@ -229,8 +263,23 @@ MainWindow::stopDAQ() {
 void
 MainWindow::on_startRvsTButton_clicked() {
   if(ui->startRvsTButton->text().contains("Stop")) {
+    waitingTStartTimer.stop();
+    stabilizingTimer.stop();
+    readingTTimer.stop();
+    measuringTimer.stop();
+    disconnect(&waitingTStartTimer, 0, 0, 0);
+    disconnect(&stabilizingTimer, 0, 0, 0);
+    disconnect(&readingTTimer, 0, 0, 0);
+    disconnect(&measuringTimer, 0, 0, 0);
+    if(pOutputFile) {
+      if(pOutputFile->isOpen())
+        pOutputFile->close();
+      pOutputFile->deleteLater();
+      pOutputFile = Q_NULLPTR;
+    }
+    if(pKeithley) pKeithley->endVvsT();
     stopDAQ();
-    pLakeShore->switchPowerOff();
+    if(pLakeShore) pLakeShore->switchPowerOff();
     ui->startRvsTButton->setText("Start R vs T");
     ui->startIvsVButton->setEnabled(true);
     return;
@@ -336,6 +385,7 @@ MainWindow::initPlots() {
   sMeasurementPlotLabel = QString("R^-1 [OHM^-1] vs T [K]");
   pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
   pPlotMeasurements->setMaxPoints(maxPlotPoints);
+  pPlotMeasurements->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
 
   pPlotMeasurements->NewDataSet(iPlotDark,//Id
                                 3, //Pen Width
@@ -348,7 +398,7 @@ MainWindow::initPlots() {
 
   pPlotMeasurements->NewDataSet(iPlotPhoto,//Id
                                 3, //Pen Width
-                                QColor(127, 127, 127),// Color
+                                QColor(255, 255, 0),// Color
                                 pPlotMeasurements->ipoint,// Symbol
                                 "Photo"// Title
                                 );
@@ -363,6 +413,8 @@ MainWindow::initPlots() {
   sTemperaturePlotLabel = QString("T [K] vs t [s]");
   pPlotTemperature = new Plot2D(this, sTemperaturePlotLabel);
   pPlotTemperature->setMaxPoints(maxPlotPoints);
+  pPlotTemperature->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
+
   pPlotTemperature->NewDataSet(1,//Id
                                3, //Pen Width
                                QColor(255, 0, 0),// Color
@@ -371,7 +423,7 @@ MainWindow::initPlots() {
                                );
   pPlotTemperature->SetShowDataSet(1, true);
   pPlotTemperature->SetShowTitle(1, true);
-  pPlotTemperature->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
+
   pPlotTemperature->UpdatePlot();
   pPlotTemperature->show();
   iCurrentTPlot = 1;
@@ -432,23 +484,24 @@ MainWindow::onTimerStabilizeT() {
     ui->statusBar->showMessage(QString("Error Starting the Measure"));
     return;
   }
-  getNewSigmaDarkMeasure();
   measuringTimer.start(timeBetweenMeasurements);
+  bRunning = true;
 }
 
 
 void
 MainWindow::onTimeToGetNewMeasure() {
-  getNewSigmaDarkMeasure();
+  getNewSigmaMeasure();
   if(!pLakeShore->isRamping()) {// Ramp is Done
+    measuringTimer.stop();
+    disconnect(&measuringTimer, 0, 0, 0);
     if(pOutputFile) {
       if(pOutputFile->isOpen())
         pOutputFile->close();
       pOutputFile->deleteLater();
       pOutputFile = Q_NULLPTR;
     }
-    measuringTimer.stop();
-    disconnect(&measuringTimer, 0, 0, 0);
+    pKeithley->endVvsT();
     stopDAQ();
     pLakeShore->switchPowerOff();
     ui->startRvsTButton->setText("Start R vs T");
@@ -531,36 +584,63 @@ MainWindow::onComplianceEvent() {
 
 void
 MainWindow::onKeithleyReadyForTrigger() {
-//  qDebug() << "MainWindow::onKeithleyReadyForTrigger()";
   isK236ReadyForTrigger = true;
 }
 
 
 void
 MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
+  if(!bRunning)
+    return;
   QStringList sMeasures = QStringList(sDataRead.split(",", QString::SkipEmptyParts));
   if(sMeasures.count() < 2) {
     qDebug() << "MainWindow::onNewKeithleyReading: Measurement Format Error";
     return;
   }
+  double currentTemperature = pLakeShore->getTemperature();
   double t = double(startMeasuringTime.msecsTo(dataTime))/1000.0;
+  Q_UNUSED(t)
   double current = sMeasures.at(0).toDouble();
   double voltage = sMeasures.at(1).toDouble();
-  pPlotMeasurements->NewPoint(iCurrentPlot, t, current/voltage);
-  pPlotMeasurements->UpdatePlot();
-  /*
-  Switch ON the Lamp
-  Start waiting for lamp ON and current stabilizing
-  iCurrentPlot = iPlotPhoto;
-  */
+  if(currentLampStatus == LAMP_OFF) {
+    pPlotMeasurements->NewPoint(iPlotDark, currentTemperature, current/voltage);
+    pPlotMeasurements->UpdatePlot();
+    currentLampStatus = LAMP_ON;
+  }
+  else {
+    pPlotMeasurements->NewPoint(iPlotPhoto, currentTemperature, current/voltage);
+    pPlotMeasurements->UpdatePlot();
+    currentLampStatus = LAMP_OFF;
+  }
+  DAQmxErrChk(
+    DAQmxWriteDigitalLines(
+      lampTaskHandle,
+      1,                       // numSampsPerChan
+      1,                       // autoStart
+      1.0,                     // timeout [s]
+      DAQmx_Val_GroupByChannel,// dataLayout
+      &currentLampStatus,      // writeArray[]
+      NULL,                    // *sampsPerChanWritten
+      NULL)                    // *reserved
+  );
+  return;
+
+Error:
+  if(DAQmxFailed(error)) {
+    char errBuf[2048];
+    DAQmxGetExtendedErrorInfo(errBuf, sizeof(errBuf));
+    DAQmxClearTask(lampTaskHandle);
+    QMessageBox::critical(Q_NULLPTR, "DAQmx Error", QString(errBuf));
+  }
+  return;
 }
 
 
 bool
-MainWindow::getNewSigmaDarkMeasure() {
-  qDebug() << "Sigma Measure";
+MainWindow::getNewSigmaMeasure() {
+  if(!isK236ReadyForTrigger)
+    return false;
   isK236ReadyForTrigger = false;
-  iCurrentPlot = iPlotDark;
   return pKeithley->sendTrigger();
 }
 
