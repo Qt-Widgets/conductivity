@@ -447,14 +447,14 @@ MainWindow::onTimerStabilizeT() {
     ui->statusBar->showMessage(QString("Error Starting the Measure"));
     return;
   }
-  getNewSigmaMeasure();
+  getNewSigmaDarkMeasure();
   measuringTimer.start(timeBetweenMeasurements);
 }
 
 
 void
 MainWindow::onTimeToGetNewMeasure() {
-  getNewSigmaMeasure();
+  getNewSigmaDarkMeasure();
   if(!pLakeShore->isRamping()) {// Ramp is Done
     if(pOutputFile) {
       if(pOutputFile->isOpen())
@@ -553,18 +553,30 @@ MainWindow::onKeithleyReadyForTrigger() {
 
 void
 MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
-  qDebug() << "t=" << startMeasuringTime.secsTo(dataTime);
   QStringList sMeasures = QStringList(sDataRead.split(",", QString::SkipEmptyParts));
-  for(int i=0; i<sMeasures.count(); i++)
-    qDebug() << sMeasures.at(i);
+  if(sMeasures.count() < 2) {
+    qDebug() << "MainWindow::onNewKeithleyReading: Measurement Format Error";
+    return;
+  }
+  double t = double(startMeasuringTime.msecsTo(dataTime))/1000.0;
+  double current = sMeasures.at(0).toDouble();
+  double voltage = sMeasures.at(1).toDouble();
+  pPlotMeasurements->NewPoint(iCurrentPlot, t, current/voltage);
+  pPlotMeasurements->UpdatePlot();
+  /*
+  Switch ON the Lamp
+  Start waiting for lamp ON and current stabilizing
+  iCurrentPlot = iPlotPhoto;
+  */
 }
 
 
 bool
-MainWindow::getNewSigmaMeasure() {
+MainWindow::getNewSigmaDarkMeasure() {
   qDebug() << "Sigma Measure";
   isK236ReadyForTrigger = false;
-  return pKeithley->sendTrigger();;
+  iCurrentPlot = iPlotDark;
+  return pKeithley->sendTrigger();
 }
 
 

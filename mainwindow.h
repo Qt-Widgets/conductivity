@@ -50,7 +50,7 @@ protected:
   bool CheckInstruments();
   bool startDAQ();
   void stopDAQ();
-  bool getNewSigmaMeasure();
+  bool getNewSigmaDarkMeasure();
   int  JunctionCheck();
   void initPlots();
 
@@ -102,6 +102,7 @@ private:
   double       timeBetweenMeasurements;
   int          iPlotDark;
   int          iPlotPhoto;
+  int          iCurrentPlot;
   bool         isK236ReadyForTrigger;
 };
 
