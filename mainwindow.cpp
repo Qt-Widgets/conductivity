@@ -394,7 +394,7 @@ MainWindow::initPlots() {
 
   pPlotMeasurements->NewDataSet(iPlotDark,//Id
                                 3, //Pen Width
-                                QColor(127, 127, 127),// Color
+                                QColor(192, 192, 192),// Color
                                 pPlotMeasurements->ipoint,// Symbol
                                 "Dark"// Title
                                 );
