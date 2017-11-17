@@ -116,7 +116,7 @@ Keithley236::initVvsT(double dAppliedCurrent, double dVoltageCompliance) {
   sCommand = QString("B%1,0,0").arg(dAppliedCurrent);
   gpibWrite(k236, sCommand);   // Set Applied Current
   gpibWrite(k236, "R0X");      // Disarm Trigger
-  gpibWrite(k236, "T0,1,0,0"); // Trigger on X ^SRC DLY MSR
+  gpibWrite(k236, "T0,1,0,0X"); // Trigger on X ^SRC DLY MSR
   gpibWrite(k236, "U3X");
   qDebug() << "Status =" << gpibRead(k236);
   gpibWrite(k236, "R1");       // Arm Trigger

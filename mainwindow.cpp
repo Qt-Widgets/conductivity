@@ -537,16 +537,18 @@ MainWindow::onKeithleyReadyForTrigger() {
 
 void
 MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
-  qDebug() << dataTime.secsTo(startMeasuringTime) << sDataRead;
+  qDebug() << "t=" << startMeasuringTime.secsTo(dataTime);
+  QStringList sMeasures = QStringList(sDataRead.split(",", QString::SkipEmptyParts));
+  for(int i=0; i<sMeasures.count(); i++)
+    qDebug() << sMeasures.at(i);
 }
 
 
 bool
 MainWindow::getNewSigmaMeasure() {
   qDebug() << "Sigma Measure";
-  pKeithley->sendTrigger();
   isK236ReadyForTrigger = false;
-  return true;
+  return pKeithley->sendTrigger();;
 }
 
 
