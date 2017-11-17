@@ -278,9 +278,6 @@ MainWindow::on_startRvsTButton_clicked() {
       pOutputFile->deleteLater();
       pOutputFile = Q_NULLPTR;
     }
-    pOutputFile->write(configureRvsTDialog.sSampleInfo.toLocal8Bit());
-    pOutputFile->write("\n");
-    pOutputFile->flush();
     if(pKeithley) pKeithley->endVvsT();
     stopDAQ();
     if(pLakeShore) pLakeShore->switchPowerOff();
@@ -348,6 +345,9 @@ MainWindow::on_startRvsTButton_clicked() {
     QApplication::restoreOverrideCursor();
     return;
   }
+  pOutputFile->write(configureRvsTDialog.sSampleInfo.toLocal8Bit());
+  pOutputFile->write("\n");
+  pOutputFile->flush();
 
   initPlots();
 
