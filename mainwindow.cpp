@@ -280,6 +280,7 @@ MainWindow::on_startRvsTButton_clicked() {
     if(pKeithley) pKeithley->endVvsT();
     stopDAQ();
     if(pLakeShore) pLakeShore->switchPowerOff();
+    bRunning = false;
     ui->startRvsTButton->setText("Start R vs T");
     ui->startIvsVButton->setEnabled(true);
     return;
