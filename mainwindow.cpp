@@ -53,7 +53,7 @@ MainWindow::MainWindow(QWidget *parent)
   , pPlotTemperature(Q_NULLPTR)
   , maxPlotPoints(3000)
   , maxReachingTTime(120)// In seconds
-  , timeBetweenMeasurements(5000)
+  , timeBetweenMeasurements(10000)
   , iPlotDark(1)
   , iPlotPhoto(2)
   , isK236ReadyForTrigger(false)
