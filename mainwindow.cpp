@@ -65,9 +65,11 @@ MainWindow::MainWindow(QWidget *parent)
   , currentLampStatus(LAMP_OFF)
   , pPlotMeasurements(Q_NULLPTR)
   , pPlotTemperature(Q_NULLPTR)
-  , maxChartPoints(3000)
+  , maxPlotPoints(3000)
   , maxReachingTTime(120)// In seconds
   , timeBetweenMeasurements(5000)
+  , iPlotDark(1)
+  , iPlotPhoto(2)
 {
   ui->setupUi(this);
 
@@ -249,7 +251,8 @@ MainWindow::on_startRvsTButton_clicked() {
     return;
   }
   // else
-  if(configureRvsTDialog.exec() == QDialog::Rejected) return;
+  if(configureRvsTDialog.exec() == QDialog::Rejected)
+    return;
 
   QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
@@ -268,11 +271,9 @@ MainWindow::on_startRvsTButton_clicked() {
     QApplication::restoreOverrideCursor();
     return;
   }
-  int initError;
   if(pKeithley  != Q_NULLPTR)  {
     ui->statusBar->showMessage("Initializing Keithley 236...");
-    initError = pKeithley->init();
-    if(initError) {
+    if(pKeithley->init()) {
       ui->statusBar->showMessage("Unable to Initialize Keithley 236...");
       stopDAQ();
       QApplication::restoreOverrideCursor();
@@ -281,8 +282,7 @@ MainWindow::on_startRvsTButton_clicked() {
   }
   if(pLakeShore != Q_NULLPTR) {
     ui->statusBar->showMessage("Initializing LakeShore 330...");
-    initError = pLakeShore->init();
-    if(initError) {
+    if(pLakeShore->init()) {
       ui->statusBar->showMessage("Unable to Initialize LakeShore 330...");
       stopDAQ();
       QApplication::restoreOverrideCursor();
@@ -310,48 +310,13 @@ MainWindow::on_startRvsTButton_clicked() {
     return;
   }
 
-  ui->startIvsVButton->setDisabled(true);
-  ui->startRvsTButton->setText("Stop R vs T");
-  ui->statusBar->clearMessage();
-
-  // Plot of Condicibility vs Temperature
-  if(pPlotMeasurements) delete pPlotMeasurements;
-  sMeasurementPlotLabel = QString("R^-1 [OHM^-1] vs T [K]");
-  pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
-  pPlotMeasurements->setMaxPoints(maxChartPoints);
-  pPlotMeasurements->NewDataSet(1,//Id
-                                3, //Pen Width
-                                QColor(255, 255, 0),// Color
-                                StripChart::ipoint,// Symbol
-                                "R"// Title
-                                );
-  pPlotMeasurements->SetShowDataSet(1, true);
-  pPlotMeasurements->SetShowTitle(1, true);
-  pPlotMeasurements->UpdatePlot();
-  pPlotMeasurements->show();
-
-  // Plot of Temperature vs Time
-  if(pPlotTemperature) delete pPlotTemperature;
-  sTemperaturePlotLabel = QString("T [K] vs t [s]");
-  pPlotTemperature = new Plot2D(this, sTemperaturePlotLabel);
-  pPlotTemperature->setMaxPoints(maxChartPoints);
-  pPlotTemperature->NewDataSet(1,//Id
-                               3, //Pen Width
-                               QColor(255, 0, 0),// Color
-                               StripChart::ipoint,// Symbol
-                               "T"// Title
-                               );
-  pPlotTemperature->SetShowDataSet(1, true);
-  pPlotTemperature->SetShowTitle(1, true);
-  pPlotTemperature->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
-  pPlotTemperature->UpdatePlot();
-  pPlotTemperature->show();
-  iCurrentTPlot = 1;
+  initPlots();
 
   // Configure Source-Measure Unit
   double dAppliedCurrent = configureRvsTDialog.dSourceValue;
   double dVoltageCompliance = 10.0;
   pKeithley->initVvsT(dAppliedCurrent, dVoltageCompliance);
+
   // Configure Thermostat
   pLakeShore->setTemperature(configureRvsTDialog.dTempStart);
   pLakeShore->switchPowerOn(3);
@@ -369,12 +334,63 @@ MainWindow::on_startRvsTButton_clicked() {
 
   // Start Reaching the Initial Temperature
   waitingTStartTimer.start(5000);
+
+  ui->startIvsVButton->setDisabled(true);
+  ui->startRvsTButton->setText("Stop R vs T");
   ui->statusBar->showMessage(QString("%1 Waiting Initial T[%2K]")
                              .arg(waitingTStartTime.toString())
                              .arg(configureRvsTDialog.dTempStart));
   QApplication::restoreOverrideCursor();
 }
 
+
+void
+MainWindow::initPlots() {
+  // Plot of Condicibility vs Temperature
+  if(pPlotMeasurements) delete pPlotMeasurements;
+  sMeasurementPlotLabel = QString("R^-1 [OHM^-1] vs T [K]");
+  pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
+  pPlotMeasurements->setMaxPoints(maxPlotPoints);
+
+  pPlotMeasurements->NewDataSet(iPlotDark,//Id
+                                3, //Pen Width
+                                QColor(127, 127, 127),// Color
+                                pPlotMeasurements->ipoint,// Symbol
+                                "Dark"// Title
+                                );
+  pPlotMeasurements->SetShowDataSet(iPlotDark, true);
+  pPlotMeasurements->SetShowTitle(iPlotDark, true);
+
+  pPlotMeasurements->NewDataSet(iPlotPhoto,//Id
+                                3, //Pen Width
+                                QColor(127, 127, 127),// Color
+                                pPlotMeasurements->ipoint,// Symbol
+                                "Photo"// Title
+                                );
+  pPlotMeasurements->SetShowDataSet(iPlotPhoto, true);
+  pPlotMeasurements->SetShowTitle(iPlotPhoto, true);
+
+  pPlotMeasurements->UpdatePlot();
+  pPlotMeasurements->show();
+
+  // Plot of Temperature vs Time
+  if(pPlotTemperature) delete pPlotTemperature;
+  sTemperaturePlotLabel = QString("T [K] vs t [s]");
+  pPlotTemperature = new Plot2D(this, sTemperaturePlotLabel);
+  pPlotTemperature->setMaxPoints(maxPlotPoints);
+  pPlotTemperature->NewDataSet(1,//Id
+                               3, //Pen Width
+                               QColor(255, 0, 0),// Color
+                               pPlotTemperature->ipoint,// Symbol
+                               "T"// Title
+                               );
+  pPlotTemperature->SetShowDataSet(1, true);
+  pPlotTemperature->SetShowTitle(1, true);
+  pPlotTemperature->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
+  pPlotTemperature->UpdatePlot();
+  pPlotTemperature->show();
+  iCurrentTPlot = 1;
+}
 
 void
 MainWindow::onTimeToCheckReachedT() {
@@ -489,7 +505,7 @@ MainWindow::on_startIvsVButton_clicked() {
   sMeasurementPlotLabel = QString("I [A] vs V [V]");
 
   pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
-  pPlotMeasurements->setMaxPoints(maxChartPoints);
+  pPlotMeasurements->setMaxPoints(maxPlotPoints);
   pPlotMeasurements->NewDataSet(1,//Id
                                 3, //Pen Width
                                 QColor(255, 255, 0),// Color
@@ -504,7 +520,7 @@ MainWindow::on_startIvsVButton_clicked() {
   if(pPlotTemperature) delete pPlotTemperature;
   sTemperaturePlotLabel = QString("T [K] vs t [s]");
   pPlotTemperature = new Plot2D(this, sTemperaturePlotLabel);
-  pPlotTemperature->setMaxPoints(maxChartPoints);
+  pPlotTemperature->setMaxPoints(maxPlotPoints);
   pPlotTemperature->NewDataSet(1,//Id
                                3, //Pen Width
                                QColor(255, 255, 0),// Color

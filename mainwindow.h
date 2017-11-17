@@ -52,6 +52,7 @@ protected:
   void stopDAQ();
   bool getNewSigmaMeasure();
   int  JunctionCheck();
+  void initPlots();
 
 private slots:
   void on_startRvsTButton_clicked();
@@ -79,7 +80,6 @@ private:
   QTimer        stabilizingTimer;
   QTimer        readingTTimer;
   QTimer        measuringTimer;
-  bool          isK236ReadyForTrigger;
 
   ConfigureRvsTDialog configureRvsTDialog;
   ConfigureIvsVDialog configureIvsVDialog;
@@ -97,9 +97,12 @@ private:
   Plot2D      *pPlotTemperature;
   QString      sMeasurementPlotLabel;
   QString      sTemperaturePlotLabel;
-  int          maxChartPoints;
+  int          maxPlotPoints;
   quint64      maxReachingTTime;
   double       timeBetweenMeasurements;
+  int          iPlotDark;
+  int          iPlotPhoto;
+  bool         isK236ReadyForTrigger;
 };
 
 #endif // MAINWINDOW_H
