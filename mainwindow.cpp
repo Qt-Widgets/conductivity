@@ -32,21 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <ni4882.h>
 #include <NIDAQmx.h>
 
-/*
-#define GPIB_COMMAND_ERROR      -1001
-#define SPOLL_ERR               -1000
-
-#define READING_TIMER       1
-#define TIMER_TO_START      2
-#define TIMER_TO_WAIT       3
-#define POSITIVE_STEP_TIMER 4
-#define NEGATIVE_STEP_TIMER 5
-#define STABILIZE_TIMER     6
-#define VOLTAGE_STEP_TIMER  7
-#define TIMEOUT_TIMER      10
-*/
-
-
 
 #define DAQmxErrChk(functionCall) if( DAQmxFailed(error=(functionCall)) ) goto Error;
 
