@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFile>
 #include <QThread>
 #include <QLayout>
+#include <QSerialPortInfo>
 #include <ni4882.h>
 #include <NIDAQmx.h>
 
@@ -59,6 +60,10 @@ MainWindow::MainWindow(QWidget *parent)
   , iPlotPhoto(2)
   , isK236ReadyForTrigger(false)
   , bRunning(false)
+  // For Arduino Serial Port
+  , baudRate(115200)
+  , waitTimeout(1000)
+  , ACK(char(6))
 {
   ui->setupUi(this);
   // To remove the resize-handle in the lower right corner
@@ -72,6 +77,11 @@ MainWindow::MainWindow(QWidget *parent)
   QSettings settings;
   restoreGeometry(settings.value("mainWindowGeometry").toByteArray());
   restoreState(settings.value("mainWindowState").toByteArray());
+
+  if(connectToArduino()) {
+    qCritical() << QString("No Arduino Ready to Use !");
+  }
+
 }
 
 
@@ -669,3 +679,61 @@ MainWindow::JunctionCheck() {// Per sapere se abbiamo una giunzione !
   return pKeithley->junctionCheck();
 }
 
+
+
+int
+MainWindow::connectToArduino() {
+  QList<QSerialPortInfo> serialPorts = QSerialPortInfo::availablePorts();
+  if(serialPorts.isEmpty()) {
+    qCritical() << QString("Empty COM port list: No Arduino connected !");
+    return -1;
+  }
+  bool found = false;
+  QSerialPortInfo info;
+  for(int i=0; i<serialPorts.size()&& !found; i++) {
+    info = serialPorts.at(i);
+    qInfo() << QString("Trying to connect at port: %1").arg(info.portName());
+    serialPort.setPortName(info.portName());
+    serialPort.setBaudRate(115200);
+    if(serialPort.open(QIODevice::ReadWrite)) {
+      requestData = QByteArray(2, char(AreYouThere));
+      QThread::sleep(3);
+      if(writeRequest(requestData) == 0)
+        found = true;
+      else
+        serialPort.close();
+    }
+  }
+  if(!found) {
+    return -1;
+  }
+  qDebug() << "Arduino found at: " << info.portName();
+  return 0;
+}
+
+
+int
+MainWindow::writeRequest(QByteArray requestData) {
+  serialPort.write(requestData.append(char(127)));
+  if (serialPort.waitForBytesWritten(waitTimeout)) {
+    if (serialPort.waitForReadyRead(waitTimeout)) {
+      QByteArray responseData = serialPort.readAll();
+      while(serialPort.waitForReadyRead(10))
+        responseData += serialPort.readAll();
+      QString response(responseData);
+      if(response != QString(ACK)) {
+        qCritical() << "MainWindow::writeRequest(): not an ACK";
+        return -1;
+      }
+    }
+    else {
+      qCritical() << "MainWindow::writeRequest(): Wait read response timeout";
+      return -1;
+    }
+  }
+  else {
+    qCritical() <<"MainWindow::writeRequest(): Wait write request timeout %1";
+    return -1;
+  }
+  return 0;
+}

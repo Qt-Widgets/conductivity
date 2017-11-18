@@ -22,7 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMainWindow>
 #include <QDateTime>
 #include <QTimer>
-#include <NIDAQmx.h>
+#include <QSerialPort>
+
+#include "NIDAQmx.h"
 
 #include "configureRvsTdialog.h"
 #include "configureIvsVdialog.h"
@@ -53,6 +55,8 @@ protected:
   bool getNewSigmaMeasure();
   int  JunctionCheck();
   void initPlots();
+  int  connectToArduino();
+  int  writeRequest(QByteArray requestData);
 
 private slots:
   void on_startRvsTButton_clicked();
@@ -67,6 +71,20 @@ private slots:
 
 private:
   Ui::MainWindow *ui;
+
+  enum commands {
+    AreYouThere   = 70,
+    InflateValve  = 71,
+    DeflateValve  = 72,
+    RightForward  = 73,
+    RightReverse  = 74,
+    LeftForward   = 75,
+    LeftReverse   = 76,
+    RightSpeed    = 77,
+    LeftSpeed     = 78,
+    UpDownServo   = 79
+  };
+  commands command;
 
 private:
   QFile*        pOutputFile;
@@ -104,6 +122,11 @@ private:
   int           iPlotPhoto;
   volatile bool isK236ReadyForTrigger;
   bool          bRunning;
+  QSerialPort   serialPort;
+  QByteArray    requestData;
+  int           baudRate;
+  int           waitTimeout;
+  const quint8  ACK;
 };
 
 #endif // MAINWINDOW_H

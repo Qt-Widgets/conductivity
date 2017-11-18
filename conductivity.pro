@@ -23,6 +23,8 @@
 QT += core
 QT += gui
 QT += widgets
+QT += serialport
+
 
 TARGET = conductivity
 TEMPLATE = app
