@@ -56,7 +56,7 @@ protected:
   int  JunctionCheck();
   void initPlots();
   int  connectToArduino();
-  int  writeRequest(QByteArray requestData);
+  int  writeToArduino(QByteArray requestData);
 
 private slots:
   void on_startRvsTButton_clicked();

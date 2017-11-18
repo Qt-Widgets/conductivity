@@ -699,7 +699,7 @@ MainWindow::connectToArduino() {
     if(serialPort.open(QIODevice::ReadWrite)) {
       requestData = QByteArray(2, char(AreYouThere));
       QThread::sleep(3);
-      if(writeRequest(requestData) == 0)
+      if(writeToArduino(requestData) == 0)
         found = true;
       else
         serialPort.close();
@@ -714,7 +714,7 @@ MainWindow::connectToArduino() {
 
 
 int
-MainWindow::writeRequest(QByteArray requestData) {
+MainWindow::writeToArduino(QByteArray requestData) {
   serialPort.write(requestData.append(char(127)));
   if (serialPort.waitForBytesWritten(waitTimeout)) {
     if (serialPort.waitForReadyRead(waitTimeout)) {
