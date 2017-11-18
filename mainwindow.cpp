@@ -106,6 +106,7 @@ MainWindow::closeEvent(QCloseEvent *event) {
   QSettings settings;
   settings.setValue("mainWindowGeometry", saveGeometry());
   settings.setValue("mainWindowState", saveState());
+  serialPort.close();
   if(bRunning) {
     waitingTStartTimer.stop();
     stabilizingTimer.stop();
