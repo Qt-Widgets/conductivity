@@ -685,7 +685,7 @@ int
 MainWindow::connectToArduino() {
   QList<QSerialPortInfo> serialPorts = QSerialPortInfo::availablePorts();
   if(serialPorts.isEmpty()) {
-    qCritical() << QString("Empty COM port list: No Arduino connected !");
+    qInfo() << QString("Empty COM port list: No Arduino connected !");
     return -1;
   }
   bool found = false;
@@ -707,7 +707,7 @@ MainWindow::connectToArduino() {
   if(!found) {
     return -1;
   }
-  qDebug() << "Arduino found at: " << info.portName();
+  qInfo() << "Arduino found at: " << info.portName();
   return 0;
 }
 
@@ -722,17 +722,17 @@ MainWindow::writeRequest(QByteArray requestData) {
         responseData += serialPort.readAll();
       QString response(responseData);
       if(response != QString(ACK)) {
-        qCritical() << "MainWindow::writeRequest(): not an ACK";
+        qInfo() << "MainWindow::writeRequest(): not an ACK";
         return -1;
       }
     }
     else {
-      qCritical() << "MainWindow::writeRequest(): Wait read response timeout";
+      qInfo() << "MainWindow::writeRequest(): Wait read response timeout";
       return -1;
     }
   }
   else {
-    qCritical() <<"MainWindow::writeRequest(): Wait write request timeout %1";
+    qInfo() <<"MainWindow::writeRequest(): Wait write request timeout %1";
     return -1;
   }
   return 0;
