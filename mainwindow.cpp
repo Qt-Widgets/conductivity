@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QSettings>
 #include <QFile>
 #include <QThread>
+#include <QLayout>
 #include <ni4882.h>
 #include <NIDAQmx.h>
 
@@ -60,6 +61,10 @@ MainWindow::MainWindow(QWidget *parent)
   , bRunning(false)
 {
   ui->setupUi(this);
+  // To remove the resize-handle in the lower right corner
+  ui->statusBar->setSizeGripEnabled(false);
+  // To make the size of the window fixed
+  this->setFixedSize(size());
 
   ui->startRvsTButton->show();
   ui->startIvsVButton->show();
