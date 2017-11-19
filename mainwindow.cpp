@@ -278,8 +278,7 @@ MainWindow::stopDAQ() {
 
 
 void
-MainWindow::on_startRvsTButton_clicked() {
-  if(ui->startRvsTButton->text().contains("Stop")) {
+MainWindow::stopRvsT() {
     bRunning = false;
     waitingTStartTimer.stop();
     stabilizingTimer.stop();
@@ -297,6 +296,13 @@ MainWindow::on_startRvsTButton_clicked() {
     if(pKeithley) pKeithley->endVvsT();
     if(pLakeShore) pLakeShore->switchPowerOff();
     stopDAQ();
+}
+
+
+void
+MainWindow::on_startRvsTButton_clicked() {
+  if(ui->startRvsTButton->text().contains("Stop")) {
+    stopRvsT();
     ui->startRvsTButton->setText("Start R vs T");
     ui->startIvsVButton->setEnabled(true);
     return;
@@ -306,7 +312,7 @@ MainWindow::on_startRvsTButton_clicked() {
     return;
 
   QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-  // Start the Digital Output Tasks
+  // Start the Digital Output Tasks to switch the lamp on or off
   ui->statusBar->showMessage("Checking for the Presence of Lamp Switch");
   if(!startDAQ()) {
     ui->statusBar->showMessage("National Instruments DAQ Board not present");
@@ -345,39 +351,38 @@ MainWindow::on_startRvsTButton_clicked() {
   if(!prepareOutputFile(configureRvsTDialog.sBaseDir,
                         configureRvsTDialog.sOutFileName))
   {
+    ui->statusBar->showMessage("Unable to Open the Output file...");
     stopDAQ();
     QApplication::restoreOverrideCursor();
     return;
   }
+  // Write the header
   pOutputFile->write(configureRvsTDialog.sSampleInfo.toLocal8Bit());
   pOutputFile->write("\n");
   pOutputFile->flush();
-
+  // Init the Plots
   initRvsTPlots();
-
   // Configure Source-Measure Unit
   double dAppliedCurrent = configureRvsTDialog.dSourceValue;
   double dVoltageCompliance = 10.0;
   pKeithley->initVvsT(dAppliedCurrent, dVoltageCompliance);
-
   // Configure Thermostat
   pLakeShore->setTemperature(configureRvsTDialog.dTempStart);
   pLakeShore->switchPowerOn(3);
-
+  // Configure the needed timers
   connect(&waitingTStartTimer, SIGNAL(timeout()),
           this, SLOT(onTimeToCheckReachedT()));
   connect(&readingTTimer, SIGNAL(timeout()),
           this, SLOT(onTimeToReadT()));
   waitingTStartTime = QDateTime::currentDateTime();
-
   // Read and plot initial value of Temperature
   startReadingTTime = waitingTStartTime;
   onTimeToReadT();
   readingTTimer.start(5000);
-
-  // Start Reaching the Initial Temperature
+  // Start the reaching of the Initial Temperature
   waitingTStartTimer.start(5000);
-
+  // All done...
+  // now we are waiting for reaching the initial temperature
   ui->startIvsVButton->setDisabled(true);
   ui->startRvsTButton->setText("Stop R vs T");
   ui->statusBar->showMessage(QString("%1 Waiting Initial T[%2K]")

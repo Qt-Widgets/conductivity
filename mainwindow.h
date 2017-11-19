@@ -55,6 +55,7 @@ protected:
   bool getNewSigmaMeasure();
   int  JunctionCheck();
   void initRvsTPlots();
+  void stopRvsT();
   void initIvsVPlots();
   bool prepareOutputFile(QString sBaseDir, QString sFileName);
   int  connectToArduino();
