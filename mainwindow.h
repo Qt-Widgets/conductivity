@@ -56,6 +56,7 @@ protected:
   int  JunctionCheck();
   void initRvsTPlots();
   void initIvsVPlots();
+  bool prepareOutputFile(QString sBaseDir, QString sFileName);
   int  connectToArduino();
   int  writeToArduino(QByteArray requestData);
 

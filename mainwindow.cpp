@@ -342,19 +342,9 @@ MainWindow::on_startRvsTButton_clicked() {
 
   // Open the Output file
   ui->statusBar->showMessage("Opening Output file...");
-  if(pOutputFile) {
-    pOutputFile->close();
-    pOutputFile->deleteLater();
-    pOutputFile = Q_NULLPTR;
-  }
-  pOutputFile = new QFile(configureRvsTDialog.sBaseDir + "/" + configureRvsTDialog.sOutFileName);
-  if(!pOutputFile->open(QIODevice::Text|QIODevice::WriteOnly)) {
-    QMessageBox::critical(this,
-                          "Error: Unable to Open Output File",
-                          QString("%1/%2")
-                          .arg(configureRvsTDialog.sBaseDir)
-                          .arg(configureRvsTDialog.sOutFileName));
-    ui->statusBar->showMessage("Unable to Open Output file...");
+  if(!prepareOutputFile(configureRvsTDialog.sBaseDir,
+                        configureRvsTDialog.sOutFileName))
+  {
     stopDAQ();
     QApplication::restoreOverrideCursor();
     return;
@@ -394,6 +384,27 @@ MainWindow::on_startRvsTButton_clicked() {
                              .arg(waitingTStartTime.toString())
                              .arg(configureRvsTDialog.dTempStart));
   QApplication::restoreOverrideCursor();
+}
+
+
+bool
+MainWindow::prepareOutputFile(QString sBaseDir, QString sFileName) {
+  if(pOutputFile) {
+    pOutputFile->close();
+    pOutputFile->deleteLater();
+    pOutputFile = Q_NULLPTR;
+  }
+  pOutputFile = new QFile(sBaseDir + "/" + sFileName);
+  if(!pOutputFile->open(QIODevice::Text|QIODevice::WriteOnly)) {
+    QMessageBox::critical(this,
+                          "Error: Unable to Open Output File",
+                          QString("%1/%2")
+                          .arg(sBaseDir)
+                          .arg(sFileName));
+    ui->statusBar->showMessage("Unable to Open Output file...");
+    return false;
+  }
+  return true;
 }
 
 
@@ -602,6 +613,19 @@ MainWindow::on_startIvsVButton_clicked() {
   ui->startRvsTButton->setDisabled(true);
   ui->startIvsVButton->setText("Stop I vs V");
 
+  // Open the Output file
+  ui->statusBar->showMessage("Opening Output file...");
+  if(!prepareOutputFile(configureIvsVDialog.sBaseDir,
+                        configureIvsVDialog.sOutFileName))
+  {
+    stopDAQ();
+    QApplication::restoreOverrideCursor();
+    return;
+  }
+  pOutputFile->write(configureIvsVDialog.sSampleInfo.toLocal8Bit());
+  pOutputFile->write("\n");
+  pOutputFile->flush();
+
   initIvsVPlots();
 
   ui->statusBar->clearMessage();
@@ -693,7 +717,8 @@ MainWindow::getNewSigmaMeasure() {
 
 
 int
-MainWindow::JunctionCheck() {// Per sapere se abbiamo una giunzione !
+MainWindow::JunctionCheck() {
+  // Per sapere se abbiamo una giunzione !
   return pKeithley->junctionCheck();
 }
 
