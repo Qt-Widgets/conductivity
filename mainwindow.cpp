@@ -69,7 +69,7 @@ MainWindow::MainWindow(QWidget *parent)
   // To remove the resize-handle in the lower right corner
   ui->statusBar->setSizeGripEnabled(false);
   // To make the size of the window fixed
-  this->setFixedSize(size());
+  setFixedSize(size());
 
   ui->startRvsTButton->show();
   ui->startIvsVButton->show();
@@ -280,6 +280,7 @@ MainWindow::stopDAQ() {
 void
 MainWindow::on_startRvsTButton_clicked() {
   if(ui->startRvsTButton->text().contains("Stop")) {
+    bRunning = false;
     waitingTStartTimer.stop();
     stabilizingTimer.stop();
     readingTTimer.stop();
@@ -289,15 +290,13 @@ MainWindow::on_startRvsTButton_clicked() {
     disconnect(&readingTTimer, 0, 0, 0);
     disconnect(&measuringTimer, 0, 0, 0);
     if(pOutputFile) {
-      if(pOutputFile->isOpen())
-        pOutputFile->close();
+      pOutputFile->close();
       pOutputFile->deleteLater();
       pOutputFile = Q_NULLPTR;
     }
     if(pKeithley) pKeithley->endVvsT();
-    stopDAQ();
     if(pLakeShore) pLakeShore->switchPowerOff();
-    bRunning = false;
+    stopDAQ();
     ui->startRvsTButton->setText("Start R vs T");
     ui->startIvsVButton->setEnabled(true);
     return;
@@ -307,7 +306,6 @@ MainWindow::on_startRvsTButton_clicked() {
     return;
 
   QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-
   // Start the Digital Output Tasks
   ui->statusBar->showMessage("Checking for the Presence of Lamp Switch");
   if(!startDAQ()) {
@@ -315,7 +313,7 @@ MainWindow::on_startRvsTButton_clicked() {
     QApplication::restoreOverrideCursor();
     return;
   }
-  // Are the instruments connectd and ready to start ?
+  // Are the GPIB instruments connectd and ready to start ?
   ui->statusBar->showMessage("Checking for the GPIB Instruments");
   if(!CheckInstruments()) {
     ui->statusBar->showMessage("GPIB Instruments not found");
@@ -345,8 +343,7 @@ MainWindow::on_startRvsTButton_clicked() {
   // Open the Output file
   ui->statusBar->showMessage("Opening Output file...");
   if(pOutputFile) {
-    if(pOutputFile->isOpen())
-      pOutputFile->close();
+    pOutputFile->close();
     pOutputFile->deleteLater();
     pOutputFile = Q_NULLPTR;
   }
@@ -358,6 +355,7 @@ MainWindow::on_startRvsTButton_clicked() {
                           .arg(configureRvsTDialog.sBaseDir)
                           .arg(configureRvsTDialog.sOutFileName));
     ui->statusBar->showMessage("Unable to Open Output file...");
+    stopDAQ();
     QApplication::restoreOverrideCursor();
     return;
   }
@@ -365,7 +363,7 @@ MainWindow::on_startRvsTButton_clicked() {
   pOutputFile->write("\n");
   pOutputFile->flush();
 
-  initPlots();
+  initRvsTPlots();
 
   // Configure Source-Measure Unit
   double dAppliedCurrent = configureRvsTDialog.dSourceValue;
@@ -400,7 +398,7 @@ MainWindow::on_startRvsTButton_clicked() {
 
 
 void
-MainWindow::initPlots() {
+MainWindow::initRvsTPlots() {
   // Plot of Condicibility vs Temperature
   if(pPlotMeasurements) delete pPlotMeasurements;
   sMeasurementPlotLabel = QString("R^-1 [OHM^-1] vs T [K]");
@@ -449,6 +447,43 @@ MainWindow::initPlots() {
   pPlotTemperature->show();
   iCurrentTPlot = 1;
 }
+
+
+void
+MainWindow::initIvsVPlots() {
+  // Plot of Current vs Voltage
+  if(pPlotMeasurements) delete pPlotMeasurements;
+  sMeasurementPlotLabel = QString("I [A] vs V [V]");
+
+  pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
+  pPlotMeasurements->setMaxPoints(maxPlotPoints);
+  pPlotMeasurements->NewDataSet(1,//Id
+                                3, //Pen Width
+                                QColor(255, 255, 0),// Color
+                                StripChart::ipoint,// Symbol
+                                "I"// Title
+                                );
+  pPlotMeasurements->SetShowDataSet(1, true);
+  pPlotMeasurements->SetShowTitle(1, true);
+  pPlotMeasurements->UpdatePlot();
+  pPlotMeasurements->show();
+  // Plot of Temperature vs Time
+  if(pPlotTemperature) delete pPlotTemperature;
+  sTemperaturePlotLabel = QString("T [K] vs t [s]");
+  pPlotTemperature = new Plot2D(this, sTemperaturePlotLabel);
+  pPlotTemperature->setMaxPoints(maxPlotPoints);
+  pPlotTemperature->NewDataSet(1,//Id
+                               3, //Pen Width
+                               QColor(255, 255, 0),// Color
+                               StripChart::ipoint,// Symbol
+                               "T"// Title
+                               );
+  pPlotTemperature->SetShowDataSet(1, true);
+  pPlotTemperature->SetShowTitle(1, true);
+  pPlotTemperature->UpdatePlot();
+  pPlotTemperature->show();
+}
+
 
 void
 MainWindow::onTimeToCheckReachedT() {
@@ -539,7 +574,7 @@ void
 MainWindow::onTimeToReadT() {
   double currentTemperature = pLakeShore->getTemperature();
   currentTime = QDateTime::currentDateTime();
-//  qDebug()<< "T = " << currentTemperature;
+  ui->temperatureEdit->setText(QString("%1").arg(currentTemperature));
   pPlotTemperature->NewPoint(iCurrentTPlot,
                              double(startReadingTTime.secsTo(currentTime)),
                              currentTemperature);
@@ -550,47 +585,24 @@ MainWindow::onTimeToReadT() {
 void
 MainWindow::on_startIvsVButton_clicked() {
   if(ui->startIvsVButton->text().contains("Stop")) {
+    if(pOutputFile) {
+      pOutputFile->close();
+      pOutputFile->deleteLater();
+      pOutputFile = Q_NULLPTR;
+    }
     ui->startIvsVButton->setText("Start I vs V");
     ui->startRvsTButton->setEnabled(true);
     return;
   }
   //else
-  if(configureIvsVDialog.exec() == QDialog::Rejected) return;
+  if(configureIvsVDialog.exec() == QDialog::Rejected)
+    return;
+
   QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
   ui->startRvsTButton->setDisabled(true);
   ui->startIvsVButton->setText("Stop I vs V");
 
-  // Plot of Condicibility vs Temperature
-  if(pPlotMeasurements) delete pPlotMeasurements;
-  sMeasurementPlotLabel = QString("I [A] vs V [V]");
-
-  pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
-  pPlotMeasurements->setMaxPoints(maxPlotPoints);
-  pPlotMeasurements->NewDataSet(1,//Id
-                                3, //Pen Width
-                                QColor(255, 255, 0),// Color
-                                StripChart::ipoint,// Symbol
-                                "I"// Title
-                                );
-  pPlotMeasurements->SetShowDataSet(1, true);
-  pPlotMeasurements->SetShowTitle(1, true);
-  pPlotMeasurements->UpdatePlot();
-  pPlotMeasurements->show();
-  // Plot of Temperature vs Time
-  if(pPlotTemperature) delete pPlotTemperature;
-  sTemperaturePlotLabel = QString("T [K] vs t [s]");
-  pPlotTemperature = new Plot2D(this, sTemperaturePlotLabel);
-  pPlotTemperature->setMaxPoints(maxPlotPoints);
-  pPlotTemperature->NewDataSet(1,//Id
-                               3, //Pen Width
-                               QColor(255, 255, 0),// Color
-                               StripChart::ipoint,// Symbol
-                               "T"// Title
-                               );
-  pPlotTemperature->SetShowDataSet(1, true);
-  pPlotTemperature->SetShowTitle(1, true);
-  pPlotTemperature->UpdatePlot();
-  pPlotTemperature->show();
+  initIvsVPlots();
 
   ui->statusBar->clearMessage();
   QApplication::restoreOverrideCursor();
@@ -612,8 +624,7 @@ MainWindow::onKeithleyReadyForTrigger() {
 
 void
 MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
-  if(!bRunning)
-    return;
+  // Decode readings
   QStringList sMeasures = QStringList(sDataRead.split(",", QString::SkipEmptyParts));
   if(sMeasures.count() < 2) {
     qDebug() << "MainWindow::onNewKeithleyReading: Measurement Format Error";
@@ -624,12 +635,17 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
   Q_UNUSED(t)
   double current = sMeasures.at(0).toDouble();
   double voltage = sMeasures.at(1).toDouble();
-  pOutputFile->write(QString("%1,%2,%3,%4,%5\n")
-                     .arg(current)
-                     .arg(voltage)
-                     .arg(currentTemperature)
-                     .arg(t)
-                     .arg(currentLampStatus)
+  ui->temperatureEdit->setText(QString("%1").arg(currentTemperature));
+  ui->currentEdit->setText(QString("%1").arg(current, 12, 'g', 6, ' '));
+  ui->voltageEdit->setText(QString("%1").arg(voltage, 12, 'g', 6, ' '));
+
+  if(!bRunning)
+    return;
+
+  pOutputFile->write(QString("%1, %2, %3")
+                     .arg(currentTemperature, 12, 'g', 6, ' ')
+                     .arg(current, 12, 'g', 6, ' ')
+                     .arg(voltage, 12, 'g', 6, ' ')
                      .toLocal8Bit());
   pOutputFile->flush();
   if(currentLampStatus == LAMP_OFF) {
@@ -641,6 +657,7 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
     pPlotMeasurements->NewPoint(iPlotPhoto, currentTemperature, current/voltage);
     pPlotMeasurements->UpdatePlot();
     currentLampStatus = LAMP_OFF;
+    pOutputFile->write("\n");
   }
   DAQmxErrChk(
     DAQmxWriteDigitalLines(
@@ -679,7 +696,6 @@ int
 MainWindow::JunctionCheck() {// Per sapere se abbiamo una giunzione !
   return pKeithley->junctionCheck();
 }
-
 
 
 int

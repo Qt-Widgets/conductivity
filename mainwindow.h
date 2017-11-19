@@ -54,7 +54,8 @@ protected:
   void stopDAQ();
   bool getNewSigmaMeasure();
   int  JunctionCheck();
-  void initPlots();
+  void initRvsTPlots();
+  void initIvsVPlots();
   int  connectToArduino();
   int  writeToArduino(QByteArray requestData);
 
