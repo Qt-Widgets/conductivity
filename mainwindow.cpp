@@ -608,7 +608,7 @@ MainWindow::on_startIvsVButton_clicked() {
     }
     ui->startIvsVButton->setText("Start I vs V");
     ui->startRvsTButton->setEnabled(true);
-    ui->statusBar->showMessage("Measure Halted");
+    ui->statusBar->showMessage("Measure (I vs V) Halted");
     return;
   }
   //else

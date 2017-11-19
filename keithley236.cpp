@@ -202,6 +202,51 @@ Keithley236::junctionCheck() {
 }
 
 
+bool
+Keithley236::initISweep(double startCurrent, double stopCurrent, double currentStep, double delay) {
+  uint iErr = 0;
+  iErr |= gpibWrite(k236, "M0,0X");    // SRQ Disabled, SRQ on Compliance
+  iErr |= gpibWrite(k236, "F1,1");     // Source I, Sweep mode
+  iErr |= gpibWrite(k236, "O1");       // Remote Sense
+  iErr |= gpibWrite(k236, "T0,1,0,0"); // Trigger on X ^SRC DLY MSR
+  iErr |= gpibWrite(k236, "L10.0,0");  // 10V Compliance, Autorange Measure
+  iErr |= gpibWrite(k236, "G5,2,2");   // Output Source and Measure, No Prefix, All Lines Sweep Data
+  sCommand = QString("M%1,0").arg(SWEEP_DONE);// SRQ On Sweep Done
+  iErr |= gpibWrite(k236, sCommand);
+
+  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+  iErr |= gpibWrite(k236, "B0,0,0");   // Source V Measure I dc
+  iErr |= gpibWrite(k236, "Z0");       // Disable suppression
+  sCommand = QString("Q1,%1,%2,%3,0,%4")
+            .arg(startCurrent)
+            .arg(stopCurrent)
+            .arg(currentStep)
+            .arg(delay);
+  iErr |= gpibWrite(k236, sCommand);   // Program Sweep
+  iErr |= gpibWrite(k236, "R1");       // Arm Trigger
+  iErr |= gpibWrite(k236, "N1X");      // Operate !
+  if(iErr & ERR) {
+    QString sError;
+    sError = QString("Keithley236::initISweep(): GPIB Error in gpibWrite(): - Status= %1")
+                     .arg(ThreadIbsta(), 4, 16, QChar('0'));
+    qCritical() <<  sError;
+    sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
+    qCritical() << sError;
+    return false;
+  }
+  // Rischio di loop infinito
+  do {
+    QThread::sleep(100);
+    ibrsp(k236, &spollByte);
+  } while (!(spollByte & READY_FOR_TRIGGER));
+  gpibWrite(k236, "H0X");
+  if(isGpibError("Keithley236::initISweep(): Trigger Error"))
+    return false;
+  return true;
+}
+
+
 void
 Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long LocalIberr, long LocalIbcntl) {
   Q_UNUSED(LocalIbsta)
@@ -216,6 +261,11 @@ Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long
     gpibWrite(LocalUd, "U9X");
     sCommand = gpibRead(LocalUd);
     qCritical() << "Keithley236::onGpibCallback: Warning" << sCommand;
+  }
+
+  if(spollByte & SWEEP_DONE) {// Sweep Done
+    QDateTime currentTime = QDateTime::currentDateTime();
+    emit sweepDone(currentTime, gpibRead(LocalUd));
   }
 
   if(spollByte & TRIGGER_OUT) {// Trigger Out
@@ -242,7 +292,7 @@ Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long
 
   if(spollByte & READY_FOR_TRIGGER) {// Ready for trigger
     emit readyForTrigger();
- }
+  }
 
   if(spollByte & READING_DONE) {// Reading Done
     QDateTime currentTime = QDateTime::currentDateTime();

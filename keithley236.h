@@ -33,6 +33,7 @@ public:
   int      initVvsT(double dAppliedCurrent, double dVoltageCompliance);
   int      endVvsT();
   int      junctionCheck();
+  bool     initISweep(double startCurrent, double stopCurrent, double currentStep, double delay);
   void     onGpibCallback(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
   bool     sendTrigger();
 
@@ -40,6 +41,7 @@ signals:
   void complianceEvent();
   void readyForTrigger();
   void newReading(QDateTime currentTime, QString sReading);
+  void sweepDone(QDateTime currentTime, QString sSweepData);
 
 public slots:
 
