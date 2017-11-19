@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 QString ErrMsg(int sta, int err, long cntl);
 QString gpibRead(int ud);
-int     gpibWrite(int ud, QString sCmd);
+uint    gpibWrite(int ud, QString sCmd);
 bool    isGpibError(QString sErrorString);
 
 #endif // UTILITY_H

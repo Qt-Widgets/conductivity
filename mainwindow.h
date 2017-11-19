@@ -53,7 +53,6 @@ protected:
   bool startDAQ();
   void stopDAQ();
   bool getNewSigmaMeasure();
-  int  JunctionCheck();
   void initRvsTPlots();
   void stopRvsT();
   void initIvsVPlots();

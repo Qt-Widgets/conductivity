@@ -40,9 +40,7 @@ namespace keithley236 {
 Keithley236::Keithley236(int gpio, int address, QObject *parent)
   : QObject(parent)
   //
-  , NO_JUNCTION(0)
-  , FORWARD_JUNCTION(1)
-  , REVERSE_JUNCTION(-1)
+  , ERROR_JUNCTION(-99999)
   //
   , SRQ_DISABLED(0)
   , WARNING(1)
@@ -140,48 +138,67 @@ Keithley236::endVvsT() {
 }
 
 
+// Returns the Order of Magnitude Difference
+// between Forward and Reverse Current
 int
-Keithley236::junctionCheck() {// Per sapere se abbiamo una giunzione !
-  gpibWrite(k236, "F0,0");     // Source V Measure I dc
-  gpibWrite(k236, "O0");       // Local Sense
-  gpibWrite(k236, "R0X");      // Disarm Trigger
-  gpibWrite(k236, "T0,1,0,0"); // Trigger on X ^SRC DLY MSR
-  gpibWrite(k236, "L1.0e-4,0");// Set Compliance, Autorange Measure
-  gpibWrite(k236, "G5,2,0");   // Output Source, Measure, No Prefix, DC
-  gpibWrite(k236, "S3");       // 20ms integration time
-  gpibWrite(k236, "P5");       // 32 Reading Filter
-  keithley236::rearmMask = SRQ_DISABLED;
-  sCommand = QString("M%1,0").arg(iMask);
-  gpibWrite(k236, sCommand);   // SRQ Disabled
-  gpibWrite(k236, "B1.0,0,0"); // Source 1.0V Measure I Autorange
-  gpibWrite(k236, "R1");       // Arm Trigger
-  gpibWrite(k236, "Z0");       // Disable suppression
-  gpibWrite(k236, "N1X");      // Operate !
+Keithley236::junctionCheck() {
+  uint iErr = 0;
+  iErr |= gpibWrite(k236, "M0,0X");    // SRQ Disabled, SRQ on Compliance
+  iErr |= gpibWrite(k236, "F0,0");     // Source V Measure I dc
+  iErr |= gpibWrite(k236, "O1");       // Remote Sense
+  iErr |= gpibWrite(k236, "P5");       // 32 Reading Filter
+  iErr |= gpibWrite(k236, "Z0");       // Disable suppression
+  iErr |= gpibWrite(k236, "S3");       // 20ms integration time
+  iErr |= gpibWrite(k236, "R0X");      // Disarm Trigger
+  iErr |= gpibWrite(k236, "T0,1,0,0"); // Trigger on X ^SRC DLY MSR
+  iErr |= gpibWrite(k236, "L1.0e-4,0");// Set Compliance, Autorange Measure
+  iErr |= gpibWrite(k236, "G5,2,0");   // Output Source, Measure, No Prefix, DC
+  iErr |= gpibWrite(k236, "B1.0,0,0"); // Source 1.0V Measure I Autorange
+  iErr |= gpibWrite(k236, "R1");       // Arm Trigger
+  iErr |= gpibWrite(k236, "N1X");      // Operate !
+  if(iErr & ERR) {
+    QString sError;
+    sError = QString("Keithley236::junctionCheck(): GPIB Error in gpibWrite(): - Status= %1")
+                     .arg(ThreadIbsta(), 4, 16, QChar('0'));
+    qCritical() <<  sError;
+    sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
+    qCritical() << sError;
+    return ERROR_JUNCTION;
+  }
+  // Rischio di loop infinito
   ibrsp(k236, &spollByte);
   while(!(spollByte & 16)) {// Ready for trigger
     ibrsp(k236, &spollByte);
     QThread::msleep(100);
   }
-  ibtrg(k236);
+  // Get the forward current value
+  gpibWrite(k236, "H0X");
+  if(isGpibError("Keithley236::junctionCheck(): Trigger Error"))
+    return ERROR_JUNCTION;
+  // Rischio di loop infinito
   ibrsp(k236, &spollByte);
   while(!(spollByte & 8)) {// Reading Done
     ibrsp(k236, &spollByte);
     QThread::msleep(100);
   }
-  sCommand = gpibRead(k236);
-  double I_Forward = sCommand.toDouble();
-  qDebug() << QString("Forward Current [A]= ") + sCommand;
+  double I_Forward = gpibRead(k236).toDouble();
+  qInfo() << QString("Forward Current [A]= ") + sCommand;
   gpibWrite(k236, "B-1.0,0,0X"); // Source -1.0V Measure I Autorange
-  QThread::msleep(1000);
-  sCommand = gpibRead(k236);
-  double I_Reverse = sCommand.toDouble();
+  if(isGpibError("Keithley236::junctionCheck(): Error Changing Output Voltage"))
+    return ERROR_JUNCTION;
+  QThread::sleep(1);
+  double I_Reverse = gpibRead(k236).toDouble();
   qDebug() << QString("Reverse Current [A]= ") + sCommand;
   gpibWrite(k236, "B0.0,0,0"); // Source 0.0V Measure I Autorange
+  if(isGpibError("Keithley236::junctionCheck(): Zeroing Output Voltage"))
+    return ERROR_JUNCTION;
   gpibWrite(k236, "N0X");      // Stand By !
-  int deltaI = abs(qRound(log10(abs(I_Forward))) - qRound(log10(abs(I_Reverse))));
-  if(deltaI < 2) return NO_JUNCTION;// No Junctions in DUT
-  if(abs(I_Forward) > abs(I_Reverse)) return FORWARD_JUNCTION;
-  return REVERSE_JUNCTION;
+  if(isGpibError("Keithley236::junctionCheck(): Placing Keithely 236 in Standby Mode"))
+    return ERROR_JUNCTION;
+  if((I_Forward == 0.0) || (I_Reverse == 0.0))
+    return ERROR_JUNCTION;
+  return qRound(log10(abs(I_Forward))) -
+         qRound(log10(abs(I_Reverse)));
 }
 
 

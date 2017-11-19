@@ -608,6 +608,7 @@ MainWindow::on_startIvsVButton_clicked() {
     }
     ui->startIvsVButton->setText("Start I vs V");
     ui->startRvsTButton->setEnabled(true);
+    ui->statusBar->showMessage("Measure Halted");
     return;
   }
   //else
@@ -623,7 +624,6 @@ MainWindow::on_startIvsVButton_clicked() {
   if(!prepareOutputFile(configureIvsVDialog.sBaseDir,
                         configureIvsVDialog.sOutFileName))
   {
-    stopDAQ();
     QApplication::restoreOverrideCursor();
     return;
   }
@@ -633,6 +633,13 @@ MainWindow::on_startIvsVButton_clicked() {
 
   initIvsVPlots();
 
+  int junctionDirection = pKeithley->junctionCheck();
+  if(junctionDirection == pKeithley->ERROR_JUNCTION) {
+    ui->statusBar->showMessage("Error Checking the Existance of a Junction...");
+    QApplication::restoreOverrideCursor();
+    return;
+  }
+  // Now we know how to proceed... (maybe...)
   ui->statusBar->clearMessage();
   QApplication::restoreOverrideCursor();
 }
@@ -718,13 +725,6 @@ MainWindow::getNewSigmaMeasure() {
     return false;
   isK236ReadyForTrigger = false;
   return pKeithley->sendTrigger();
-}
-
-
-int
-MainWindow::JunctionCheck() {
-  // Per sapere se abbiamo una giunzione !
-  return pKeithley->junctionCheck();
 }
 
 

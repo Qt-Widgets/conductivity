@@ -44,9 +44,7 @@ signals:
 public slots:
 
 public:
-  const int NO_JUNCTION;
-  const int FORWARD_JUNCTION;
-  const int REVERSE_JUNCTION;
+  const int ERROR_JUNCTION;
 
   const int SRQ_DISABLED;
   const int WARNING;

@@ -81,9 +81,9 @@ ErrMsg(int sta, int err, long cntl) {
 }
 
 
-int
+uint
 gpibWrite(int ud, QString sCmd) {
-  int iRes = ibwrt(ud, sCmd.toUtf8().constData(), sCmd.length());
+  uint iRes = ibwrt(ud, sCmd.toUtf8().constData(), sCmd.length());
   if(iRes & ERR) {
     QString sError;
     sError = QString("GPIB Error Writing: %1 - Status= %2").arg(sCmd).arg(ThreadIbsta(), 4, 16, QChar('0'));
