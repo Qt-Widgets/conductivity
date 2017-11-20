@@ -63,7 +63,6 @@ MainWindow::MainWindow(QWidget *parent)
   // For Arduino Serial Port
   , baudRate(115200)
   , waitTimeout(1000)
-  , ACK(char(6))
 {
   ui->setupUi(this);
   // To remove the resize-handle in the lower right corner
@@ -158,7 +157,7 @@ MainWindow::CheckInstruments() {
   if(isGpibError("MainWindow::CheckInstruments() - FindLstn() failed. Are the Instruments Connected and Switced On ?"))
     return false;
   int nDevices = ThreadIbcntl();
-
+//  qInfo() << QString("Found %1 Instruments connected to the GPIB Bus").arg(nDevices);
   // Identify the instruments connected to the GPIB Bus
   char readBuf[257];
   QString sCommand = "*IDN?\r\n";
@@ -169,18 +168,13 @@ MainWindow::CheckInstruments() {
     Receive(gpibBoardID, resultlist[i], readBuf, 256, STOPend);
     if(isGpibError("MainWindow::CheckInstruments() - Receive() Failed"))
       return false;
+    readBuf[ibcnt] = 0;
     QString sInstrumentID = QString(readBuf);
+//    qDebug() << QString("InstrumentID= %1").arg(sInstrumentID);
     // La source Measure Unit K236 non risponde al comando di identificazione !!!!
-    if(sInstrumentID.contains("NSDCI", Qt::CaseInsensitive)) {
+    if(sInstrumentID.contains("NSDC", Qt::CaseInsensitive)) {
       if(pKeithley == Q_NULLPTR) {
         pKeithley = new Keithley236(gpibBoardID, resultlist[i], this);
-        isK236ReadyForTrigger = false;
-        connect(pKeithley, SIGNAL(complianceEvent()),
-                this, SLOT(onComplianceEvent()));
-        connect(pKeithley, SIGNAL(readyForTrigger()),
-                this, SLOT(onKeithleyReadyForTrigger()));
-        connect(pKeithley, SIGNAL(newReading(QDateTime, QString)),
-                this, SLOT(onNewKeithleyReading(QDateTime, QString)));
       }
     } else if(sInstrumentID.contains("MODEL330", Qt::CaseInsensitive)) {
       if(pLakeShore == NULL)
@@ -293,8 +287,14 @@ MainWindow::stopRvsT() {
       pOutputFile->deleteLater();
       pOutputFile = Q_NULLPTR;
     }
-    if(pKeithley) pKeithley->endVvsT();
-    if(pLakeShore) pLakeShore->switchPowerOff();
+    pKeithley->endVvsT();
+    disconnect(pKeithley, SIGNAL(complianceEvent()),
+               this, SLOT(onComplianceEvent()));
+    disconnect(pKeithley, SIGNAL(readyForTrigger()),
+               this, SLOT(onKeithleyReadyForTrigger()));
+    disconnect(pKeithley, SIGNAL(newReading(QDateTime, QString)),
+               this, SLOT(onNewKeithleyReading(QDateTime, QString)));
+    pLakeShore->switchPowerOff();
     stopDAQ();
 }
 
@@ -335,6 +335,13 @@ MainWindow::on_startRvsTButton_clicked() {
       QApplication::restoreOverrideCursor();
       return;
     }
+    isK236ReadyForTrigger = false;
+    connect(pKeithley, SIGNAL(complianceEvent()),
+            this, SLOT(onComplianceEvent()));
+    connect(pKeithley, SIGNAL(readyForTrigger()),
+            this, SLOT(onKeithleyReadyForTrigger()));
+    connect(pKeithley, SIGNAL(newReading(QDateTime, QString)),
+            this, SLOT(onNewKeithleyReading(QDateTime, QString)));
   }
   if(pLakeShore != Q_NULLPTR) {
     ui->statusBar->showMessage("Initializing LakeShore 330...");
@@ -389,6 +396,119 @@ MainWindow::on_startRvsTButton_clicked() {
                              .arg(waitingTStartTime.toString())
                              .arg(configureRvsTDialog.dTempStart));
   QApplication::restoreOverrideCursor();
+}
+
+
+void
+MainWindow::on_startIvsVButton_clicked() {
+  if(ui->startIvsVButton->text().contains("Stop")) {
+    if(pOutputFile) {
+      pOutputFile->close();
+      pOutputFile->deleteLater();
+      pOutputFile = Q_NULLPTR;
+    }
+    ui->startIvsVButton->setText("Start I vs V");
+    ui->startRvsTButton->setEnabled(true);
+    ui->statusBar->showMessage("Measure (I vs V) Halted");
+    return;
+  }
+  //else
+  if(configureIvsVDialog.exec() == QDialog::Rejected)
+    return;
+
+  QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+  ui->startRvsTButton->setDisabled(true);
+  ui->startIvsVButton->setText("Stop I vs V");
+
+  // Are the GPIB instruments connectd and ready to start ?
+  ui->statusBar->showMessage("Checking for the GPIB Instruments");
+  if(!CheckInstruments()) {
+    ui->statusBar->showMessage("GPIB Instruments not found");
+    QApplication::restoreOverrideCursor();
+    return;
+  }
+  if(pKeithley != Q_NULLPTR)  {
+    ui->statusBar->showMessage("Initializing Keithley 236...");
+    if(pKeithley->init()) {
+      ui->statusBar->showMessage("Unable to Initialize Keithley 236...");
+      QApplication::restoreOverrideCursor();
+      return;
+    }
+    isK236ReadyForTrigger = false;
+    connect(pKeithley, SIGNAL(complianceEvent()),
+            this, SLOT(onComplianceEvent()));
+    connect(pKeithley, SIGNAL(readyForTrigger()),
+            this, SLOT(onKeithleyReadyForSweepTrigger()));
+    connect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)),
+            this, SLOT(onKeithleySweepDone(QDateTime, QString)));
+  }
+  if(pLakeShore != Q_NULLPTR) {
+    ui->statusBar->showMessage("Initializing LakeShore 330...");
+    if(pLakeShore->init()) {
+      ui->statusBar->showMessage("Unable to Initialize LakeShore 330...");
+      QApplication::restoreOverrideCursor();
+      return;
+    }
+  }
+
+  // Open the Output file
+//  ui->statusBar->showMessage("Opening Output file...");
+//  if(!prepareOutputFile(configureIvsVDialog.sBaseDir,
+//                        configureIvsVDialog.sOutFileName))
+//  {
+//    QApplication::restoreOverrideCursor();
+//    return;
+//  }
+//  pOutputFile->write(configureIvsVDialog.sSampleInfo.toLocal8Bit());
+//  pOutputFile->write("\n");
+//  pOutputFile->flush();
+
+  initIvsVPlots();
+
+  ui->statusBar->showMessage("Checking the Existance of a Junction...");
+  int junctionDirection = pKeithley->junctionCheck();
+  if(junctionDirection == pKeithley->ERROR_JUNCTION) {
+    ui->statusBar->showMessage("Error Checking the Existance of a Junction...");
+    QApplication::restoreOverrideCursor();
+    return;
+  }
+  // Now we know how to proceed... (maybe...)
+  isK236ReadyForTrigger = false;
+  if(junctionDirection == 0) {
+    // No diode junction
+    ui->statusBar->showMessage("Sweeping...Please Wait");
+    pKeithley->initISweep(-1.0e-6, 1.0e-6, 1.0e-8, 1000.0);
+  }
+  else if(junctionDirection > 0) {
+    qDebug() << "Forward Direction Handling";
+    // Forward junction
+  }
+  else {
+    // Reverse junction
+    qDebug() << "Reverse Direction Handling";
+  }
+  QApplication::restoreOverrideCursor();
+}
+
+
+void
+MainWindow::stopIvsV() {
+    if(pOutputFile) {
+      pOutputFile->close();
+      pOutputFile->deleteLater();
+      pOutputFile = Q_NULLPTR;
+    }
+    disconnect(pKeithley, SIGNAL(complianceEvent()),
+               this, SLOT(onComplianceEvent()));
+    disconnect(pKeithley, SIGNAL(readyForTrigger()),
+              this, SLOT(onKeithleyReadyForSweepTrigger()));
+    disconnect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)),
+              this, SLOT(onKeithleySweepDone(QDateTime, QString)));
+    pKeithley->endISweep();
+    pLakeShore->switchPowerOff();
+    ui->startIvsVButton->setText("Start I vs V");
+    ui->startRvsTButton->setEnabled(true);
+    ui->statusBar->showMessage("Sweep Done");
 }
 
 
@@ -477,27 +597,29 @@ MainWindow::initIvsVPlots() {
                                 3, //Pen Width
                                 QColor(255, 255, 0),// Color
                                 StripChart::ipoint,// Symbol
-                                "I"// Title
+                                "IvsV"// Title
                                 );
   pPlotMeasurements->SetShowDataSet(1, true);
   pPlotMeasurements->SetShowTitle(1, true);
+  pPlotMeasurements->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
   pPlotMeasurements->UpdatePlot();
   pPlotMeasurements->show();
-  // Plot of Temperature vs Time
-  if(pPlotTemperature) delete pPlotTemperature;
-  sTemperaturePlotLabel = QString("T [K] vs t [s]");
-  pPlotTemperature = new Plot2D(this, sTemperaturePlotLabel);
-  pPlotTemperature->setMaxPoints(maxPlotPoints);
-  pPlotTemperature->NewDataSet(1,//Id
-                               3, //Pen Width
-                               QColor(255, 255, 0),// Color
-                               StripChart::ipoint,// Symbol
-                               "T"// Title
-                               );
-  pPlotTemperature->SetShowDataSet(1, true);
-  pPlotTemperature->SetShowTitle(1, true);
-  pPlotTemperature->UpdatePlot();
-  pPlotTemperature->show();
+//  // Plot of Temperature vs Time
+//  if(pPlotTemperature) delete pPlotTemperature;
+//  sTemperaturePlotLabel = QString("T [K] vs t [s]");
+//  pPlotTemperature = new Plot2D(this, sTemperaturePlotLabel);
+//  pPlotTemperature->setMaxPoints(maxPlotPoints);
+//  pPlotTemperature->NewDataSet(1,//Id
+//                               3, //Pen Width
+//                               QColor(255, 255, 0),// Color
+//                               StripChart::ipoint,// Symbol
+//                               "T"// Title
+//                               );
+//  pPlotTemperature->SetShowDataSet(1, true);
+//  pPlotTemperature->SetShowTitle(1, true);
+//  pPlotTemperature->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
+//  pPlotTemperature->UpdatePlot();
+//  pPlotTemperature->show();
 }
 
 
@@ -599,53 +721,6 @@ MainWindow::onTimeToReadT() {
 
 
 void
-MainWindow::on_startIvsVButton_clicked() {
-  if(ui->startIvsVButton->text().contains("Stop")) {
-    if(pOutputFile) {
-      pOutputFile->close();
-      pOutputFile->deleteLater();
-      pOutputFile = Q_NULLPTR;
-    }
-    ui->startIvsVButton->setText("Start I vs V");
-    ui->startRvsTButton->setEnabled(true);
-    ui->statusBar->showMessage("Measure (I vs V) Halted");
-    return;
-  }
-  //else
-  if(configureIvsVDialog.exec() == QDialog::Rejected)
-    return;
-
-  QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-  ui->startRvsTButton->setDisabled(true);
-  ui->startIvsVButton->setText("Stop I vs V");
-
-  // Open the Output file
-  ui->statusBar->showMessage("Opening Output file...");
-  if(!prepareOutputFile(configureIvsVDialog.sBaseDir,
-                        configureIvsVDialog.sOutFileName))
-  {
-    QApplication::restoreOverrideCursor();
-    return;
-  }
-  pOutputFile->write(configureIvsVDialog.sSampleInfo.toLocal8Bit());
-  pOutputFile->write("\n");
-  pOutputFile->flush();
-
-  initIvsVPlots();
-
-  int junctionDirection = pKeithley->junctionCheck();
-  if(junctionDirection == pKeithley->ERROR_JUNCTION) {
-    ui->statusBar->showMessage("Error Checking the Existance of a Junction...");
-    QApplication::restoreOverrideCursor();
-    return;
-  }
-  // Now we know how to proceed... (maybe...)
-  ui->statusBar->clearMessage();
-  QApplication::restoreOverrideCursor();
-}
-
-
-void
 MainWindow::onComplianceEvent() {
   qCritical() << "MainWindow::onComplianceEvent()";
   on_startRvsTButton_clicked();
@@ -655,6 +730,14 @@ MainWindow::onComplianceEvent() {
 void
 MainWindow::onKeithleyReadyForTrigger() {
   isK236ReadyForTrigger = true;
+}
+
+
+void
+MainWindow::onKeithleyReadyForSweepTrigger() {
+  disconnect(pKeithley, SIGNAL(readyForTrigger()),
+             this, SLOT(onKeithleyReadyForSweepTrigger()));
+  pKeithley->triggerSweep();
 }
 
 
@@ -716,6 +799,25 @@ Error:
     QMessageBox::critical(Q_NULLPTR, "DAQmx Error", QString(errBuf));
   }
   return;
+}
+
+
+void
+MainWindow::onKeithleySweepDone(QDateTime dataTime, QString sData) {
+  stopIvsV();
+  Q_UNUSED(dataTime)
+  ui->statusBar->showMessage("Sweep Done: Decoding readings...Please wait");
+  QStringList sMeasures = QStringList(sData.split(",", QString::SkipEmptyParts));
+  if(sMeasures.count() < 2) {
+    qCritical() << "no Sweep Values ";
+    return;
+  }
+  ui->statusBar->showMessage("Sweep Done: Updating Plot...Please wait");
+  for(int i=0; i<sMeasures.count(); i+=2) {
+    pPlotMeasurements->NewPoint(1, sMeasures.at(i).toDouble(), sMeasures.at(i+1).toDouble());
+  }
+  pPlotMeasurements->UpdatePlot();
+
 }
 
 

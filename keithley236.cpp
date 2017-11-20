@@ -68,7 +68,7 @@ Keithley236::~Keithley236() {
 
 int
 Keithley236::init() {
-  k236 = ibdev(gpibNumber, k236Address, 0, T3s, 1, 0);
+  k236 = ibdev(gpibNumber, k236Address, 0, T1s, 1, 0);
   if(k236 < 0) {
     qDebug() << "ibdev() Failed";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
@@ -131,9 +131,9 @@ Keithley236::initVvsT(double dAppliedCurrent, double dVoltageCompliance) {
 int
 Keithley236::endVvsT() {
   ibnotify (k236, 0, NULL, NULL);// disable notification
+  gpibWrite(k236, "M0,0X");      // SRQ Disabled, SRQ on Compliance
   gpibWrite(k236, "R0");         // Disarm Trigger
   gpibWrite(k236, "N0X");        // Place in Stand By
-  gpibWrite(k236, "M0,0X");      // SRQ Disabled, SRQ on Compliance
   return 0;
 }
 
@@ -152,7 +152,7 @@ Keithley236::junctionCheck() {
   iErr |= gpibWrite(k236, "R0X");      // Disarm Trigger
   iErr |= gpibWrite(k236, "T0,1,0,0"); // Trigger on X ^SRC DLY MSR
   iErr |= gpibWrite(k236, "L1.0e-4,0");// Set Compliance, Autorange Measure
-  iErr |= gpibWrite(k236, "G5,2,0");   // Output Source, Measure, No Prefix, DC
+  iErr |= gpibWrite(k236, "G4,2,0");   // Output Only Measure, No Prefix, Single Line
   iErr |= gpibWrite(k236, "B1.0,0,0"); // Source 1.0V Measure I Autorange
   iErr |= gpibWrite(k236, "R1");       // Arm Trigger
   iErr |= gpibWrite(k236, "N1X");      // Operate !
@@ -165,30 +165,55 @@ Keithley236::junctionCheck() {
     qCritical() << sError;
     return ERROR_JUNCTION;
   }
+  QThread::sleep(3);
   // Rischio di loop infinito
   ibrsp(k236, &spollByte);
-  while(!(spollByte & 16)) {// Ready for trigger
-    ibrsp(k236, &spollByte);
+  while(!(spollByte & READY_FOR_TRIGGER)) {// Ready for trigger
     QThread::msleep(100);
+    ibrsp(k236, &spollByte);
   }
   // Get the forward current value
   gpibWrite(k236, "H0X");
   if(isGpibError("Keithley236::junctionCheck(): Trigger Error"))
     return ERROR_JUNCTION;
+
   // Rischio di loop infinito
   ibrsp(k236, &spollByte);
-  while(!(spollByte & 8)) {// Reading Done
-    ibrsp(k236, &spollByte);
+  while(!(spollByte & READING_DONE)) {// Reading Done
     QThread::msleep(100);
+    ibrsp(k236, &spollByte);
   }
-  double I_Forward = gpibRead(k236).toDouble();
-  qInfo() << QString("Forward Current [A]= ") + sCommand;
+  sResponse = gpibRead(k236);
+  double I_Forward = sResponse.toDouble();
+  //  qInfo() << QString("Forward Current [A]= %1").arg(sResponse);
+  // qDebug() << QString("Forward Current [A]= %1").arg(I_Forward);
+
   gpibWrite(k236, "B-1.0,0,0X"); // Source -1.0V Measure I Autorange
   if(isGpibError("Keithley236::junctionCheck(): Error Changing Output Voltage"))
     return ERROR_JUNCTION;
-  QThread::sleep(1);
-  double I_Reverse = gpibRead(k236).toDouble();
-  qDebug() << QString("Reverse Current [A]= ") + sCommand;
+  QThread::sleep(3);
+
+  // Rischio di loop infinito
+  ibrsp(k236, &spollByte);
+  while(!(spollByte & READY_FOR_TRIGGER)) {// Ready for trigger
+    QThread::msleep(100);
+    ibrsp(k236, &spollByte);
+  }
+  // Get the reverse current value
+  gpibWrite(k236, "H0X");
+  if(isGpibError("Keithley236::junctionCheck(): Trigger Error"))
+    return ERROR_JUNCTION;
+
+  // Rischio di loop infinito
+  ibrsp(k236, &spollByte);
+  while(!(spollByte & READING_DONE)) {// Reading Done
+    QThread::msleep(100);
+    ibrsp(k236, &spollByte);
+  }
+  sResponse = gpibRead(k236);
+  double I_Reverse = sResponse.toDouble();
+  // qDebug() << QString("Reverse Current [A]= %1").arg(sResponse);
+  // qDebug() << QString("Reverse Current [A]= %1").arg(I_Reverse);
   gpibWrite(k236, "B0.0,0,0"); // Source 0.0V Measure I Autorange
   if(isGpibError("Keithley236::junctionCheck(): Zeroing Output Voltage"))
     return ERROR_JUNCTION;
@@ -208,23 +233,26 @@ Keithley236::initISweep(double startCurrent, double stopCurrent, double currentS
   iErr |= gpibWrite(k236, "M0,0X");    // SRQ Disabled, SRQ on Compliance
   iErr |= gpibWrite(k236, "F1,1");     // Source I, Sweep mode
   iErr |= gpibWrite(k236, "O1");       // Remote Sense
-  iErr |= gpibWrite(k236, "T0,1,0,0"); // Trigger on X ^SRC DLY MSR
+  iErr |= gpibWrite(k236, "T1,0,0,0"); // Trigger on GET, Continuous
   iErr |= gpibWrite(k236, "L10.0,0");  // 10V Compliance, Autorange Measure
   iErr |= gpibWrite(k236, "G5,2,2");   // Output Source and Measure, No Prefix, All Lines Sweep Data
-  sCommand = QString("M%1,0").arg(SWEEP_DONE);// SRQ On Sweep Done
-  iErr |= gpibWrite(k236, sCommand);
-
-  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-  iErr |= gpibWrite(k236, "B0,0,0");   // Source V Measure I dc
   iErr |= gpibWrite(k236, "Z0");       // Disable suppression
-  sCommand = QString("Q1,%1,%2,%3,0,%4")
+  sCommand = QString("Q1,%1,%2,%3,0,%4X")
             .arg(startCurrent)
             .arg(stopCurrent)
             .arg(currentStep)
             .arg(delay);
   iErr |= gpibWrite(k236, sCommand);   // Program Sweep
-  iErr |= gpibWrite(k236, "R1");       // Arm Trigger
+  if(iErr & ERR) {
+    QString sError;
+    sError = QString("Keithley236::initISweep(): GPIB Error in gpibWrite(): - Status= %1")
+                     .arg(ThreadIbsta(), 4, 16, QChar('0'));
+    qCritical() <<  sError;
+    sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
+    qCritical() << sError;
+    return false;
+  }
+  iErr = gpibWrite(k236, "R1");        // Arm Trigger
   iErr |= gpibWrite(k236, "N1X");      // Operate !
   if(iErr & ERR) {
     QString sError;
@@ -235,15 +263,21 @@ Keithley236::initISweep(double startCurrent, double stopCurrent, double currentS
     qCritical() << sError;
     return false;
   }
-  // Rischio di loop infinito
-  do {
-    QThread::sleep(100);
-    ibrsp(k236, &spollByte);
-  } while (!(spollByte & READY_FOR_TRIGGER));
-  gpibWrite(k236, "H0X");
-  if(isGpibError("Keithley236::initISweep(): Trigger Error"))
+  sCommand = QString("M%1,0X").arg(SWEEP_DONE + READY_FOR_TRIGGER);
+  gpibWrite(k236, sCommand);   // SRQ On Sweep Done
+  if(isGpibError("Keithley236::initISweep(): Error enabling SRQ Mask"))
     return false;
   return true;
+}
+
+
+int
+Keithley236::endISweep() {
+  ibnotify (k236, 0, NULL, NULL);// disable notification
+  gpibWrite(k236, "M0,0X");      // SRQ Disabled, SRQ on Compliance
+  gpibWrite(k236, "R0");         // Disarm Trigger
+  gpibWrite(k236, "N0X");        // Place in Stand By
+  return 0;
 }
 
 
@@ -255,21 +289,6 @@ Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long
 
   if(ibrsp(LocalUd, &spollByte) & ERR) {
     qCritical() << QString("GPIB error %1").arg(LocalIberr);
-  }
-
-  if(spollByte & WARNING) {// Warning
-    gpibWrite(LocalUd, "U9X");
-    sCommand = gpibRead(LocalUd);
-    qCritical() << "Keithley236::onGpibCallback: Warning" << sCommand;
-  }
-
-  if(spollByte & SWEEP_DONE) {// Sweep Done
-    QDateTime currentTime = QDateTime::currentDateTime();
-    emit sweepDone(currentTime, gpibRead(LocalUd));
-  }
-
-  if(spollByte & TRIGGER_OUT) {// Trigger Out
-    qCritical() << "Keithley236::onGpibCallback: Trigger Out ?";
   }
 
   if(spollByte & COMPLIANCE) {// Compliance
@@ -290,6 +309,26 @@ Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long
     qCritical() << "Keithley236::onGpibCallback: Error" << sCommand;
   }
 
+  if(spollByte & WARNING) {// Warning
+    gpibWrite(LocalUd, "U9X");
+    sCommand = gpibRead(LocalUd);
+    qCritical() << "Keithley236::onGpibCallback: Warning" << sCommand;
+  }
+
+  if(spollByte & SWEEP_DONE) {// Sweep Done
+    QDateTime currentTime = QDateTime::currentDateTime();
+    qDebug() << "Prima";
+    QString sString = gpibRead(LocalUd);
+    qDebug() << "Dopo";
+    emit sweepDone(currentTime, sString);
+    keithley236::rearmMask = 0;
+    return;
+  }
+
+  if(spollByte & TRIGGER_OUT) {// Trigger Out
+    qCritical() << "Keithley236::onGpibCallback: Trigger Out ?";
+  }
+
   if(spollByte & READY_FOR_TRIGGER) {// Ready for trigger
     emit readyForTrigger();
   }
@@ -303,10 +342,20 @@ Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long
   keithley236::rearmMask = RQS;
 }
 
+
 bool
 Keithley236::sendTrigger() {
   gpibWrite(k236, "H0X");
   if(isGpibError("Keithley236::sendTrigger(): Trigger Error"))
+    return false;
+  return true;
+}
+
+
+bool
+Keithley236::triggerSweep() {
+  ibtrg(k236);
+  if(isGpibError("Keithley236::triggerSweep(): Trigger Error"))
     return false;
   return true;
 }

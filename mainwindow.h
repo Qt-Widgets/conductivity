@@ -55,6 +55,7 @@ protected:
   bool getNewSigmaMeasure();
   void initRvsTPlots();
   void stopRvsT();
+  void stopIvsV();
   void initIvsVPlots();
   bool prepareOutputFile(QString sBaseDir, QString sFileName);
   int  connectToArduino();
@@ -70,21 +71,19 @@ private slots:
   void onComplianceEvent();
   void onKeithleyReadyForTrigger();
   void onNewKeithleyReading(QDateTime dataTime, QString sDataRead);
+  void onKeithleyReadyForSweepTrigger();
+  void onKeithleySweepDone(QDateTime dataTime, QString sData);
 
 private:
   Ui::MainWindow *ui;
 
   enum commands {
+    ACK           = 6,
+    NACK          = 21,
+    EOS           = 127,
     AreYouThere   = 70,
-    InflateValve  = 71,
-    DeflateValve  = 72,
-    RightForward  = 73,
-    RightReverse  = 74,
-    LeftForward   = 75,
-    LeftReverse   = 76,
-    RightSpeed    = 77,
-    LeftSpeed     = 78,
-    UpDownServo   = 79
+    SwitchON      = 71,
+    SwitchOFF     = 72
   };
   commands command;
 
@@ -128,7 +127,6 @@ private:
   QByteArray    requestData;
   int           baudRate;
   int           waitTimeout;
-  const quint8  ACK;
 };
 
 #endif // MAINWINDOW_H

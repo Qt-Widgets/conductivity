@@ -29,7 +29,7 @@ bool
 isGpibError(QString sErrorString) {
   if(ThreadIbsta() & ERR) {
     qCritical() << sErrorString;
-    QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
+    QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcnt());
     qCritical() << sError;
     return true;
   }
@@ -83,30 +83,22 @@ ErrMsg(int sta, int err, long cntl) {
 
 uint
 gpibWrite(int ud, QString sCmd) {
-  uint iRes = ibwrt(ud, sCmd.toUtf8().constData(), sCmd.length());
-  if(iRes & ERR) {
-    QString sError;
-    sError = QString("GPIB Error Writing: %1 - Status= %2").arg(sCmd).arg(ThreadIbsta(), 4, 16, QChar('0'));
-    qCritical() <<  sError;
-    sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qCritical() <<  sError;
-  }
-  return iRes;
+  ibwrt(ud, sCmd.toUtf8().constData(), sCmd.length());
+  isGpibError("GPIB Writing Error Writing");
+  return ThreadIbsta();
 }
 
 
 QString
 gpibRead(int ud) {
   QString sString;
-  if(ibrd(ud, gpibUtilities::readBuf, sizeof(gpibUtilities::readBuf)-1) & ERR) {
-    QString sError;
-    sError = QString("GPIB Reading Error - Status= %1").arg(ThreadIbsta(), 4, 16, QChar('0'));
-    qCritical() << sError;
-    sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-    qCritical() << sError;
-  }
-  gpibUtilities::readBuf[ThreadIbcntl()] = 0;
-  sString = QString(gpibUtilities::readBuf);
+  do {
+    ibrd(ud, gpibUtilities::readBuf, sizeof(gpibUtilities::readBuf)-1);
+    if(isGpibError("GPIB Reading Error"))
+      return sString;
+    gpibUtilities::readBuf[ThreadIbcnt()] = 0;
+    sString += QString(gpibUtilities::readBuf);
+  } while(ThreadIbcnt() == sizeof(gpibUtilities::readBuf)-1);
   return sString;
 }
 

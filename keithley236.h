@@ -34,8 +34,10 @@ public:
   int      endVvsT();
   int      junctionCheck();
   bool     initISweep(double startCurrent, double stopCurrent, double currentStep, double delay);
+  int      endISweep();
   void     onGpibCallback(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
   bool     sendTrigger();
+  bool     triggerSweep();
 
 signals:
   void complianceEvent();
