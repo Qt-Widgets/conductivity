@@ -60,6 +60,8 @@ protected:
   bool prepareOutputFile(QString sBaseDir, QString sFileName);
   int  connectToArduino();
   int  writeToArduino(QByteArray requestData);
+  bool switchLampOn();
+  bool switchLampOff();
 
 private slots:
   void on_startRvsTButton_clicked();

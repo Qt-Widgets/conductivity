@@ -80,7 +80,7 @@ MainWindow::MainWindow(QWidget *parent)
   if(connectToArduino()) {
     qCritical() << QString("No Arduino Ready to Use !");
   }
-
+  switchLampOff();
 }
 
 
@@ -206,6 +206,24 @@ MainWindow::CheckInstruments() {
 
 
 bool
+MainWindow::switchLampOn() {
+  requestData = QByteArray(1, SwitchON);
+  if(writeToArduino(requestData) != 0)
+    return false;
+  return true;
+}
+
+
+bool
+MainWindow::switchLampOff() {
+  requestData = QByteArray(1, SwitchOFF);
+  if(writeToArduino(requestData) != 0)
+    return false;
+  return true;
+}
+
+
+bool
 MainWindow::startDAQ() {
   // DAQmx Configure Digital Output Code
   DAQmxErrChk (
@@ -295,6 +313,7 @@ MainWindow::stopRvsT() {
     disconnect(pKeithley, SIGNAL(newReading(QDateTime, QString)),
                this, SLOT(onNewKeithleyReading(QDateTime, QString)));
     pLakeShore->switchPowerOff();
+    switchLampOff();
     stopDAQ();
 }
 
@@ -463,23 +482,24 @@ MainWindow::on_startIvsVButton_clicked() {
   pOutputFile->write("\n");
   pOutputFile->flush();
 
-  initIvsVPlots();
-
-  ui->statusBar->showMessage("Checking the Existance of a Junction...");
+  ui->statusBar->showMessage("Checking the presence of a Junction...");
   int junctionDirection = pKeithley->junctionCheck();
   if(junctionDirection == pKeithley->ERROR_JUNCTION) {
-    ui->statusBar->showMessage("Error Checking the Existance of a Junction...");
+    ui->statusBar->showMessage("Error Checking the presence of a Junction...");
     QApplication::restoreOverrideCursor();
     return;
   }
   // Now we know how to proceed... (maybe...)
+  initIvsVPlots();
   isK236ReadyForTrigger = false;
   if(junctionDirection == 0) {
     // No diode junction
     ui->statusBar->showMessage("Sweeping...Please Wait");
+    int nPoints = 20;
     double dIStart = configureIvsVDialog.dIStart;
     double dIStop = configureIvsVDialog.dIStop;
-    pKeithley->initISweep(dIStart, dIStop, 1.0e-8, 1000.0);
+    double dIStep = (dIStop - dIStart) / double(nPoints);
+    pKeithley->initISweep(dIStart, dIStop, dIStep, 1000.0);
   }
   else if(junctionDirection > 0) {
     qDebug() << "Forward Direction Handling";
@@ -701,6 +721,7 @@ MainWindow::onTimeToGetNewMeasure() {
     pKeithley->endVvsT();
     stopDAQ();
     pLakeShore->switchPowerOff();
+    switchLampOff();
     ui->startRvsTButton->setText("Start R vs T");
     ui->startIvsVButton->setEnabled(true);
     qDebug() << "Ramp is Done";
@@ -773,12 +794,14 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
     pPlotMeasurements->NewPoint(iPlotDark, currentTemperature, current/voltage);
     pPlotMeasurements->UpdatePlot();
     currentLampStatus = LAMP_ON;
+    switchLampOn();
   }
   else {
     pPlotMeasurements->NewPoint(iPlotPhoto, currentTemperature, current/voltage);
     pPlotMeasurements->UpdatePlot();
     currentLampStatus = LAMP_OFF;
     pOutputFile->write("\n");
+    switchLampOff();
   }
   DAQmxErrChk(
     DAQmxWriteDigitalLines(
@@ -806,7 +829,6 @@ Error:
 
 void
 MainWindow::onKeithleySweepDone(QDateTime dataTime, QString sData) {
-  stopIvsV();
   Q_UNUSED(dataTime)
   ui->statusBar->showMessage("Sweep Done: Decoding readings...Please wait");
   QStringList sMeasures = QStringList(sData.split(",", QString::SkipEmptyParts));
@@ -815,11 +837,21 @@ MainWindow::onKeithleySweepDone(QDateTime dataTime, QString sData) {
     return;
   }
   ui->statusBar->showMessage("Sweep Done: Updating Plot...Please wait");
+  double current, voltage;
   for(int i=0; i<sMeasures.count(); i+=2) {
-    pPlotMeasurements->NewPoint(1, sMeasures.at(i).toDouble(), sMeasures.at(i+1).toDouble());
+    current = sMeasures.at(i).toDouble();
+    voltage = sMeasures.at(i+1).toDouble();
+    pOutputFile->write(QString("%1, %2\n")
+                       .arg(voltage, 12, 'g', 6, ' ')
+                       .arg(current, 12, 'g', 6, ' ')
+                       .toLocal8Bit());
+    pPlotMeasurements->NewPoint(1, voltage, current);
   }
   pPlotMeasurements->UpdatePlot();
-
+  pOutputFile->flush();
+  pOutputFile->close();
+  stopIvsV();
+  ui->statusBar->showMessage("Measure Done");
 }
 
 
