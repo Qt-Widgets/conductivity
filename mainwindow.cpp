@@ -61,7 +61,7 @@ MainWindow::MainWindow(QWidget *parent)
   , isK236ReadyForTrigger(false)
   , bRunning(false)
   // For Arduino Serial Port
-  , baudRate(115200)
+  , baudRate(1200)
   , waitTimeout(1000)
 {
   ui->setupUi(this);
@@ -452,16 +452,16 @@ MainWindow::on_startIvsVButton_clicked() {
   }
 
   // Open the Output file
-//  ui->statusBar->showMessage("Opening Output file...");
-//  if(!prepareOutputFile(configureIvsVDialog.sBaseDir,
-//                        configureIvsVDialog.sOutFileName))
-//  {
-//    QApplication::restoreOverrideCursor();
-//    return;
-//  }
-//  pOutputFile->write(configureIvsVDialog.sSampleInfo.toLocal8Bit());
-//  pOutputFile->write("\n");
-//  pOutputFile->flush();
+  ui->statusBar->showMessage("Opening Output file...");
+  if(!prepareOutputFile(configureIvsVDialog.sBaseDir,
+                        configureIvsVDialog.sOutFileName))
+  {
+    QApplication::restoreOverrideCursor();
+    return;
+  }
+  pOutputFile->write(configureIvsVDialog.sSampleInfo.toLocal8Bit());
+  pOutputFile->write("\n");
+  pOutputFile->flush();
 
   initIvsVPlots();
 
@@ -477,7 +477,9 @@ MainWindow::on_startIvsVButton_clicked() {
   if(junctionDirection == 0) {
     // No diode junction
     ui->statusBar->showMessage("Sweeping...Please Wait");
-    pKeithley->initISweep(-1.0e-6, 1.0e-6, 1.0e-8, 1000.0);
+    double dIStart = configureIvsVDialog.dIStart;
+    double dIStop = configureIvsVDialog.dIStop;
+    pKeithley->initISweep(dIStart, dIStop, 1.0e-8, 1000.0);
   }
   else if(junctionDirection > 0) {
     qDebug() << "Forward Direction Handling";
@@ -841,12 +843,14 @@ MainWindow::connectToArduino() {
   QSerialPortInfo info;
   for(int i=0; i<serialPorts.size()&& !found; i++) {
     info = serialPorts.at(i);
-    qInfo() << QString("Trying to connect at port: %1").arg(info.portName());
     serialPort.setPortName(info.portName());
-    serialPort.setBaudRate(115200);
+    serialPort.setBaudRate(QSerialPort::Baud1200);
+    serialPort.setDataBits(QSerialPort::Data8);
+    serialPort.setParity(QSerialPort::NoParity);
+    serialPort.setStopBits(QSerialPort::OneStop);
+    QThread::sleep(3);
     if(serialPort.open(QIODevice::ReadWrite)) {
-      requestData = QByteArray(2, char(AreYouThere));
-      QThread::sleep(3);
+      requestData = QByteArray(2, AreYouThere);
       if(writeToArduino(requestData) == 0)
         found = true;
       else
@@ -863,14 +867,13 @@ MainWindow::connectToArduino() {
 
 int
 MainWindow::writeToArduino(QByteArray requestData) {
-  serialPort.write(requestData.append(char(127)));
+  serialPort.write(requestData.append(uchar(EOS)));
   if (serialPort.waitForBytesWritten(waitTimeout)) {
     if (serialPort.waitForReadyRead(waitTimeout)) {
       QByteArray responseData = serialPort.readAll();
       while(serialPort.waitForReadyRead(10))
         responseData += serialPort.readAll();
-      QString response(responseData);
-      if(response != QString(ACK)) {
+      if(responseData.at(0) != uchar(ACK)) {
         qInfo() << "MainWindow::writeRequest(): not an ACK";
         return -1;
       }

@@ -317,9 +317,7 @@ Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long
 
   if(spollByte & SWEEP_DONE) {// Sweep Done
     QDateTime currentTime = QDateTime::currentDateTime();
-    qDebug() << "Prima";
     QString sString = gpibRead(LocalUd);
-    qDebug() << "Dopo";
     emit sweepDone(currentTime, sString);
     keithley236::rearmMask = 0;
     return;

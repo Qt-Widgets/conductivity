@@ -54,14 +54,13 @@ ConfigureRvsTDialog::ConfigureRvsTDialog(QWidget *parent)
 
   restoreSettings();
   setToolTips();
+  setCaptions(bSourceI);
 
   // Measurement parameters
-  setCaptions(bSourceI);
-  ui->testValueEdit->setText(QString("%1").arg(dSourceValue, 0, 'g', 2));
   if(!isSourceValueValid()) {
     dSourceValue = 0.0;
-    ui->testValueEdit->setText(QString("%1").arg(dSourceValue, 0, 'g', 2));
   }
+  ui->testValueEdit->setText(QString("%1").arg(dSourceValue, 0, 'g', 2));
 
   // Temperature parameters
   if(!isTemperatureValueValid(dTempStart)) {
@@ -124,6 +123,7 @@ ConfigureRvsTDialog::restoreSettings() {
   dTempStart       = settings.value("ConfigureRvsTTempertureStart", 300.0).toDouble();
   dTempEnd         = settings.value("ConfigureRvsTTempertureEnd", 300.0).toDouble();
   dTRate           = settings.value("ConfigureRvsTTRate", 1.0).toDouble();
+
   sSampleInfo      = settings.value("ConfigureRvsTSampleInfo", "").toString();
   sBaseDir         = settings.value("ConfigureRvsTBaseDir", sBaseDir).toString();
   sOutFileName     = settings.value("ConfigureRvsTOutFileName", sOutFileName).toString();
