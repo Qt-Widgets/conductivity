@@ -701,7 +701,7 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
   if(!bRunning)
     return;
 
-  pOutputFile->write(QString("%1, %2, %3")
+  pOutputFile->write(QString("%1 %2 %3")
                      .arg(currentTemperature, 12, 'g', 6, ' ')
                      .arg(current, 12, 'g', 6, ' ')
                      .arg(voltage, 12, 'g', 6, ' ')
@@ -737,7 +737,7 @@ MainWindow::onKeithleySweepDone(QDateTime dataTime, QString sData) {
   for(int i=0; i<sMeasures.count(); i+=2) {
     current = sMeasures.at(i).toDouble();
     voltage = sMeasures.at(i+1).toDouble();
-    pOutputFile->write(QString("%1, %2\n")
+    pOutputFile->write(QString("%1 %2\n")
                        .arg(voltage, 12, 'g', 6, ' ')
                        .arg(current, 12, 'g', 6, ' ')
                        .toLocal8Bit());
@@ -788,7 +788,7 @@ MainWindow::connectToArduino() {
   if(!found) {
     return -1;
   }
-  qInfo() << "Arduino found at: " << info.portName();
+//  qInfo() << "Arduino found at: " << info.portName();
   return 0;
 }
 
