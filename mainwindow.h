@@ -122,6 +122,8 @@ private:
   enum QSerialPort::BaudRate
                 baudRate;
   int           waitTimeout;
+  int           nSweepPoints;
+
 };
 
 #endif // MAINWINDOW_H

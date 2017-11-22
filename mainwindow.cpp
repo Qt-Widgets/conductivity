@@ -57,6 +57,7 @@ MainWindow::MainWindow(QWidget *parent)
   // For Arduino Serial Port
   , baudRate(QSerialPort::Baud115200)
   , waitTimeout(1000)
+  , nSweepPoints(100)
 {
   ui->setupUi(this);
   // To remove the resize-handle in the lower right corner
@@ -241,6 +242,10 @@ MainWindow::stopRvsT() {
     disconnect(pKeithley, SIGNAL(newReading(QDateTime, QString)),
                this, SLOT(onNewKeithleyReading(QDateTime, QString)));
     pLakeShore->switchPowerOff();
+    pKeithley->deleteLater();
+    pKeithley = Q_NULLPTR;
+    pLakeShore->deleteLater();
+    pLakeShore = Q_NULLPTR;
     switchLampOff();
 }
 
@@ -396,6 +401,7 @@ MainWindow::on_startIvsVButton_clicked() {
     QApplication::restoreOverrideCursor();
     return;
   }
+  pOutputFile->write(QString("%1 %2").arg("Voltage[V]", 12). arg("Current[A]", 12).toLocal8Bit());
   pOutputFile->write(configureIvsVDialog.sSampleInfo.toLocal8Bit());
   pOutputFile->write("\n");
   pOutputFile->flush();
@@ -413,10 +419,9 @@ MainWindow::on_startIvsVButton_clicked() {
   if(junctionDirection == 0) {
     // No diode junction
     ui->statusBar->showMessage("Sweeping...Please Wait");
-    int nPoints = 20;
     double dIStart = configureIvsVDialog.dIStart;
     double dIStop = configureIvsVDialog.dIStop;
-    double dIStep = (dIStop - dIStart) / double(nPoints);
+    double dIStep = (dIStop - dIStart) / double(nSweepPoints);
     pKeithley->initISweep(dIStart, dIStop, dIStep, 1000.0);
   }
   else if(junctionDirection > 0) {
@@ -449,6 +454,8 @@ MainWindow::stopIvsV() {
     ui->startIvsVButton->setText("Start I vs V");
     ui->startRvsTButton->setEnabled(true);
     ui->statusBar->showMessage("Sweep Done");
+    pKeithley->deleteLater();
+    pKeithley = Q_NULLPTR;
 }
 
 

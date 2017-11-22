@@ -70,14 +70,8 @@ ConfigureIvsVDialog::ConfigureIvsVDialog(QWidget *parent)
     dTemperature = 300.0;
   ui->TValueEdit->setText(QString("%1").arg(dTemperature, 0, 'f', 2));
 
-  if(bUseThermostat) {
-    ui->ThermostatCheckBox->setChecked(true);
-    ui->TValueEdit->setEnabled(true);
-  }
-  else {
-    ui->ThermostatCheckBox->setChecked(false);
-    ui->TValueEdit->setEnabled(false);
-  }
+  ui->ThermostatCheckBox->setChecked(bUseThermostat);
+  ui->TValueEdit->setEnabled(bUseThermostat);
 
   // Sample information
   ui->sampleInformationEdit->setPlainText(sSampleInfo);
@@ -203,13 +197,13 @@ ConfigureIvsVDialog::on_outFilePathButton_clicked() {
 void
 ConfigureIvsVDialog::on_ThermostatCheckBox_stateChanged(int arg1) {
   if(arg1) {
-    ui->labelTValue->setEnabled(true);
-    ui->TValueEdit->setEnabled(true);
+    bUseThermostat = true;
   }
   else {
-    ui->labelTValue->setDisabled(true);
-    ui->TValueEdit->setDisabled(true);
+    bUseThermostat = false;
   }
+  ui->labelTValue->setEnabled(bUseThermostat);
+  ui->TValueEdit->setEnabled(bUseThermostat);
 }
 
 

@@ -40,9 +40,9 @@ ConfigureRvsTDialog::ConfigureRvsTDialog(QWidget *parent)
   , TRateMin(0.01)
   , TRateMax(10.0)
   , reachingTTimeMin(0)// In minutes
-  , reachingTTimeMax(5)// In minutes
+  , reachingTTimeMax(30)// In minutes
   , stabilizingTTimeMin(0)// In minutes
-  , stabilizingTTimeMax(3)// In minutes
+  , stabilizingTTimeMax(15)// In minutes
   , ui(new Ui::ConfigureRvsTDialog)
 {
   setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
