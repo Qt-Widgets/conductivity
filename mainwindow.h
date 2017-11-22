@@ -24,8 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QTimer>
 #include <QSerialPort>
 
-#include "NIDAQmx.h"
-
 #include "configureRvsTdialog.h"
 #include "configureIvsVdialog.h"
 
@@ -50,8 +48,6 @@ public:
 protected:
   void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
   bool CheckInstruments();
-  bool startDAQ();
-  void stopDAQ();
   bool getNewSigmaMeasure();
   void initRvsTPlots();
   void stopRvsT();
@@ -80,12 +76,12 @@ private:
   Ui::MainWindow *ui;
 
   enum commands {
-    ACK           = 6,
-    NACK          = 21,
-    EOS           = 127,
-    AreYouThere   = 70,
-    SwitchON      = 71,
-    SwitchOFF     = 72
+    ACK         = 6,
+    NACK        = 21,
+    EOS         = 127,
+    AreYouThere = 70,
+    SwitchON    = 71,
+    SwitchOFF   = 72
   };
   commands command;
 
@@ -109,11 +105,7 @@ private:
   const quint8  LAMP_OFF;
   int           iCurrentTPlot;
   int           gpibBoardID;
-  int32         error;
-  TaskHandle    lampTaskHandle;// Digital Output
-  QString       sLampLine;
   quint8        currentLampStatus;
-  bool          bStartDaq;
   Plot2D       *pPlotMeasurements;
   Plot2D       *pPlotTemperature;
   QString       sMeasurementPlotLabel;
@@ -127,7 +119,8 @@ private:
   bool          bRunning;
   QSerialPort   serialPort;
   QByteArray    requestData;
-  int           baudRate;
+  enum QSerialPort::BaudRate
+                baudRate;
   int           waitTimeout;
 };
 

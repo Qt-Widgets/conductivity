@@ -33,10 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QLayout>
 #include <QSerialPortInfo>
 #include <ni4882.h>
-#include <NIDAQmx.h>
-
-
-#define DAQmxErrChk(functionCall) if( DAQmxFailed(error=(functionCall)) ) goto Error;
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -48,8 +44,6 @@ MainWindow::MainWindow(QWidget *parent)
   , LAMP_ON(1)
   , LAMP_OFF(0)
   , gpibBoardID(0)
-  , lampTaskHandle(0)
-  , sLampLine(QString("NiUSB-6211/port1/line0"))
   , currentLampStatus(LAMP_OFF)
   , pPlotMeasurements(Q_NULLPTR)
   , pPlotTemperature(Q_NULLPTR)
@@ -61,7 +55,7 @@ MainWindow::MainWindow(QWidget *parent)
   , isK236ReadyForTrigger(false)
   , bRunning(false)
   // For Arduino Serial Port
-  , baudRate(1200)
+  , baudRate(QSerialPort::Baud115200)
   , waitTimeout(1000)
 {
   ui->setupUi(this);
@@ -79,6 +73,7 @@ MainWindow::MainWindow(QWidget *parent)
 
   if(connectToArduino()) {
     qCritical() << QString("No Arduino Ready to Use !");
+    exit(-1);
   }
   switchLampOff();
 }
@@ -122,7 +117,6 @@ MainWindow::closeEvent(QCloseEvent *event) {
       pOutputFile = Q_NULLPTR;
     }
     if(pKeithley) pKeithley->endVvsT();
-    stopDAQ();
     if(pLakeShore) pLakeShore->switchPowerOff();
   }
 }
@@ -223,72 +217,6 @@ MainWindow::switchLampOff() {
 }
 
 
-bool
-MainWindow::startDAQ() {
-  // DAQmx Configure Digital Output Code
-  DAQmxErrChk (
-    DAQmxCreateTask("Switch the Lamp", &lampTaskHandle)
-  );
-  DAQmxErrChk (
-      DAQmxCreateDOChan(
-        lampTaskHandle,
-        sLampLine.toLatin1().constData(),
-        "Lamp Switch",
-        DAQmx_Val_ChanPerLine)
-  );
-  DAQmxSetDOOutputDriveType(
-    lampTaskHandle,
-    sLampLine.toLatin1().constData(),
-    DAQmx_Val_ActiveDrive);
-  // DAQmx Start Code
-  DAQmxErrChk (
-    DAQmxStartTask(lampTaskHandle)
-  );
-  // Write Initial Lamp Status
-  DAQmxErrChk(
-    DAQmxWriteDigitalLines(
-      lampTaskHandle,
-      1,                       // numSampsPerChan
-      1,                       // autoStart
-      1.0,                     // timeout [s]
-      DAQmx_Val_GroupByChannel,// dataLayout
-      &currentLampStatus,      // writeArray[]
-      NULL,                    // *sampsPerChanWritten
-      NULL)                    // *reserved
-  );
-  return true;
-
-Error:
-  if(DAQmxFailed(error)) {
-    char errBuf[2048];
-    DAQmxGetExtendedErrorInfo(errBuf, sizeof(errBuf));
-    DAQmxClearTask(lampTaskHandle);
-    QMessageBox::critical(Q_NULLPTR, "DAQmx Error", QString(errBuf));
-  }
-  return false;
-}
-
-
-void
-MainWindow::stopDAQ() {
-  if(lampTaskHandle) {
-    currentLampStatus  = LAMP_OFF;
-    DAQmxWriteDigitalLines(
-      lampTaskHandle,
-      1,                       // numSampsPerChan
-      1,                       // autoStart
-      1.0,                     // timeout [s]
-      DAQmx_Val_GroupByChannel,// dataLayout
-      &currentLampStatus,      // writeArray[]
-      NULL,                    // *sampsPerChanWritten
-      NULL);                   // *reserved
-    DAQmxStopTask(lampTaskHandle);
-    DAQmxClearTask(lampTaskHandle);
-  }
-  lampTaskHandle = Q_NULLPTR;
-}
-
-
 void
 MainWindow::stopRvsT() {
     bRunning = false;
@@ -314,7 +242,6 @@ MainWindow::stopRvsT() {
                this, SLOT(onNewKeithleyReading(QDateTime, QString)));
     pLakeShore->switchPowerOff();
     switchLampOff();
-    stopDAQ();
 }
 
 
@@ -333,16 +260,10 @@ MainWindow::on_startRvsTButton_clicked() {
   QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
   // Start the Digital Output Tasks to switch the lamp on or off
   ui->statusBar->showMessage("Checking for the Presence of Lamp Switch");
-  if(!startDAQ()) {
-    ui->statusBar->showMessage("National Instruments DAQ Board not present");
-    QApplication::restoreOverrideCursor();
-    return;
-  }
   // Are the GPIB instruments connectd and ready to start ?
   ui->statusBar->showMessage("Checking for the GPIB Instruments");
   if(!CheckInstruments()) {
     ui->statusBar->showMessage("GPIB Instruments not found");
-    stopDAQ();
     QApplication::restoreOverrideCursor();
     return;
   }
@@ -350,7 +271,6 @@ MainWindow::on_startRvsTButton_clicked() {
     ui->statusBar->showMessage("Initializing Keithley 236...");
     if(pKeithley->init()) {
       ui->statusBar->showMessage("Unable to Initialize Keithley 236...");
-      stopDAQ();
       QApplication::restoreOverrideCursor();
       return;
     }
@@ -366,7 +286,6 @@ MainWindow::on_startRvsTButton_clicked() {
     ui->statusBar->showMessage("Initializing LakeShore 330...");
     if(pLakeShore->init()) {
       ui->statusBar->showMessage("Unable to Initialize LakeShore 330...");
-      stopDAQ();
       QApplication::restoreOverrideCursor();
       return;
     }
@@ -378,7 +297,6 @@ MainWindow::on_startRvsTButton_clicked() {
                         configureRvsTDialog.sOutFileName))
   {
     ui->statusBar->showMessage("Unable to Open the Output file...");
-    stopDAQ();
     QApplication::restoreOverrideCursor();
     return;
   }
@@ -719,7 +637,6 @@ MainWindow::onTimeToGetNewMeasure() {
       pOutputFile = Q_NULLPTR;
     }
     pKeithley->endVvsT();
-    stopDAQ();
     pLakeShore->switchPowerOff();
     switchLampOff();
     ui->startRvsTButton->setText("Start R vs T");
@@ -803,27 +720,6 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
     pOutputFile->write("\n");
     switchLampOff();
   }
-  DAQmxErrChk(
-    DAQmxWriteDigitalLines(
-      lampTaskHandle,
-      1,                       // numSampsPerChan
-      1,                       // autoStart
-      1.0,                     // timeout [s]
-      DAQmx_Val_GroupByChannel,// dataLayout
-      &currentLampStatus,      // writeArray[]
-      NULL,                    // *sampsPerChanWritten
-      NULL)                    // *reserved
-  );
-  return;
-
-Error:
-  if(DAQmxFailed(error)) {
-    char errBuf[2048];
-    DAQmxGetExtendedErrorInfo(errBuf, sizeof(errBuf));
-    DAQmxClearTask(lampTaskHandle);
-    QMessageBox::critical(Q_NULLPTR, "DAQmx Error", QString(errBuf));
-  }
-  return;
 }
 
 
@@ -876,7 +772,7 @@ MainWindow::connectToArduino() {
   for(int i=0; i<serialPorts.size()&& !found; i++) {
     info = serialPorts.at(i);
     serialPort.setPortName(info.portName());
-    serialPort.setBaudRate(QSerialPort::Baud1200);
+    serialPort.setBaudRate(QSerialPort::Baud115200);
     serialPort.setDataBits(QSerialPort::Data8);
     serialPort.setParity(QSerialPort::NoParity);
     serialPort.setStopBits(QSerialPort::OneStop);

@@ -57,10 +57,12 @@ ConfigureRvsTDialog::ConfigureRvsTDialog(QWidget *parent)
   setCaptions(bSourceI);
 
   // Measurement parameters
-  if(!isSourceValueValid()) {
-    dSourceValue = 0.0;
-  }
   ui->testValueEdit->setText(QString("%1").arg(dSourceValue, 0, 'g', 2));
+  if(!isSourceValueValid()) {
+    qDebug() << QString("Invalid Source Value %1").arg(dSourceValue);
+    dSourceValue = 0.0;
+    ui->testValueEdit->setText(QString("%1").arg(dSourceValue, 0, 'g', 2));
+  }
 
   // Temperature parameters
   if(!isTemperatureValueValid(dTempStart)) {
@@ -219,15 +221,18 @@ ConfigureRvsTDialog::isSourceValueValid() {
   if(!ok) {
     return false;
   }
-  if(bSourceI)
-    if((tmp >= currentMin) &&(tmp <= currentMax))
+  if(bSourceI) {
+    if((tmp >= currentMin) &&(tmp <= currentMax)) {
       return true;
+    }
     else {
       return false;
     }
+  }
   else
-    if((tmp >= voltageMin) && (tmp <= voltageMax))
+    if((tmp >= voltageMin) && (tmp <= voltageMax)) {
       return true;
+    }
     else {
       return false;
     }
