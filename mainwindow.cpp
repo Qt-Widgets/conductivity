@@ -783,13 +783,14 @@ MainWindow::connectToArduino() {
     QSerialPortInfo info;
     for(int i=0; i<serialPorts.size()&& !found; i++) {
       info = serialPorts.at(i);
+//      qInfo() << "Conntecting to: " << info.portName();
       serialPort.setPortName(info.portName());
       serialPort.setBaudRate(QSerialPort::Baud115200);
       serialPort.setDataBits(QSerialPort::Data8);
       serialPort.setParity(QSerialPort::NoParity);
       serialPort.setStopBits(QSerialPort::OneStop);
-      QThread::sleep(3);
       if(serialPort.open(QIODevice::ReadWrite)) {
+        QThread::sleep(3);
         requestData = QByteArray(2, AreYouThere);
         found = writeToArduino(requestData);
         if(found) break;
