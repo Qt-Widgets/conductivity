@@ -68,7 +68,7 @@ Keithley236::~Keithley236() {
 
 int
 Keithley236::init() {
-  k236 = ibdev(gpibNumber, k236Address, 0, T1s, 1, 0);
+  k236 = ibdev(gpibNumber, k236Address, 0, T10s, 1, 0);
   if(k236 < 0) {
     qDebug() << "ibdev() Failed";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
@@ -332,8 +332,8 @@ Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long
   }
 
   if(spollByte & READING_DONE) {// Reading Done
-    QDateTime currentTime = QDateTime::currentDateTime();
     sResponse = gpibRead(LocalUd);
+    QDateTime currentTime = QDateTime::currentDateTime();
     emit newReading(currentTime, sResponse);
   }
 

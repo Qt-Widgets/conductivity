@@ -54,8 +54,8 @@ protected:
   void stopIvsV();
   void initIvsVPlots();
   bool prepareOutputFile(QString sBaseDir, QString sFileName);
-  int  connectToArduino();
-  int  writeToArduino(QByteArray requestData);
+  bool connectToArduino();
+  bool writeToArduino(QByteArray requestData);
   bool switchLampOn();
   bool switchLampOff();
 

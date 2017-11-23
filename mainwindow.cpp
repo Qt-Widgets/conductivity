@@ -58,6 +58,7 @@ MainWindow::MainWindow(QWidget *parent)
   , baudRate(QSerialPort::Baud115200)
   , waitTimeout(1000)
   , nSweepPoints(100)
+
 {
   ui->setupUi(this);
   // To remove the resize-handle in the lower right corner
@@ -72,7 +73,7 @@ MainWindow::MainWindow(QWidget *parent)
   restoreGeometry(settings.value("mainWindowGeometry").toByteArray());
   restoreState(settings.value("mainWindowState").toByteArray());
 
-  if(connectToArduino()) {
+  if(!connectToArduino()) {
     qCritical() << QString("No Arduino Ready to Use !");
     exit(-1);
   }
@@ -203,18 +204,14 @@ MainWindow::CheckInstruments() {
 bool
 MainWindow::switchLampOn() {
   requestData = QByteArray(1, SwitchON);
-  if(writeToArduino(requestData) != 0)
-    return false;
-  return true;
+  return writeToArduino(requestData);
 }
 
 
 bool
 MainWindow::switchLampOff() {
   requestData = QByteArray(1, SwitchOFF);
-  if(writeToArduino(requestData) != 0)
-    return false;
-  return true;
+  return writeToArduino(requestData);
 }
 
 
@@ -306,6 +303,14 @@ MainWindow::on_startRvsTButton_clicked() {
     return;
   }
   // Write the header
+  pOutputFile->write(QString("%1 %2 %3 %4 %5 %6")
+                     .arg("T-Dark[K]", 12)
+                     .arg("V-Dark[V]", 12)
+                     .arg("I-Dark[A]", 12)
+                     .arg("T-Photo[K]", 12)
+                     .arg("V-Photo[V]", 12)
+                     .arg("I-Photo[A]\n", 12)
+                     .toLocal8Bit());
   pOutputFile->write(configureRvsTDialog.sSampleInfo.toLocal8Bit());
   pOutputFile->write("\n");
   pOutputFile->flush();
@@ -484,10 +489,10 @@ void
 MainWindow::initRvsTPlots() {
   // Plot of Condicibility vs Temperature
   if(pPlotMeasurements) delete pPlotMeasurements;
-  sMeasurementPlotLabel = QString("R^-1 [OHM^-1] vs T [K]");
+  sMeasurementPlotLabel = QString("log(S) [Ohm^-1] vs 1000/T [K]");
   pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
   pPlotMeasurements->setMaxPoints(maxPlotPoints);
-  pPlotMeasurements->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
+  pPlotMeasurements->SetLimits(0.0, 1.0, 0.1, 1.0, true, true, false, true);
 
   pPlotMeasurements->NewDataSet(iPlotDark,//Id
                                 3, //Pen Width
@@ -581,7 +586,7 @@ MainWindow::onTimeToCheckReachedT() {
     connect(&stabilizingTimer, SIGNAL(timeout()),
             this, SLOT(onTimerStabilizeT()));
     stabilizingTimer.start(configureRvsTDialog.iStabilizingTime*60*1000);
-    qDebug() << QString("Starting T Reached: Thermal Stabilization...");
+//    qDebug() << QString("Starting T Reached: Thermal Stabilization...");
     ui->statusBar->showMessage(QString("Starting T Reached: Thermal Stabilization for %1 min.").arg(configureRvsTDialog.iStabilizingTime));
   }
   else {
@@ -594,7 +599,7 @@ MainWindow::onTimeToCheckReachedT() {
       connect(&stabilizingTimer, SIGNAL(timeout()),
               this, SLOT(onTimerStabilizeT()));
       stabilizingTimer.start(configureRvsTDialog.iStabilizingTime*60*1000);
-      qDebug() << QString("Max Reaching Time Exceed...Thermal Stabilization...");
+//      qDebug() << QString("Max Reaching Time Exceed...Thermal Stabilization...");
       ui->statusBar->showMessage(QString("Max Reaching Time Exceed...Thermal Stabilization for %1 min.").arg(configureRvsTDialog.iStabilizingTime));
     }
   }
@@ -617,7 +622,7 @@ MainWindow::onTimerStabilizeT() {
   pPlotTemperature->SetShowTitle(2, true);
   pPlotTemperature->UpdatePlot();
   iCurrentTPlot = 2;
-  qDebug() << "Thermal Stabilization Reached: Start of the Measure";
+//  qDebug() << "Thermal Stabilization Reached: Start of the Measure";
   ui->statusBar->showMessage(QString("Thermal Stabilization Reached: Start of the Measure"));
   connect(&measuringTimer, SIGNAL(timeout()),
           this, SLOT(onTimeToGetNewMeasure()));
@@ -648,7 +653,7 @@ MainWindow::onTimeToGetNewMeasure() {
     switchLampOff();
     ui->startRvsTButton->setText("Start R vs T");
     ui->startIvsVButton->setEnabled(true);
-    qDebug() << "Ramp is Done";
+//    qDebug() << "End Temperature Reached: Measure is Done";
     ui->statusBar->showMessage(QString("Measurements Completed !"));
     return;
   }
@@ -715,13 +720,13 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
                      .toLocal8Bit());
   pOutputFile->flush();
   if(currentLampStatus == LAMP_OFF) {
-    pPlotMeasurements->NewPoint(iPlotDark, currentTemperature, current/voltage);
+    pPlotMeasurements->NewPoint(iPlotDark, 1000.0/currentTemperature, current/voltage);
     pPlotMeasurements->UpdatePlot();
     currentLampStatus = LAMP_ON;
     switchLampOn();
   }
   else {
-    pPlotMeasurements->NewPoint(iPlotPhoto, currentTemperature, current/voltage);
+    pPlotMeasurements->NewPoint(iPlotPhoto, 1000.0/currentTemperature, current/voltage);
     pPlotMeasurements->UpdatePlot();
     currentLampStatus = LAMP_OFF;
     pOutputFile->write("\n");
@@ -767,40 +772,36 @@ MainWindow::getNewSigmaMeasure() {
 }
 
 
-int
+bool
 MainWindow::connectToArduino() {
+  bool found = false;
   QList<QSerialPortInfo> serialPorts = QSerialPortInfo::availablePorts();
   if(serialPorts.isEmpty()) {
-    qInfo() << QString("Empty COM port list: No Arduino connected !");
-    return -1;
+    qCritical() << QString("Empty COM port list: No Arduino connected !");
   }
-  bool found = false;
-  QSerialPortInfo info;
-  for(int i=0; i<serialPorts.size()&& !found; i++) {
-    info = serialPorts.at(i);
-    serialPort.setPortName(info.portName());
-    serialPort.setBaudRate(QSerialPort::Baud115200);
-    serialPort.setDataBits(QSerialPort::Data8);
-    serialPort.setParity(QSerialPort::NoParity);
-    serialPort.setStopBits(QSerialPort::OneStop);
-    QThread::sleep(3);
-    if(serialPort.open(QIODevice::ReadWrite)) {
-      requestData = QByteArray(2, AreYouThere);
-      if(writeToArduino(requestData) == 0)
-        found = true;
-      else
+  else {
+    QSerialPortInfo info;
+    for(int i=0; i<serialPorts.size()&& !found; i++) {
+      info = serialPorts.at(i);
+      serialPort.setPortName(info.portName());
+      serialPort.setBaudRate(QSerialPort::Baud115200);
+      serialPort.setDataBits(QSerialPort::Data8);
+      serialPort.setParity(QSerialPort::NoParity);
+      serialPort.setStopBits(QSerialPort::OneStop);
+      QThread::sleep(3);
+      if(serialPort.open(QIODevice::ReadWrite)) {
+        requestData = QByteArray(2, AreYouThere);
+        found = writeToArduino(requestData);
+        if(found) break;
         serialPort.close();
+      }
     }
   }
-  if(!found) {
-    return -1;
-  }
-//  qInfo() << "Arduino found at: " << info.portName();
-  return 0;
+  return found;
 }
 
 
-int
+bool
 MainWindow::writeToArduino(QByteArray requestData) {
   serialPort.write(requestData.append(uchar(EOS)));
   if (serialPort.waitForBytesWritten(waitTimeout)) {
@@ -809,18 +810,18 @@ MainWindow::writeToArduino(QByteArray requestData) {
       while(serialPort.waitForReadyRead(10))
         responseData += serialPort.readAll();
       if(responseData.at(0) != uchar(ACK)) {
-        qInfo() << "MainWindow::writeRequest(): not an ACK";
-        return -1;
+        qCritical() << "MainWindow::writeRequest(): not an ACK";
+        return false;
       }
     }
     else {
-      qInfo() << "MainWindow::writeRequest(): Wait read response timeout";
-      return -1;
+      qCritical() << "MainWindow::writeRequest(): Wait read response timeout";
+      return false;
     }
   }
   else {
-    qInfo() <<"MainWindow::writeRequest(): Wait write request timeout %1";
-    return -1;
+    qCritical() <<"MainWindow::writeRequest(): Wait write request timeout %1";
+    return false;
   }
-  return 0;
+  return true;
 }
