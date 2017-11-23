@@ -32,7 +32,7 @@ public:
   int      init();
   int      initVvsT(double dAppliedCurrent, double dVoltageCompliance);
   int      endVvsT();
-  int      junctionCheck();
+  int      junctionCheck(double v1, double v2);
   bool     initISweep(double startCurrent, double stopCurrent, double currentStep, double delay);
   int      endISweep();
   void     onGpibCallback(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);

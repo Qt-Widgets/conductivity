@@ -141,7 +141,7 @@ Keithley236::endVvsT() {
 // Returns the Order of Magnitude Difference
 // between Forward and Reverse Current
 int
-Keithley236::junctionCheck() {
+Keithley236::junctionCheck(double v1, double v2) {
   uint iErr = 0;
   iErr |= gpibWrite(k236, "M0,0X");    // SRQ Disabled, SRQ on Compliance
   iErr |= gpibWrite(k236, "F0,0");     // Source V Measure I dc
@@ -153,8 +153,12 @@ Keithley236::junctionCheck() {
   iErr |= gpibWrite(k236, "T0,1,0,0"); // Trigger on X ^SRC DLY MSR
   iErr |= gpibWrite(k236, "L1.0e-4,0");// Set Compliance, Autorange Measure
   iErr |= gpibWrite(k236, "G4,2,0");   // Output Only Measure, No Prefix, Single Line
-  iErr |= gpibWrite(k236, "B1.0,0,0"); // Source 1.0V Measure I Autorange
   iErr |= gpibWrite(k236, "R1");       // Arm Trigger
+
+  // Get the reverse current value
+  sCommand = QString("B%1,0,1000").arg(v1, 6, 'g');
+//  qDebug() << sCommand;
+  iErr |= gpibWrite(k236, sCommand);   // Source initial Voltage Measure I Autorange
   iErr |= gpibWrite(k236, "N1X");      // Operate !
   if(iErr & ERR) {
     QString sError;
@@ -165,45 +169,15 @@ Keithley236::junctionCheck() {
     qCritical() << sError;
     return ERROR_JUNCTION;
   }
-  QThread::sleep(3);
   // Rischio di loop infinito
   ibrsp(k236, &spollByte);
   while(!(spollByte & READY_FOR_TRIGGER)) {// Ready for trigger
     QThread::msleep(100);
     ibrsp(k236, &spollByte);
   }
-  // Get the forward current value
   gpibWrite(k236, "H0X");
   if(isGpibError("Keithley236::junctionCheck(): Trigger Error"))
     return ERROR_JUNCTION;
-
-  // Rischio di loop infinito
-  ibrsp(k236, &spollByte);
-  while(!(spollByte & READING_DONE)) {// Reading Done
-    QThread::msleep(100);
-    ibrsp(k236, &spollByte);
-  }
-  sResponse = gpibRead(k236);
-  double I_Forward = sResponse.toDouble();
-  //  qInfo() << QString("Forward Current [A]= %1").arg(sResponse);
-  // qDebug() << QString("Forward Current [A]= %1").arg(I_Forward);
-
-  gpibWrite(k236, "B-1.0,0,0X"); // Source -1.0V Measure I Autorange
-  if(isGpibError("Keithley236::junctionCheck(): Error Changing Output Voltage"))
-    return ERROR_JUNCTION;
-  QThread::sleep(3);
-
-  // Rischio di loop infinito
-  ibrsp(k236, &spollByte);
-  while(!(spollByte & READY_FOR_TRIGGER)) {// Ready for trigger
-    QThread::msleep(100);
-    ibrsp(k236, &spollByte);
-  }
-  // Get the reverse current value
-  gpibWrite(k236, "H0X");
-  if(isGpibError("Keithley236::junctionCheck(): Trigger Error"))
-    return ERROR_JUNCTION;
-
   // Rischio di loop infinito
   ibrsp(k236, &spollByte);
   while(!(spollByte & READING_DONE)) {// Reading Done
@@ -212,8 +186,30 @@ Keithley236::junctionCheck() {
   }
   sResponse = gpibRead(k236);
   double I_Reverse = sResponse.toDouble();
-  // qDebug() << QString("Reverse Current [A]= %1").arg(sResponse);
-  // qDebug() << QString("Reverse Current [A]= %1").arg(I_Reverse);
+
+  // Get the forward current value
+  sCommand = QString("B%1,0,1000").arg(v2, 6, 'g');
+//  qDebug() << sCommand;
+  iErr |= gpibWrite(k236, sCommand);   // Source final Voltage Measure I Autorange
+  if(isGpibError("Keithley236::junctionCheck(): Error Changing Output Voltage"))
+    return ERROR_JUNCTION;
+  // Rischio di loop infinito
+  ibrsp(k236, &spollByte);
+  while(!(spollByte & READY_FOR_TRIGGER)) {// Ready for trigger
+    QThread::msleep(100);
+    ibrsp(k236, &spollByte);
+  }
+  gpibWrite(k236, "H0X");
+  if(isGpibError("Keithley236::junctionCheck(): Trigger Error"))
+    return ERROR_JUNCTION;
+  // Rischio di loop infinito
+  ibrsp(k236, &spollByte);
+  while(!(spollByte & READING_DONE)) {// Reading Done
+    QThread::msleep(100);
+    ibrsp(k236, &spollByte);
+  }
+  sResponse = gpibRead(k236);
+  double I_Forward = sResponse.toDouble();
   gpibWrite(k236, "B0.0,0,0"); // Source 0.0V Measure I Autorange
   if(isGpibError("Keithley236::junctionCheck(): Zeroing Output Voltage"))
     return ERROR_JUNCTION;
@@ -222,8 +218,14 @@ Keithley236::junctionCheck() {
     return ERROR_JUNCTION;
   if((I_Forward == 0.0) || (I_Reverse == 0.0))
     return ERROR_JUNCTION;
-  return qRound(log10(abs(I_Forward))) -
-         qRound(log10(abs(I_Reverse)));
+
+//  qDebug() << I_Forward << I_Reverse;
+//  qDebug() << "Diff="
+//           << qRound(log10(fabs(I_Forward))) -
+//              qRound(log10(fabs(I_Reverse)));
+
+  return qRound(log10(fabs(I_Forward))) -
+         qRound(log10(fabs(I_Reverse)));
 }
 
 
@@ -277,6 +279,7 @@ Keithley236::endISweep() {
   gpibWrite(k236, "M0,0X");      // SRQ Disabled, SRQ on Compliance
   gpibWrite(k236, "R0");         // Disarm Trigger
   gpibWrite(k236, "N0X");        // Place in Stand By
+  ibclr(k236);
   return 0;
 }
 

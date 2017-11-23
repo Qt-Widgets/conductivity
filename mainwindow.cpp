@@ -412,7 +412,9 @@ MainWindow::on_startIvsVButton_clicked() {
   pOutputFile->flush();
 
   ui->statusBar->showMessage("Checking the presence of a Junction...");
-  int junctionDirection = pKeithley->junctionCheck();
+  double vStart = configureIvsVDialog.dVStart;
+  double vStop =  configureIvsVDialog.dVStop;
+  int junctionDirection = pKeithley->junctionCheck(vStart, vStop);
   if(junctionDirection == pKeithley->ERROR_JUNCTION) {
     ui->statusBar->showMessage("Error Checking the presence of a Junction...");
     QApplication::restoreOverrideCursor();
@@ -790,6 +792,8 @@ MainWindow::connectToArduino() {
       serialPort.setParity(QSerialPort::NoParity);
       serialPort.setStopBits(QSerialPort::OneStop);
       if(serialPort.open(QIODevice::ReadWrite)) {
+        // Arduino will reset upon opening the seial port
+        // so we need to give it time to boot
         QThread::sleep(3);
         requestData = QByteArray(2, AreYouThere);
         found = writeToArduino(requestData);
