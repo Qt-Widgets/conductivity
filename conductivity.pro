@@ -29,8 +29,10 @@ QT += serialport
 TARGET = conductivity
 TEMPLATE = app
 
-# For National Instruments DAQ & GPIB Boards
-INCLUDEPATH += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/include"
+windows {
+    # For National Instruments DAQ & GPIB Boards
+    INCLUDEPATH += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/include"
+}
 
 SOURCES += main.cpp
 SOURCES += cdatastream2d.cpp
@@ -68,7 +70,9 @@ FORMS   += configureRvsTdialog.ui
 FORMS   += configureIvsVdialog.ui
 FORMS   += axesdialog.ui
 
-# For National Instruments DAQ & GPIB Boards
-LIBS += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/lib32/msvc/gpib-32.obj"
+windows {
+  # For National Instruments DAQ & GPIB Boards
+  LIBS += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/lib32/msvc/gpib-32.obj"
+}
 
 DISTFILES +=

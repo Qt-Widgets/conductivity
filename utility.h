@@ -20,7 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define UTILITY_H
 
 #include <QString>
+#ifdef Q_OS_LINUX
+#include <gpib/ib.h>
+#else
 #include <ni4882.h>
+#endif
 
 #define GPIB_DEVICE_NOT_PRESENT -1000
 

@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "keithley236.h"
 #include "lakeshore330.h"
 #include "plot2d.h"
+#include "math.h"
 
 #include <QMessageBox>
 #include <QDebug>
@@ -32,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QThread>
 #include <QLayout>
 #include <QSerialPortInfo>
-#include <ni4882.h>
+//#include <ni4882.h>
 
 
 MainWindow::MainWindow(QWidget *parent)

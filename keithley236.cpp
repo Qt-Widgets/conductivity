@@ -18,8 +18,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "keithley236.h"
 #include "utility.h"
+#include "math.h"
 
+#ifdef Q_OS_LINUX
+#include <gpib/ib.h>
+#else
 #include <ni4882.h>
+#endif
 
 #include <QDebug>
 #include <QThread>
@@ -29,8 +34,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace keithley236 {
   int rearmMask;
-  int __stdcall
-  myCallback(int LocalUd, unsigned long LocalIbsta, unsigned long LocalIberr, long LocalIbcntl, void* callbackData) {
+#ifdef Q_OS_LINUX
+int
+#else
+int __stdcall
+#endif
+myCallback(int LocalUd, unsigned long LocalIbsta, unsigned long LocalIberr, long LocalIbcntl, void* callbackData) {
     reinterpret_cast<Keithley236*>(callbackData)->onGpibCallback(LocalUd, LocalIbsta, LocalIberr, LocalIbcntl);
     return rearmMask;
   }
@@ -60,7 +69,10 @@ Keithley236::Keithley236(int gpio, int address, QObject *parent)
 
 Keithley236::~Keithley236() {
   if(k236 != -1) {
+#ifdef Q_OS_LINUX
+#else
     ibnotify (k236, 0, NULL, NULL);// disable notification
+#endif
     ibonl(k236, 0);// Disable hardware and software.
   }
 }
