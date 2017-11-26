@@ -73,12 +73,6 @@ MainWindow::MainWindow(QWidget *parent)
   QSettings settings;
   restoreGeometry(settings.value("mainWindowGeometry").toByteArray());
   restoreState(settings.value("mainWindowState").toByteArray());
-
-  if(!connectToArduino()) {
-    qCritical() << QString("No Arduino Ready to Use !");
-    exit(-1);
-  }
-  switchLampOff();
 }
 
 
@@ -261,8 +255,13 @@ MainWindow::on_startRvsTButton_clicked() {
     return;
 
   QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-  // Start the Digital Output Tasks to switch the lamp on or off
+  // Start the Tasks to switch the lamp on or off
   ui->statusBar->showMessage("Checking for the Presence of Lamp Switch");
+  if(!connectToArduino()) {
+    qCritical() << QString("No Arduino Ready to Use !");
+    exit(-1);
+  }
+  switchLampOff();
   // Are the GPIB instruments connectd and ready to start ?
   ui->statusBar->showMessage("Checking for the GPIB Instruments");
   if(!CheckInstruments()) {
