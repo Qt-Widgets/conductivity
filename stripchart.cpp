@@ -684,8 +684,8 @@ StripChart::DrawLastPoint(QPainter* painter, CDataStream* pData) {
       return;
   } else
     iy = int((Pf.bottom + (pData->m_pointArray[i] - Ax.YMin)*yfact));
-    if(ix<=Pf.right && ix>=Pf.left && iy>=Pf.top && iy<=Pf.bottom)
-      painter->drawPoint(ix, iy);
+  if(ix<=Pf.right && ix>=Pf.left && iy>=Pf.top && iy<=Pf.bottom)
+  painter->drawPoint(ix, iy);
   return;
 }
 

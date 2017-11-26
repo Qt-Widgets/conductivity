@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
 #include "configureRvsTdialog.h"
-#include "ui_ConfigureRvsTDialog.h"
+#include "ui_configureRvsTdialog.h"
 
 
 #include <QSettings>

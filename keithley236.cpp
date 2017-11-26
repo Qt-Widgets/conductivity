@@ -96,12 +96,15 @@ Keithley236::init() {
     qDebug() << "Nolistener at Addr";
     return GPIB_DEVICE_NOT_PRESENT;
   }
+#ifdef Q_OS_LINUX
+#else
   // set up the asynchronous event notification routine on RQS
   ibnotify(k236,
            RQS,
            (GpibNotifyCallback_t) keithley236::myCallback,
            this);
   isGpibError("ibnotify call failed.");
+#endif
   ibclr(k236);
   QThread::sleep(1);
   return 0;
@@ -142,7 +145,10 @@ Keithley236::initVvsT(double dAppliedCurrent, double dVoltageCompliance) {
 
 int
 Keithley236::endVvsT() {
+#ifdef Q_OS_LINUX
+#else
   ibnotify (k236, 0, NULL, NULL);// disable notification
+#endif
   gpibWrite(k236, "M0,0X");      // SRQ Disabled, SRQ on Compliance
   gpibWrite(k236, "R0");         // Disarm Trigger
   gpibWrite(k236, "N0X");        // Place in Stand By
@@ -287,7 +293,10 @@ Keithley236::initISweep(double startCurrent, double stopCurrent, double currentS
 
 int
 Keithley236::endISweep() {
+#ifdef Q_OS_LINUX
+#else
   ibnotify (k236, 0, NULL, NULL);// disable notification
+#endif
   gpibWrite(k236, "M0,0X");      // SRQ Disabled, SRQ on Compliance
   gpibWrite(k236, "R0");         // Disarm Trigger
   gpibWrite(k236, "N0X");        // Place in Stand By

@@ -21,13 +21,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utility.h"
 #include <QDebug>
 #include <QThread>
+#ifdef Q_OS_LINUX
+#include <gpib/ib.h>
+#else
 #include <ni4882.h>
+#endif
+
 
 namespace
 lakeshore330 {
   int RearmMask;
-
+#ifdef Q_OS_LINUX
+  int
+#else
   int __stdcall
+#endif
   MyCallback(int LocalUd, unsigned long LocalIbsta, unsigned long LocalIberr, long LocalIbcntl, void* callbackData) {
     reinterpret_cast<LakeShore330*>(callbackData)->onGpibCallback(LocalUd, LocalIbsta, LocalIberr, LocalIbcntl);
     return RearmMask;
@@ -63,7 +71,10 @@ LakeShore330::~LakeShore330() {
 //  qDebug() << "LakeShore330::~LakeShore330()";
   if(ls330 != -1) {
     switchPowerOff();
+#ifdef Q_OS_LINUX
+#else
     ibnotify (ls330, 0, NULL, NULL);// disable notification
+#endif
     ibonl(ls330, 0);// Disable hardware and software.
   }
 }
@@ -87,6 +98,8 @@ LakeShore330::init() {
     qCritical() << "LakeShore330::init() Nolistener at Addr";
     return GPIB_DEVICE_NOT_PRESENT;
   }
+#ifdef Q_OS_LINUX
+#else
   // set up the asynchronous event notification routine on RQS
   ibnotify(ls330,
            RQS,
@@ -94,6 +107,7 @@ LakeShore330::init() {
            this);
   if(isGpibError("LakeShore330::init() ibnotify call failed."))
     return -1;
+#endif
   ibclr(ls330);
   QThread::sleep(1);
   gpibWrite(ls330, "*sre 0\r\n");// Set Service Request Enable

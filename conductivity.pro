@@ -30,8 +30,8 @@ TARGET = conductivity
 TEMPLATE = app
 
 windows {
-    # For National Instruments DAQ & GPIB Boards
-    INCLUDEPATH += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/include"
+  # For National Instruments DAQ & GPIB Boards
+  INCLUDEPATH += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/include"
 }
 
 SOURCES += main.cpp
@@ -47,8 +47,8 @@ SOURCES += AxisFrame.cpp
 SOURCES += cdatastream.cpp
 SOURCES += DataSetProperties.cpp
 SOURCES += lakeshore330.cpp
-SOURCES += configureRvsTdialog.cpp
 SOURCES += configureIvsVdialog.cpp
+SOURCES += configureRvsTdialog.cpp
 
 HEADERS += mainwindow.h
 HEADERS += cdatastream2d.h
@@ -62,17 +62,22 @@ HEADERS += AxisFrame.h
 HEADERS += cdatastream.h
 HEADERS += DataSetProperties.h
 HEADERS += lakeshore330.h
-HEADERS += configureRvsTdialog.h
 HEADERS += configureIvsVdialog.h
+HEADERS += configureRvsTdialog.h
 
 FORMS   += mainwindow.ui
-FORMS   += configureRvsTdialog.ui
 FORMS   += configureIvsVdialog.ui
+FORMS   += configureRvsTdialog.ui
 FORMS   += axesdialog.ui
 
-windows {
+win32:win64 {
   # For National Instruments DAQ & GPIB Boards
   LIBS += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/lib32/msvc/gpib-32.obj"
+}
+
+linux:unix {
+  message("Running on Linux")
+  LIBS += -L"/usr/local/lib" -lgpib # To include libgpib.so from /usr/local/lib
 }
 
 DISTFILES +=
