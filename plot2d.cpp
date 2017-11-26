@@ -694,17 +694,17 @@ Plot2D::DrawLastPoint(QPainter* painter, CDataStream2D* pData) {
 
   if(Ax.LogX) {
     if(pData->m_pointArrayX[i] > 0.0)
-    ix = int(((log10(pData->m_pointArrayX[i]) - xlmin)*xfact) + Pf.left);
+      ix = int(((log10(pData->m_pointArrayX[i]) - xlmin)*xfact) + Pf.left);
+    else
+      return;
   } else {
     ix = int(((pData->m_pointArrayX[i] - Ax.XMin)*xfact) + Pf.left);
   }
   if(Ax.LogY) {
-    if(pData->m_pointArrayY[i] > 0.0) {
+    if(pData->m_pointArrayY[i] > 0.0)
       iy = int((Pf.bottom + (log10(pData->m_pointArrayY[i]) - ylmin)*yfact));
-    }
-    else {
+    else
       return;
-    }
   }
   else {
     iy = int((Pf.bottom + (pData->m_pointArrayY[i] - Ax.YMin)*yfact));

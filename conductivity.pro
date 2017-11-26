@@ -70,7 +70,12 @@ FORMS   += configureIvsVdialog.ui
 FORMS   += configureRvsTdialog.ui
 FORMS   += axesdialog.ui
 
-win32:win64 {
+win32 {
+  # For National Instruments DAQ & GPIB Boards
+  LIBS += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/lib32/msvc/gpib-32.obj"
+}
+
+win64 {
   # For National Instruments DAQ & GPIB Boards
   LIBS += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/lib32/msvc/gpib-32.obj"
 }
