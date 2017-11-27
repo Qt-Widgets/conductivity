@@ -75,7 +75,7 @@ LakeShore330::~LakeShore330() {
 int
 LakeShore330::init() {
 //  qDebug() << "LakeShore330::init()";
-  ls330 = ibdev(gpibNumber, ls330Address, 0, T3s, 1, 0x1c0A);
+  ls330 = ibdev(gpibNumber, ls330Address, 0, T3s, 1, 0);
   if(ls330 < 0) {
     qCritical() << "LakeShore330::init() ibdev() Failed";
     QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
@@ -83,7 +83,7 @@ LakeShore330::init() {
     return GPIB_DEVICE_NOT_PRESENT;
   }
   short listen;
-  ibln(ls330, ls330Address, NO_SAD, &listen);
+  ibln(gpibNumber, ls330Address, NO_SAD, &listen);
   if(isGpibError("LakeShore330::init() LakeShore 330 Not Respondig"))
     return GPIB_DEVICE_NOT_PRESENT;
   if(listen == 0) {

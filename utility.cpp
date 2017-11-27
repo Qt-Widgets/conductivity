@@ -95,6 +95,7 @@ ErrMsg(int sta, int err, long cntl) {
 
 uint
 gpibWrite(int ud, QString sCmd) {
+//  qDebug() << QString("Writing %1 bytes of data: Data = %2").arg(sCmd.length()).arg(sCmd.toUtf8().constData());
   ibwrt(ud, sCmd.toUtf8().constData(), sCmd.length());
   isGpibError("GPIB Writing Error Writing");
   return ThreadIbsta();

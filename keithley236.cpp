@@ -81,7 +81,7 @@ Keithley236::init() {
     return GPIB_DEVICE_NOT_PRESENT;
   }
   short listen;
-  ibln(k236, k236Address, NO_SAD, &listen);
+  ibln(gpibNumber, k236Address, NO_SAD, &listen);
   if(isGpibError("Keithley 236 Not Respondig"))
     return GPIB_DEVICE_NOT_PRESENT;
   if(listen == 0) {
