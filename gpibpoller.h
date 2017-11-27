@@ -16,23 +16,30 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
-#ifndef UTILITY_H
-#define UTILITY_H
+#ifndef GPIBPOLLER_H
+#define GPIBPOLLER_H
 
-#include <QString>
-#ifdef Q_OS_LINUX
 #include <gpib/ib.h>
 #include <QObject>
 #include <QTimer>
-#else
-#include <ni4882.h>
-#endif
 
-#define GPIB_DEVICE_NOT_PRESENT -1000
+class GpibPoller : public QObject
+{
+    Q_OBJECT
+public:
+    explicit GpibPoller(int device, QObject *parent = 0);
+    void startPolling(int eventMask);
+    void endPolling();
 
-QString ErrMsg(int sta, int err, long cntl);
-QString gpibRead(int ud);
-uint    gpibWrite(int ud, QString sCmd);
-bool    isGpibError(QString sErrorString);
+  public slots:
+    void poll();
 
-#endif // UTILITY_H
+  signals:
+    void gpibNotify(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
+
+  protected:
+    int ud;
+    int mask;
+    QTimer pollTimer;
+};
+#endif // GPIBPOLLER_H

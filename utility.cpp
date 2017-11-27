@@ -18,23 +18,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "utility.h"
 #include <QDebug>
+#include <QThread>
 
 
 namespace gpibUtilities {
 char readBuf[2001];
 }
-
-
-#ifdef Q_OS_LINUX
-int
-ibnotify(int boardOrDevice, int eventMask, GpibNotifyCallback_t callbackFunction, void *callbackData) {
-  Q_UNUSED(boardOrDevice)
-  Q_UNUSED(eventMask)
-  Q_UNUSED(callbackFunction)
-  Q_UNUSED(callbackData)
-  return 0;
-}
-#endif
 
 
 bool

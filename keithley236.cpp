@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
 #include "keithley236.h"
+#include "gpibpoller.h"
 #include "utility.h"
 #include "math.h"
 
@@ -34,11 +35,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace keithley236 {
 int rearmMask;
+#ifndef Q_OS_LINUX
 int __stdcall
 myCallback(int LocalUd, unsigned long LocalIbsta, unsigned long LocalIberr, long LocalIbcntl, void* callbackData) {
     reinterpret_cast<Keithley236*>(callbackData)->onGpibCallback(LocalUd, LocalIbsta, LocalIberr, LocalIbcntl);
     return rearmMask;
   }
+#endif
 }
 
 
@@ -65,7 +68,10 @@ Keithley236::Keithley236(int gpio, int address, QObject *parent)
 
 Keithley236::~Keithley236() {
   if(k236 != -1) {
+#ifdef Q_OS_LINUX
+#else
     ibnotify (k236, 0, NULL, NULL);// disable notification
+#endif
     ibonl(k236, 0);// Disable hardware and software.
   }
 }
@@ -90,10 +96,14 @@ Keithley236::init() {
     return GPIB_DEVICE_NOT_PRESENT;
   }
   // set up the asynchronous event notification routine on RQS
+#ifdef Q_OS_LINUX
+  ibnotify(k236, RQS);
+#else
   ibnotify(k236,
            RQS,
            (GpibNotifyCallback_t) keithley236::myCallback,
            this);
+#endif
   isGpibError("ibnotify call failed.");
   ibclr(k236);
   QThread::sleep(1);
@@ -135,7 +145,10 @@ Keithley236::initVvsT(double dAppliedCurrent, double dVoltageCompliance) {
 
 int
 Keithley236::endVvsT() {
+#ifdef Q_OS_LINUX
+#else
   ibnotify (k236, 0, NULL, NULL);// disable notification
+#endif
   gpibWrite(k236, "M0,0X");      // SRQ Disabled, SRQ on Compliance
   gpibWrite(k236, "R0");         // Disarm Trigger
   gpibWrite(k236, "N0X");        // Place in Stand By
@@ -280,7 +293,10 @@ Keithley236::initISweep(double startCurrent, double stopCurrent, double currentS
 
 int
 Keithley236::endISweep() {
+#ifdef Q_OS_LINUX
+#else
   ibnotify (k236, 0, NULL, NULL);// disable notification
+#endif
   gpibWrite(k236, "M0,0X");      // SRQ Disabled, SRQ on Compliance
   gpibWrite(k236, "R0");         // Disarm Trigger
   gpibWrite(k236, "N0X");        // Place in Stand By
@@ -365,3 +381,16 @@ Keithley236::triggerSweep() {
     return false;
   return true;
 }
+
+#ifdef Q_OS_LINUX
+int
+Keithley236::ibnotify(int ud, int mask) {
+  GpibPoller* pPoller = new GpibPoller(ud);
+  pPoller->moveToThread(&pollThread);
+  connect(pPoller, SIGNAL(gpibNotify(int,ulong,ulong,long)),
+          this, SLOT(onGpibCallback(int,ulong,ulong,long)));
+  pollThread.start();
+  pPoller->startPolling(mask);
+  return 0;
+}
+#endif

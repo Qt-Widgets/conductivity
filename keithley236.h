@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QObject>
 #include <QDateTime>
+#include <QThread>
 
 class Keithley236 : public QObject
 {
@@ -35,7 +36,6 @@ public:
   int      junctionCheck(double v1, double v2);
   bool     initISweep(double startCurrent, double stopCurrent, double currentStep, double delay);
   int      endISweep();
-  void     onGpibCallback(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
   bool     sendTrigger();
   bool     triggerSweep();
 
@@ -46,6 +46,12 @@ signals:
   void sweepDone(QDateTime currentTime, QString sSweepData);
 
 public slots:
+  void onGpibCallback(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
+
+protected:
+#ifdef Q_OS_LINUX
+int ibnotify(int ud, int mask);
+#endif
 
 public:
   const int ERROR_JUNCTION;
@@ -60,6 +66,7 @@ public:
   const int COMPLIANCE;
 
 private:
+  QThread pollThread;
   int gpibNumber;
   int k236Address;
   int k236;
