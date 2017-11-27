@@ -33,4 +33,10 @@ QString gpibRead(int ud);
 uint    gpibWrite(int ud, QString sCmd);
 bool    isGpibError(QString sErrorString);
 
+#ifdef Q_OS_LINUX
+#define __stdcall
+typedef int* GpibNotifyCallback_t;
+int ibnotify (int boardOrDevice, int eventMask, GpibNotifyCallback_t callbackFunction, void *callbackData);
+#endif
+
 #endif // UTILITY_H

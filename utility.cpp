@@ -25,6 +25,18 @@ char readBuf[2001];
 }
 
 
+#ifdef Q_OS_LINUX
+int
+ibnotify(int boardOrDevice, int eventMask, GpibNotifyCallback_t callbackFunction, void *callbackData) {
+  Q_UNUSED(boardOrDevice)
+  Q_UNUSED(eventMask)
+  Q_UNUSED(callbackFunction)
+  Q_UNUSED(callbackData)
+  return 0;
+}
+#endif
+
+
 bool
 isGpibError(QString sErrorString) {
   if(ThreadIbsta() & ERR) {
