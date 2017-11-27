@@ -147,7 +147,7 @@ MainWindow::CheckInstruments() {
   if(isGpibError("MainWindow::CheckInstruments() - FindLstn() failed. Are the Instruments Connected and Switced On ?"))
     return false;
   int nDevices = ThreadIbcntl();
-  qInfo() << QString("Found %1 Instruments connected to the GPIB Bus").arg(nDevices);
+//  qInfo() << QString("Found %1 Instruments connected to the GPIB Bus").arg(nDevices);
   // Identify the instruments connected to the GPIB Bus
   char readBuf[257];
   QString sCommand = "*IDN?";
@@ -160,7 +160,7 @@ MainWindow::CheckInstruments() {
       return false;
     readBuf[ibcnt] = 0;
     QString sInstrumentID = QString(readBuf);
-    qDebug() << QString("InstrumentID= %1").arg(sInstrumentID);
+//    qDebug() << QString("InstrumentID= %1").arg(sInstrumentID);
     // La source Measure Unit K236 non risponde al comando di identificazione !!!!
     if(sInstrumentID.contains("NSDC", Qt::CaseInsensitive)) {
       if(pKeithley == Q_NULLPTR) {
