@@ -21,7 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QObject>
 #include <QDateTime>
-#include <QThread>
+#ifdef Q_OS_LINUX
+#include <QTimer>
+#endif
 
 
 QT_FORWARD_DECLARE_CLASS(GpibPoller)
@@ -44,21 +46,20 @@ public:
   bool     triggerSweep();
 
 signals:
-  void complianceEvent();
-  void readyForTrigger();
-  void newReading(QDateTime currentTime, QString sReading);
-  void sweepDone(QDateTime currentTime, QString sSweepData);
+  void     complianceEvent();
+  void     readyForTrigger();
+  void     newReading(QDateTime currentTime, QString sReading);
+  void     sweepDone(QDateTime currentTime, QString sSweepData);
+
+protected:
+  void     onGpibCallback(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
 
 #ifdef Q_OS_LINUX
 public slots:
-  void onGpibCallback(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
-  void pollEnd();
+  void checkNotify();
 
 protected:
-  int  ibnotify(int ud, int mask);
-
-protected:
-  GpibPoller* pPoller;
+  QTimer pollTimer;
 #endif
 
 public:
@@ -74,7 +75,6 @@ public:
   const int COMPLIANCE;
 
 private:
-  QThread pollThread;
   int gpibNumber;
   int k236Address;
   int k236;

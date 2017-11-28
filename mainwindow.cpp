@@ -490,7 +490,7 @@ void
 MainWindow::initRvsTPlots() {
   // Plot of Condicibility vs Temperature
   if(pPlotMeasurements) delete pPlotMeasurements;
-  sMeasurementPlotLabel = QString("log(S) [Ohm^-1] vs 1000/T [K]");
+  sMeasurementPlotLabel = QString("log(S) [Ohm^-1] -vs- 1000/T [K^-1]");
   pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
   pPlotMeasurements->setMaxPoints(maxPlotPoints);
   pPlotMeasurements->SetLimits(0.0, 1.0, 0.1, 1.0, true, true, false, true);

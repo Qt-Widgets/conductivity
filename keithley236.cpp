@@ -17,7 +17,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
 #include "keithley236.h"
-#include "gpibpoller.h"
 #include "utility.h"
 #include "math.h"
 
@@ -28,8 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 #include <QDebug>
-#include <QThread>
 #include <QDateTime>
+#include <QThread>
 
 #define MAX_COMPLIANCE_EVENTS 5
 
@@ -69,8 +68,8 @@ Keithley236::Keithley236(int gpio, int address, QObject *parent)
 Keithley236::~Keithley236() {
   if(k236 != -1) {
 #ifdef Q_OS_LINUX
-    pollThread.quit();
-    pollThread.wait(3);
+    pollTimer.stop();
+    disconnect(&pollTimer, 0, 0, 0);
 #else
     ibnotify (k236, 0, NULL, NULL);// disable notification
 #endif
@@ -99,14 +98,16 @@ Keithley236::init() {
   }
   // set up the asynchronous event notification routine on RQS
 #ifdef Q_OS_LINUX
-  ibnotify(k236, RQS);
+  connect(&pollTimer, SIGNAL(timeout()),
+          this, SLOT(checkNotify()));
+  pollTimer.start(10);
 #else
   ibnotify(k236,
            RQS,
            (GpibNotifyCallback_t) keithley236::myCallback,
            this);
-#endif
   isGpibError("ibnotify call failed.");
+#endif
   ibclr(k236);
   QThread::sleep(1);
   return 0;
@@ -148,6 +149,8 @@ Keithley236::initVvsT(double dAppliedCurrent, double dVoltageCompliance) {
 int
 Keithley236::endVvsT() {
 #ifdef Q_OS_LINUX
+    pollTimer.stop();
+    disconnect(&pollTimer, 0, 0, 0);
 #else
   ibnotify (k236, 0, NULL, NULL);// disable notification
 #endif
@@ -296,6 +299,8 @@ Keithley236::initISweep(double startCurrent, double stopCurrent, double currentS
 int
 Keithley236::endISweep() {
 #ifdef Q_OS_LINUX
+  pollTimer.stop();
+  disconnect(&pollTimer, 0, 0, 0);
 #else
   ibnotify (k236, 0, NULL, NULL);// disable notification
 #endif
@@ -386,24 +391,11 @@ Keithley236::triggerSweep() {
 
 
 #ifdef Q_OS_LINUX
-int
-Keithley236::ibnotify(int ud, int mask) {
-  pPoller = new GpibPoller(ud);
-  pPoller->moveToThread(&pollThread);
-  connect(pPoller, SIGNAL(gpibNotify(int, unsigned long, unsigned long, long)),
-          this, SLOT(onGpibCallback(int, unsigned long, unsigned long, long)));
-  connect(&pollThread, SIGNAL(finished()),
-          this, SLOT(pollEnd()));
-  pollThread.start();
-  pPoller->startPolling(mask);
-  return 0;
-}
-
-
 void
-Keithley236::pollEnd() {
-  pPoller->deleteLater();
-  pPoller = Q_NULLPTR;
+Keithley236::checkNotify() {
+  ibrsp(k236, &spollByte);
+  if(!(spollByte & 64))
+    return; // SRQ not enabled
+  onGpibCallback(k236, ThreadIbsta(), ThreadIberr(), ThreadIbcnt());
 }
-
 #endif

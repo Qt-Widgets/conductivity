@@ -35,7 +35,6 @@ windows {
 }
 
 SOURCES += main.cpp
-SOURCES += gpibpoller.cpp
 SOURCES += cdatastream2d.cpp
 SOURCES += plot2d.cpp
 SOURCES += mainwindow.cpp
@@ -52,7 +51,6 @@ SOURCES += configureIvsVdialog.cpp
 SOURCES += configureRvsTdialog.cpp
 
 HEADERS += mainwindow.h
-HEADERS += gpibpoller.h
 HEADERS += cdatastream2d.h
 HEADERS += plot2d.h
 HEADERS += utility.h
@@ -82,7 +80,7 @@ win64 {
   LIBS += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/lib32/msvc/gpib-32.obj"
 }
 
-linux: {
+linux {
   message("Running on Linux")
   LIBS += -L"/usr/local/lib" -lgpib # To include libgpib.so from /usr/local/lib
 }
