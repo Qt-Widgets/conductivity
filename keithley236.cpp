@@ -69,6 +69,8 @@ Keithley236::Keithley236(int gpio, int address, QObject *parent)
 Keithley236::~Keithley236() {
   if(k236 != -1) {
 #ifdef Q_OS_LINUX
+    pollThread.quit();
+    pollThread.wait(3);
 #else
     ibnotify (k236, 0, NULL, NULL);// disable notification
 #endif
@@ -382,15 +384,25 @@ Keithley236::triggerSweep() {
   return true;
 }
 
+
 #ifdef Q_OS_LINUX
 int
 Keithley236::ibnotify(int ud, int mask) {
-  GpibPoller* pPoller = new GpibPoller(ud);
+  pPoller = new GpibPoller(ud);
   pPoller->moveToThread(&pollThread);
   connect(pPoller, SIGNAL(gpibNotify(int,ulong,ulong,long)),
           this, SLOT(onGpibCallback(int,ulong,ulong,long)));
+  connect(&pollThread, SIGNAL(finished()),
+          this, SLOT(pollEnd()));
   pollThread.start();
   pPoller->startPolling(mask);
   return 0;
 }
+
+void
+Keithley236::pollEnd() {
+  pPoller->deleteLater();
+  pPoller = Q_NULLPTR;
+}
+
 #endif

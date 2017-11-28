@@ -21,13 +21,20 @@ GpibPoller::startPolling(int eventMask) {
 
 void
 GpibPoller::endPolling() {
+  pollTimer.stop();
+  disconnect(&pollTimer, 0, 0, 0);
 }
 
 
 void
 GpibPoller::poll() {
-  ibwait(ud, 0);
-  qInfo() << QString("ibsta= %1, mask = %2").arg(ThreadIbsta()).arg(mask);
-  if((ThreadIbsta() & mask) != 0)
+  ibwait(ud, 0);// To update the gpib status
+  qInfo() << QString("ibsta = 0x%1, mask = 0x%2")
+             .arg(ThreadIbsta(), 4, 16)
+             .arg(mask, 4, 16);
+  if((ThreadIbsta() & mask) != 0) {
+    qDebug() << QString("GPIB Event: 0x%1")
+                .arg(ThreadIbsta() & mask, 4, 16);
     emit gpibNotify(ud, ThreadIbsta(), ThreadIberr(), ThreadIbcnt());
+  }
 }

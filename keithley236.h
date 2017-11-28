@@ -23,6 +23,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDateTime>
 #include <QThread>
 
+
+QT_FORWARD_DECLARE_CLASS(GpibPoller)
+
+
 class Keithley236 : public QObject
 {
   Q_OBJECT
@@ -48,9 +52,13 @@ signals:
 public slots:
   void onGpibCallback(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
 
-protected:
 #ifdef Q_OS_LINUX
-int ibnotify(int ud, int mask);
+protected:
+  int  ibnotify(int ud, int mask);
+  void pollEnd();
+
+protected:
+  GpibPoller* pPoller;
 #endif
 
 public:
