@@ -57,25 +57,27 @@ ErrMsg(int sta, int err, long cntl) {
   if (sta & LACS)  sError += QString(" LACS");
   if (sta & DTAS)  sError += QString(" DTAS");
   if (sta & DCAS)  sError += QString(" DCAS");
+  sError += QString(">");
 
-  sTmp = QString("> error = 0x%1").arg(err, 4, 16, QChar('0'));
-  sError += sTmp;
-  if (err == EDVR) sError += QString(" EDVR <DOS Error>");
-  if (err == ECIC) sError += QString(" ECIC <Not CIC>");
-  if (err == ENOL) sError += QString(" ENOL <No Listener>");
-  if (err == EADR) sError += QString(" EADR <Address error>");
-  if (err == EARG) sError += QString(" EARG <Invalid argument>");
-  if (err == ESAC) sError += QString(" ESAC <Not Sys Ctrlr>");
-  if (err == EABO) sError += QString(" EABO <Op. aborted>");
-  if (err == ENEB) sError += QString(" ENEB <No GPIB board>");
-  if (err == EOIP) sError += QString(" EOIP <Async I/O in prg>");
-  if (err == ECAP) sError += QString(" ECAP <No capability>");
-  if (err == EFSO) sError += QString(" EFSO <File sys. error>");
-  if (err == EBUS) sError += QString(" EBUS <Command error>");
-  if (err == ESTB) sError += QString(" ESTB <Status byte lost>");
-  if (err == ESRQ) sError += QString(" ESRQ <SRQ stuck on>");
-  if (err == ETAB) sError += QString(" ETAB <Table Overflow>");
-
+  if(sta & ERR)  {
+      sTmp = QString(" error = 0x%1").arg(err, 4, 16, QChar('0'));
+      sError += sTmp;
+      if (err == EDVR) sError += QString(" EDVR <DOS Error>");
+      if (err == ECIC) sError += QString(" ECIC <Not CIC>");
+      if (err == ENOL) sError += QString(" ENOL <No Listener>");
+      if (err == EADR) sError += QString(" EADR <Address error>");
+      if (err == EARG) sError += QString(" EARG <Invalid argument>");
+      if (err == ESAC) sError += QString(" ESAC <Not Sys Ctrlr>");
+      if (err == EABO) sError += QString(" EABO <Op. aborted>");
+      if (err == ENEB) sError += QString(" ENEB <No GPIB board>");
+      if (err == EOIP) sError += QString(" EOIP <Async I/O in prg>");
+      if (err == ECAP) sError += QString(" ECAP <No capability>");
+      if (err == EFSO) sError += QString(" EFSO <File sys. error>");
+      if (err == EBUS) sError += QString(" EBUS <Command error>");
+      if (err == ESTB) sError += QString(" ESTB <Status byte lost>");
+      if (err == ESRQ) sError += QString(" ESRQ <SRQ stuck on>");
+      if (err == ETAB) sError += QString(" ETAB <Table Overflow>");
+  }
   sTmp = QString(" count = 0x%1").arg(cntl, 4, 16, QChar('0'));
   sError += sTmp;
   return sError;

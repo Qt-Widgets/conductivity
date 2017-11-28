@@ -82,7 +82,7 @@ win64 {
   LIBS += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/lib32/msvc/gpib-32.obj"
 }
 
-linux:unix {
+linux: {
   message("Running on Linux")
   LIBS += -L"/usr/local/lib" -lgpib # To include libgpib.so from /usr/local/lib
 }

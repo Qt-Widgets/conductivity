@@ -19,27 +19,32 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef GPIBPOLLER_H
 #define GPIBPOLLER_H
 
-#include <gpib/ib.h>
 #include <QObject>
 #include <QTimer>
+
+#ifdef Q_OS_LINUX
+#include <gpib/ib.h>
+#else
+#include <ni4882.h>
+#endif
 
 class GpibPoller : public QObject
 {
     Q_OBJECT
 public:
-    explicit GpibPoller(int device, QObject *parent = 0);
-    void startPolling(int eventMask);
-    void endPolling();
+  explicit GpibPoller(int device, QObject *parent = 0);
+  void startPolling(int eventMask);
+  void endPolling();
 
-  public slots:
-    void poll();
+public slots:
+  void poll();
 
-  signals:
-    void gpibNotify(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
+signals:
+  void gpibNotify(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
 
-  protected:
-    int ud;
-    int mask;
-    QTimer pollTimer;
+protected:
+  int ud;
+  int mask;
+  QTimer pollTimer;
 };
 #endif // GPIBPOLLER_H

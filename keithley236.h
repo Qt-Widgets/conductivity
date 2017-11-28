@@ -49,13 +49,13 @@ signals:
   void newReading(QDateTime currentTime, QString sReading);
   void sweepDone(QDateTime currentTime, QString sSweepData);
 
+#ifdef Q_OS_LINUX
 public slots:
   void onGpibCallback(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
+  void pollEnd();
 
-#ifdef Q_OS_LINUX
 protected:
   int  ibnotify(int ud, int mask);
-  void pollEnd();
 
 protected:
   GpibPoller* pPoller;

@@ -390,14 +390,15 @@ int
 Keithley236::ibnotify(int ud, int mask) {
   pPoller = new GpibPoller(ud);
   pPoller->moveToThread(&pollThread);
-  connect(pPoller, SIGNAL(gpibNotify(int,ulong,ulong,long)),
-          this, SLOT(onGpibCallback(int,ulong,ulong,long)));
+  connect(pPoller, SIGNAL(gpibNotify(int, unsigned long, unsigned long, long)),
+          this, SLOT(onGpibCallback(int, unsigned long, unsigned long, long)));
   connect(&pollThread, SIGNAL(finished()),
           this, SLOT(pollEnd()));
   pollThread.start();
   pPoller->startPolling(mask);
   return 0;
 }
+
 
 void
 Keithley236::pollEnd() {
