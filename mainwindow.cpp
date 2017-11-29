@@ -705,8 +705,8 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
   double currentTemperature = pLakeShore->getTemperature();
   double t = double(startMeasuringTime.msecsTo(dataTime))/1000.0;
   Q_UNUSED(t)
-  double current = sMeasures.at(0).toDouble();
-  double voltage = sMeasures.at(1).toDouble();
+  double current = sMeasures.at(1).toDouble();
+  double voltage = sMeasures.at(0).toDouble();
   ui->temperatureEdit->setText(QString("%1").arg(currentTemperature));
   ui->currentEdit->setText(QString("%1").arg(current, 12, 'g', 6, ' '));
   ui->voltageEdit->setText(QString("%1").arg(voltage, 12, 'g', 6, ' '));
