@@ -84,4 +84,7 @@ linux {
   LIBS += -L"/usr/local/lib" -lgpib # To include libgpib.so from /usr/local/lib
 }
 
-DISTFILES +=
+DISTFILES += \
+    doc/linux_Gpib_HowTo.txt \
+    doc/Keithley236Manual.pdf \
+    doc/LakeShore330_Manual.pdf
