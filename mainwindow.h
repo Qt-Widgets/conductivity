@@ -84,6 +84,14 @@ private:
     SwitchOFF   = 72
   };
   commands command;
+  enum measure {
+      NoMeasure   = 0,
+      RvsTSourceI = 1,
+      RvsTSourceV = 2,
+      IvsVSourceI = 3,
+      IvsVSourceV = 4,
+  };
+  measure presentMeasure;
 
 private:
   QFile*        pOutputFile;

@@ -38,6 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow(parent)
   , ui(new Ui::MainWindow)
+  , presentMeasure(NoMeasure)
   , pOutputFile(Q_NULLPTR)
   , pKeithley(Q_NULLPTR)
   , pLakeShore(Q_NULLPTR)
@@ -212,6 +213,7 @@ MainWindow::switchLampOff() {
 void
 MainWindow::stopRvsT() {
     bRunning = false;
+    presentMeasure = NoMeasure;
     waitingTStartTimer.stop();
     stabilizingTimer.stop();
     readingTTimer.stop();
@@ -238,6 +240,9 @@ MainWindow::stopRvsT() {
     pLakeShore->deleteLater();
     pLakeShore = Q_NULLPTR;
     switchLampOff();
+    serialPort.close();
+    ui->startRvsTButton->setText("Start R vs T");
+    ui->startIvsVButton->setEnabled(true);
 }
 
 
@@ -245,8 +250,7 @@ void
 MainWindow::on_startRvsTButton_clicked() {
   if(ui->startRvsTButton->text().contains("Stop")) {
     stopRvsT();
-    ui->startRvsTButton->setText("Start R vs T");
-    ui->startIvsVButton->setEnabled(true);
+    ui->statusBar->showMessage("Measure (R vs T) Halted");
     return;
   }
   // else
@@ -322,6 +326,12 @@ MainWindow::on_startRvsTButton_clicked() {
   // Configure Thermostat
   pLakeShore->setTemperature(configureRvsTDialog.dTempStart);
   pLakeShore->switchPowerOn(3);
+
+  if(configureRvsTDialog.bSourceI)
+    presentMeasure = RvsTSourceI;
+  else
+    presentMeasure = RvsTSourceV;
+
   // Configure the needed timers
   connect(&waitingTStartTimer, SIGNAL(timeout()),
           this, SLOT(onTimeToCheckReachedT()));
@@ -348,13 +358,7 @@ MainWindow::on_startRvsTButton_clicked() {
 void
 MainWindow::on_startIvsVButton_clicked() {
   if(ui->startIvsVButton->text().contains("Stop")) {
-    if(pOutputFile) {
-      pOutputFile->close();
-      pOutputFile->deleteLater();
-      pOutputFile = Q_NULLPTR;
-    }
-    ui->startIvsVButton->setText("Start I vs V");
-    ui->startRvsTButton->setEnabled(true);
+    stopIvsV();
     ui->statusBar->showMessage("Measure (I vs V) Halted");
     return;
   }
@@ -420,6 +424,12 @@ MainWindow::on_startIvsVButton_clicked() {
     return;
   }
   // Now we know how to proceed... (maybe...)
+
+//  if(configureIvsVDialog.bSourceI)
+  presentMeasure = IvsVSourceI;
+//  else
+//    presentMeasure = IvsVSourceV;
+
   initIvsVPlots();
   isK236ReadyForTrigger = false;
   connect(&readingTTimer, SIGNAL(timeout()),
@@ -450,6 +460,7 @@ MainWindow::on_startIvsVButton_clicked() {
 
 void
 MainWindow::stopIvsV() {
+    presentMeasure = NoMeasure;
     if(pOutputFile) {
       pOutputFile->close();
       pOutputFile->deleteLater();
@@ -653,20 +664,7 @@ void
 MainWindow::onTimeToGetNewMeasure() {
   getNewSigmaMeasure();
   if(!pLakeShore->isRamping()) {// Ramp is Done
-    measuringTimer.stop();
-    bRunning = false;
-    disconnect(&measuringTimer, 0, 0, 0);
-    if(pOutputFile) {
-      if(pOutputFile->isOpen())
-        pOutputFile->close();
-      pOutputFile->deleteLater();
-      pOutputFile = Q_NULLPTR;
-    }
-    pKeithley->endVvsT();
-    pLakeShore->switchPowerOff();
-    switchLampOff();
-    ui->startRvsTButton->setText("Start R vs T");
-    ui->startIvsVButton->setEnabled(true);
+    stopRvsT();
 //    qDebug() << "End Temperature Reached: Measure is Done";
     ui->statusBar->showMessage(QString("Measurements Completed !"));
     return;
