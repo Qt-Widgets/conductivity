@@ -34,7 +34,7 @@ int rearmMask;
 #ifndef Q_OS_LINUX
 int __stdcall
 myCallback(int LocalUd, unsigned long LocalIbsta, unsigned long LocalIberr, long LocalIbcntl, void* callbackData) {
-    reinterpret_cast<Keithley236*>(callbackData)->onGpibCallback(LocalUd, LocalIbsta, LocalIberr, LocalIbcntl);
+    reinterpret_cast<LakeShore330*>(callbackData)->onGpibCallback(LocalUd, LocalIbsta, LocalIberr, LocalIbcntl);
     return rearmMask;
   }
 #endif
@@ -97,15 +97,18 @@ LakeShore330::init() {
     return GPIB_DEVICE_NOT_PRESENT;
   }
 #ifdef Q_OS_LINUX
+  connect(&pollTimer, SIGNAL(timeout()),
+          this, SLOT(checkNotify()));
+  pollTimer.start(10);
 #else
   // set up the asynchronous event notification routine on RQS
   ibnotify(ls330,
            RQS,
-           (GpibNotifyCallback_t) lakeshore330::MyCallback,
+           (GpibNotifyCallback_t) lakeshore330::myCallback,
            this);
-#endif
   if(isGpibError("LakeShore330::init() ibnotify call failed."))
     return -1;
+#endif
   ibclr(ls330);
   QThread::sleep(1);
   gpibWrite(ls330, "*sre 0\r\n");// Set Service Request Enable
@@ -268,3 +271,14 @@ LakeShore330::isRamping() {
     return false;
   return (iRamping == 1);
 }
+
+
+#ifdef Q_OS_LINUX
+void
+LakeShore330::checkNotify() {
+  ibrsp(ls330, &spollByte);
+  if(!(spollByte & 64))
+    return; // SRQ not enabled
+  onGpibCallback(ls330, ThreadIbsta(), ThreadIberr(), ThreadIbcnt());
+}
+#endif

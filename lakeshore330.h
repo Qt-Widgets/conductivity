@@ -20,10 +20,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define LAKESHORE330_H
 
 #include <QObject>
+#ifdef Q_OS_LINUX
+#include <QTimer>
+#endif
+
 
 class LakeShore330 : public QObject
 {
   Q_OBJECT
+
 public:
   explicit LakeShore330(int gpio, int address, QObject *parent = 0);
   virtual ~LakeShore330();
@@ -39,6 +44,12 @@ public:
 signals:
 
 public slots:
+#ifdef Q_OS_LINUX
+  void checkNotify();
+
+protected:
+  QTimer pollTimer;
+#endif
 
 private:
   int gpibNumber;

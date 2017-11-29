@@ -26,9 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 
-QT_FORWARD_DECLARE_CLASS(GpibPoller)
-
-
 class Keithley236 : public QObject
 {
   Q_OBJECT
@@ -39,6 +36,7 @@ public:
   int      init();
   int      initVvsT(double dAppliedCurrent, double dVoltageCompliance);
   int      endVvsT();
+  void     onGpibCallback(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
   int      junctionCheck(double v1, double v2);
   bool     initISweep(double startCurrent, double stopCurrent, double currentStep, double delay);
   int      endISweep();
@@ -52,10 +50,9 @@ signals:
   void     sweepDone(QDateTime currentTime, QString sSweepData);
 
 protected:
-  void     onGpibCallback(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
 
-#ifdef Q_OS_LINUX
 public slots:
+#ifdef Q_OS_LINUX
   void checkNotify();
 
 protected:

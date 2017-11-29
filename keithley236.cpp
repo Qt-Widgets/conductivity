@@ -106,7 +106,8 @@ Keithley236::init() {
            RQS,
            (GpibNotifyCallback_t) keithley236::myCallback,
            this);
-  isGpibError("ibnotify call failed.");
+  if(isGpibError("ibnotify call failed."))
+    return -1;
 #endif
   ibclr(k236);
   QThread::sleep(1);
