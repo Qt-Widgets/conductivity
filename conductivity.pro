@@ -70,16 +70,15 @@ FORMS   += configureIvsVdialog.ui
 FORMS   += configureRvsTdialog.ui
 FORMS   += axesdialog.ui
 
+# For National Instruments GPIB Boards
 win32 {
-  # For National Instruments DAQ & GPIB Boards
+  message("Running on Windows 32 bit")
   LIBS += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/lib32/msvc/gpib-32.obj"
 }
-
 win64 {
-  # For National Instruments DAQ & GPIB Boards
+  message("Running on Windows 64 bit")
   LIBS += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/lib32/msvc/gpib-32.obj"
 }
-
 linux {
   message("Running on Linux")
   LIBS += -L"/usr/local/lib" -lgpib # To include libgpib.so from /usr/local/lib
