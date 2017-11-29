@@ -405,7 +405,7 @@ MainWindow::on_startIvsVButton_clicked() {
     QApplication::restoreOverrideCursor();
     return;
   }
-  pOutputFile->write(QString("%1 %2").arg("Voltage[V]", 12). arg("Current[A]", 12).toLocal8Bit());
+  pOutputFile->write(QString("%1 %2\n").arg("Voltage[V]", 12). arg("Current[A]", 12).toLocal8Bit());
   pOutputFile->write(configureIvsVDialog.sSampleInfo.toLocal8Bit());
   pOutputFile->write("\n");
   pOutputFile->flush();
