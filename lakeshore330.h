@@ -55,8 +55,10 @@ private:
   int gpibNumber;
   int ls330Address;
   int ls330;
-  int iMask, iComplianceEvents;
-  QString sCommand, sResponse;
+  int iMask;
+  QString sCommand;
+  QString sResponse;
+  char spollByte;
   // Status Byte Register
   const quint8 SRQ;// Service Request
   const quint8 ESB;// Standard Event Status
