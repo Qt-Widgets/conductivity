@@ -422,6 +422,12 @@ MainWindow::on_startIvsVButton_clicked() {
   // Now we know how to proceed... (maybe...)
   initIvsVPlots();
   isK236ReadyForTrigger = false;
+  connect(&readingTTimer, SIGNAL(timeout()),
+          this, SLOT(onTimeToReadT()));
+  // Read and plot initial value of Temperature
+  startReadingTTime = QDateTime::currentDateTime();
+  onTimeToReadT();
+  readingTTimer.start(5000);
   if(junctionDirection == 0) {
     // No diode junction
     ui->statusBar->showMessage("Sweeping...Please Wait");
@@ -449,6 +455,8 @@ MainWindow::stopIvsV() {
       pOutputFile->deleteLater();
       pOutputFile = Q_NULLPTR;
     }
+    readingTTimer.stop();
+    disconnect(&readingTTimer, 0, 0, 0);
     disconnect(pKeithley, SIGNAL(complianceEvent()),
                this, SLOT(onComplianceEvent()));
     disconnect(pKeithley, SIGNAL(readyForTrigger()),
@@ -488,8 +496,11 @@ MainWindow::prepareOutputFile(QString sBaseDir, QString sFileName) {
 
 void
 MainWindow::initRvsTPlots() {
-  // Plot of Condicibility vs Temperature
   if(pPlotMeasurements) delete pPlotMeasurements;
+  pPlotMeasurements = Q_NULLPTR;
+  if(pPlotTemperature) delete pPlotTemperature;
+  pPlotTemperature = Q_NULLPTR;
+  // Plot of Condicibility vs Temperature
   sMeasurementPlotLabel = QString("log(S) [Ohm^-1] -vs- 1000/T [K^-1]");
   pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
   pPlotMeasurements->setMaxPoints(maxPlotPoints);
@@ -517,7 +528,6 @@ MainWindow::initRvsTPlots() {
   pPlotMeasurements->show();
 
   // Plot of Temperature vs Time
-  if(pPlotTemperature) delete pPlotTemperature;
   sTemperaturePlotLabel = QString("T [K] vs t [s]");
   pPlotTemperature = new Plot2D(this, sTemperaturePlotLabel);
   pPlotTemperature->setMaxPoints(maxPlotPoints);
@@ -540,8 +550,11 @@ MainWindow::initRvsTPlots() {
 
 void
 MainWindow::initIvsVPlots() {
-  // Plot of Current vs Voltage
   if(pPlotMeasurements) delete pPlotMeasurements;
+  pPlotMeasurements = Q_NULLPTR;
+  if(pPlotTemperature) delete pPlotTemperature;
+  pPlotTemperature = Q_NULLPTR;
+  // Plot of Current vs Voltage
   sMeasurementPlotLabel = QString("I [A] vs V [V]");
 
   pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
@@ -549,7 +562,7 @@ MainWindow::initIvsVPlots() {
   pPlotMeasurements->NewDataSet(1,//Id
                                 3, //Pen Width
                                 QColor(255, 255, 0),// Color
-                                StripChart::ipoint,// Symbol
+                                pPlotMeasurements->ipoint,// Symbol
                                 "IvsV"// Title
                                 );
   pPlotMeasurements->SetShowDataSet(1, true);
@@ -557,22 +570,22 @@ MainWindow::initIvsVPlots() {
   pPlotMeasurements->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
   pPlotMeasurements->UpdatePlot();
   pPlotMeasurements->show();
-//  // Plot of Temperature vs Time
-//  if(pPlotTemperature) delete pPlotTemperature;
-//  sTemperaturePlotLabel = QString("T [K] vs t [s]");
-//  pPlotTemperature = new Plot2D(this, sTemperaturePlotLabel);
-//  pPlotTemperature->setMaxPoints(maxPlotPoints);
-//  pPlotTemperature->NewDataSet(1,//Id
-//                               3, //Pen Width
-//                               QColor(255, 255, 0),// Color
-//                               StripChart::ipoint,// Symbol
-//                               "T"// Title
-//                               );
-//  pPlotTemperature->SetShowDataSet(1, true);
-//  pPlotTemperature->SetShowTitle(1, true);
-//  pPlotTemperature->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
-//  pPlotTemperature->UpdatePlot();
-//  pPlotTemperature->show();
+  // Plot of Temperature vs Time
+  sTemperaturePlotLabel = QString("T [K] vs t [s]");
+  pPlotTemperature = new Plot2D(this, sTemperaturePlotLabel);
+  pPlotTemperature->setMaxPoints(maxPlotPoints);
+  pPlotTemperature->NewDataSet(1,//Id
+                               3, //Pen Width
+                               QColor(255, 255, 0),// Color
+                               pPlotTemperature->ipoint,// Symbol
+                               "T"// Title
+                               );
+  pPlotTemperature->SetShowDataSet(1, true);
+  pPlotTemperature->SetShowTitle(1, true);
+  pPlotTemperature->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
+  pPlotTemperature->UpdatePlot();
+  pPlotTemperature->show();
+  iCurrentTPlot = 1;
 }
 
 
