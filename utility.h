@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 #define GPIB_DEVICE_NOT_PRESENT -1000
+#define NO_ERROR 0
 
 QString ErrMsg(int sta, int err, long cntl);
 QString gpibRead(int ud);

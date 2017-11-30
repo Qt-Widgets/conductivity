@@ -111,7 +111,7 @@ Keithley236::init() {
 #endif
   ibclr(k236);
   QThread::sleep(1);
-  return 0;
+  return NO_ERROR;
 }
 
 
@@ -143,7 +143,7 @@ Keithley236::initVvsT(double dAppliedCurrent, double dVoltageCompliance) {
   gpibWrite(k236, sCommand);   // SRQ Mask, Interrupt on Compliance
   if(isGpibError(QString("Keithley236::initVvsT: %1").arg(sCommand)))
     exit(-1);
-  return 0;
+  return NO_ERROR;
 }
 
 
@@ -158,7 +158,7 @@ Keithley236::endVvsT() {
   gpibWrite(k236, "M0,0X");      // SRQ Disabled, SRQ on Compliance
   gpibWrite(k236, "R0");         // Disarm Trigger
   gpibWrite(k236, "N0X");        // Place in Stand By
-  return 0;
+  return NO_ERROR;
 }
 
 
@@ -309,7 +309,7 @@ Keithley236::endISweep() {
   gpibWrite(k236, "R0");         // Disarm Trigger
   gpibWrite(k236, "N0X");        // Place in Stand By
   ibclr(k236);
-  return 0;
+  return NO_ERROR;
 }
 
 
@@ -370,6 +370,15 @@ Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long
   }
 
   keithley236::rearmMask = RQS;
+}
+
+
+bool
+Keithley236::isReadyForTrigger() {
+  ibrsp(k236, &spollByte);
+  if(isGpibError(": Error in ibrsp()"))
+    return false;
+  return ((spollByte & READY_FOR_TRIGGER) != 0);
 }
 
 

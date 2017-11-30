@@ -42,6 +42,7 @@ public:
   int      endISweep();
   bool     sendTrigger();
   bool     triggerSweep();
+  bool     isReadyForTrigger();
 
 signals:
   void     complianceEvent();
