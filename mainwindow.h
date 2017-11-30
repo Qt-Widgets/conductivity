@@ -69,7 +69,7 @@ private slots:
   void onComplianceEvent();
   void onKeithleyReadyForTrigger();
   void onNewKeithleyReading(QDateTime dataTime, QString sDataRead);
-  void onKeithleyReadyForSweepTrigger();
+  bool onKeithleyReadyForSweepTrigger();
   void onKeithleySweepDone(QDateTime dataTime, QString sData);
 
 private:

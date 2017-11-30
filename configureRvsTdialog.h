@@ -38,6 +38,7 @@ public:
 public:
   bool   bSourceI;
   double dSourceValue;
+  double dCompliance;
   double dTempStart;
   double dTempEnd;
   double dTRate;
@@ -54,6 +55,7 @@ protected:
   void closeEvent(QCloseEvent *event);
   void setCaptions(bool bSourceI);
   bool isSourceValueValid();
+  bool isComplianceValueValid();
   bool isTemperatureValueValid(double dTemperature);
   bool isTRateValid(double dTRate);
   bool isReachingTimeValid(int iReachingTime);
@@ -71,6 +73,8 @@ private slots:
   void on_outFilePathButton_clicked();
   void on_doneButton_clicked();
   void on_cancelButton_clicked();
+
+  void on_complianceValueEdit_textChanged(const QString &arg1);
 
 private:
   // QLineEdit styles
@@ -90,6 +94,7 @@ private:
   const int    stabilizingTTimeMin;
   const int    stabilizingTTimeMax;
 
+  QString sHeader;
   // Dialog user interace
   Ui::ConfigureRvsTDialog *ui;
 };

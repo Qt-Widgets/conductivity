@@ -321,7 +321,7 @@ MainWindow::on_startRvsTButton_clicked() {
   initRvsTPlots();
   // Configure Source-Measure Unit
   double dAppliedCurrent = configureRvsTDialog.dSourceValue;
-  double dVoltageCompliance = 10.0;
+  double dVoltageCompliance = configureRvsTDialog.dCompliance;
   pKeithley->initVvsT(dAppliedCurrent, dVoltageCompliance);
   // Configure Thermostat
   pLakeShore->setTemperature(configureRvsTDialog.dTempStart);
@@ -647,8 +647,8 @@ MainWindow::onTimerStabilizeT() {
   pPlotTemperature->SetShowTitle(2, true);
   pPlotTemperature->UpdatePlot();
   iCurrentTPlot = 2;
-//  qDebug() << "Thermal Stabilization Reached: Start of the Measure";
-  ui->statusBar->showMessage(QString("Thermal Stabilization Reached: Start of the Measure"));
+//  qDebug() << "Thermal Stabilization Reached: Measure Started";
+  ui->statusBar->showMessage(QString("Thermal Stabilization Reached: Measure Started"));
   connect(&measuringTimer, SIGNAL(timeout()),
           this, SLOT(onTimeToGetNewMeasure()));
   if(!pLakeShore->startRamp(configureRvsTDialog.dTempEnd, configureRvsTDialog.dTRate)) {
@@ -697,11 +697,11 @@ MainWindow::onKeithleyReadyForTrigger() {
 }
 
 
-void
+bool
 MainWindow::onKeithleyReadyForSweepTrigger() {
   disconnect(pKeithley, SIGNAL(readyForTrigger()),
              this, SLOT(onKeithleyReadyForSweepTrigger()));
-  pKeithley->triggerSweep();
+  return pKeithley->sendTrigger();
 }
 
 

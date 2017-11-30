@@ -57,8 +57,8 @@
    <widget class="QLineEdit" name="testValueEdit">
     <property name="geometry">
      <rect>
-      <x>250</x>
-      <y>44</y>
+      <x>260</x>
+      <y>30</y>
       <width>71</width>
       <height>20</height>
      </rect>
@@ -70,8 +70,8 @@
    <widget class="QLabel" name="labelUnits">
     <property name="geometry">
      <rect>
-      <x>330</x>
-      <y>46</y>
+      <x>340</x>
+      <y>30</y>
       <width>21</width>
       <height>16</height>
      </rect>
@@ -83,14 +83,59 @@
    <widget class="QLabel" name="labelSourceVal">
     <property name="geometry">
      <rect>
-      <x>186</x>
-      <y>45</y>
-      <width>61</width>
+      <x>176</x>
+      <y>30</y>
+      <width>81</width>
       <height>21</height>
      </rect>
     </property>
     <property name="text">
      <string>Voltage</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="labelCompliance">
+    <property name="geometry">
+     <rect>
+      <x>176</x>
+      <y>60</y>
+      <width>81</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Compliance</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="complianceValueEdit">
+    <property name="geometry">
+     <rect>
+      <x>260</x>
+      <y>60</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="labelComplianceUnits">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>60</y>
+      <width>21</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>I</string>
     </property>
    </widget>
   </widget>

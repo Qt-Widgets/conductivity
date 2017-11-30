@@ -117,22 +117,36 @@ Keithley236::init() {
 
 int
 Keithley236::initVvsT(double dAppliedCurrent, double dVoltageCompliance) {
-  gpibWrite(k236, "M0,0X");     // SRQ Disabled, SRQ on Compliance
-  gpibWrite(k236, "F1,0");      // Source I Measure V dc
-  gpibWrite(k236, "O1");        // Remote Sense
-  gpibWrite(k236, "P5");        // 32 Reading Filter
-  gpibWrite(k236, "Z0");        // Disable Zero suppression
-  gpibWrite(k236, "S3");        // 20ms integration time
-  sCommand = QString("L%1,0").arg(dVoltageCompliance);
-  gpibWrite(k236, sCommand);    // Set Compliance, Autorange Measure
-  sCommand = QString("B%1,0,0").arg(dAppliedCurrent);
-  gpibWrite(k236, sCommand);    // Set Applied Current
-  gpibWrite(k236, "R0X");       // Disarm Trigger
-  gpibWrite(k236, "T0,1,0,0X"); // Trigger on X ^SRC DLY MSR
-  gpibWrite(k236, "R1");        // Arm Trigger
-  gpibWrite(k236, "N1");        // Operate !
-  gpibWrite(k236, "G5,2,0X");   // Output Source, Measure, No Prefix, DC
+  uint iErr = 0;
+  iErr |= gpibWrite(k236, "M0,0");      // SRQ Disabled, SRQ on Compliance
+  iErr |= gpibWrite(k236, "R0");        // Disarm Trigger
+  iErr |= gpibWrite(k236, "O1");        // Remote Sense
+  iErr |= gpibWrite(k236, "T1,1,0,0");  // Trigger on GET ^SRC DLY MSR
+  iErr |= gpibWrite(k236, "F1,1");      // Place for a moment in Source V Measure I dc
+                                        // For some reason the Compliance command does not
+                                        // works when in Source I Measure V condition
+  sCommand = QString("L%1,0X").arg(dVoltageCompliance);
+  iErr |= gpibWrite(k236, sCommand);    // Set Compliance, Autorange Measure
+  iErr |= gpibWrite(k236, "F1,0");      // Source I Measure V dc
+  iErr |= gpibWrite(k236, "G5,2,0");    // Output Source, Measure, No Prefix, DC
+  iErr |= gpibWrite(k236, "Z0");        // Disable Zero suppression
+  iErr |= gpibWrite(k236, "P5");        // 32 Reading Filter
+  iErr |= gpibWrite(k236, "S3");        // 20ms integration time
+  sCommand = QString("B%1,0,0X").arg(dAppliedCurrent);
+  iErr |= gpibWrite(k236, sCommand);    // Set Applied Current
+  iErr |= gpibWrite(k236, "R1");        // Arm Trigger
+  iErr |= gpibWrite(k236, "N1");        // Operate !
+  if(iErr & ERR) {
+    QString sError;
+    sError = QString("Keithley236::initVvsT(): GPIB Error in gpibWrite(): - Status= %1")
+                     .arg(ThreadIbsta(), 4, 16, QChar('0'));
+    qCritical() <<  sError;
+    sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
+    qCritical() << sError;
+    return false;
+  }
   // Give the instrument time to execute commands
+  QThread::sleep(1);
   int srqMask =
       COMPLIANCE +
       K236_ERROR +
@@ -384,17 +398,8 @@ Keithley236::isReadyForTrigger() {
 
 bool
 Keithley236::sendTrigger() {
-  gpibWrite(k236, "H0X");
-  if(isGpibError("Keithley236::sendTrigger(): Trigger Error"))
-    return false;
-  return true;
-}
-
-
-bool
-Keithley236::triggerSweep() {
   ibtrg(k236);
-  if(isGpibError("Keithley236::triggerSweep(): Trigger Error"))
+  if(isGpibError("Keithley236::sendTrigger(): Trigger Error"))
     return false;
   return true;
 }

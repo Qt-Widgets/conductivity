@@ -31,10 +31,10 @@ ConfigureRvsTDialog::ConfigureRvsTDialog(QWidget *parent)
   : QDialog(parent)
   , sBaseDir(QDir::homePath())
   , sOutFileName("conductivity.dat")
-  , currentMin(-1.0e-3)
-  , currentMax(1.0e-3)
-  , voltageMin(-10.0)
-  , voltageMax(10.0)
+  , currentMin(-1.0e-2)
+  , currentMax(1.0e-2)
+  , voltageMin(-110.0)
+  , voltageMax(110.0)
   , temperatureMin(0.0)
   , temperatureMax(450.0)
   , TRateMin(0.01)
@@ -48,6 +48,7 @@ ConfigureRvsTDialog::ConfigureRvsTDialog(QWidget *parent)
   setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
   setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
   ui->setupUi(this);
+  sHeader = QString("Enter values in range [%1 : %2]");
 
   sNormalStyle = ui->testValueEdit->styleSheet();
   sErrorStyle  = "QLineEdit { color: rgb(255, 255, 255); background: rgb(255, 0, 0); selection-background-color: rgb(128, 128, 255); }";
@@ -57,11 +58,17 @@ ConfigureRvsTDialog::ConfigureRvsTDialog(QWidget *parent)
   setCaptions(bSourceI);
 
   // Measurement parameters
-  ui->testValueEdit->setText(QString("%1").arg(dSourceValue, 0, 'g', 2));
+  ui->testValueEdit->setText(QString("%1").arg(dSourceValue, 0, 'g', 4));
   if(!isSourceValueValid()) {
     qDebug() << QString("Invalid Source Value %1").arg(dSourceValue);
     dSourceValue = 0.0;
-    ui->testValueEdit->setText(QString("%1").arg(dSourceValue, 0, 'g', 2));
+    ui->testValueEdit->setText(QString("%1").arg(dSourceValue, 0, 'g', 4));
+  }
+  ui->complianceValueEdit->setText(QString("%1").arg(dCompliance, 0, 'g', 4));
+  if(!isComplianceValueValid()) {
+    qDebug() << QString("Invalid Compliance Value %1").arg(dCompliance);
+    dCompliance = 0.0;
+    ui->complianceValueEdit->setText(QString("%1").arg(dCompliance, 0, 'g', 4));
   }
 
   // Temperature parameters
@@ -122,6 +129,7 @@ ConfigureRvsTDialog::restoreSettings() {
 
   bSourceI         = settings.value("ConfigureRvsTSourceI", true).toBool();
   dSourceValue     = settings.value("ConfigureRvsTSourceValue", 0.0).toDouble();
+  dCompliance      = settings.value("ConfigureRvsTCompliance", 0.0).toDouble();
   dTempStart       = settings.value("ConfigureRvsTTempertureStart", 300.0).toDouble();
   dTempEnd         = settings.value("ConfigureRvsTTempertureEnd", 300.0).toDouble();
   dTRate           = settings.value("ConfigureRvsTTRate", 1.0).toDouble();
@@ -140,6 +148,7 @@ ConfigureRvsTDialog::saveSettings() {
 //  qDebug() << "ConfigureRvsTDialog::saveSettings()";
   settings.setValue("ConfigureRvsTSourceI", bSourceI);
   settings.setValue("ConfigureRvsTSourceValue", dSourceValue);
+  settings.setValue("ConfigureRvsTCompliance", dCompliance);
   settings.setValue("ConfigureRvsTTempertureStart", dTempStart);
   settings.setValue("ConfigureRvsTTempertureEnd", dTempEnd);
   settings.setValue("ConfigureRvsTTRate", dTRate);
@@ -154,12 +163,14 @@ ConfigureRvsTDialog::saveSettings() {
 
 void
 ConfigureRvsTDialog::setToolTips() {
-  QString sHeader = QString("Enter values in range [%1 : %2]");
-  if(bSourceI)
+  if(bSourceI) {
     ui->testValueEdit->setToolTip(sHeader.arg(currentMin).arg(currentMax));
-  else
+    ui->complianceValueEdit->setToolTip(sHeader.arg(voltageMin).arg(voltageMax));
+  }
+  else {
     ui->testValueEdit->setToolTip(sHeader.arg(voltageMin).arg(voltageMax));
-
+    ui->complianceValueEdit->setToolTip(sHeader.arg(currentMin).arg(currentMax));
+  }
   ui->TStartEdit->setToolTip(sHeader.arg(temperatureMin).arg(temperatureMax));
   ui->TEndEdit->setToolTip(sHeader.arg(temperatureMin).arg(temperatureMax));
   ui->TRateEdit->setToolTip(sHeader.arg(TRateMin).arg(TRateMax));
@@ -180,10 +191,12 @@ ConfigureRvsTDialog::setCaptions(bool bSourceI) {
   if(bSourceI) {
     ui->labelSourceVal->setText("Current");
     ui->labelUnits->setText("A");
+    ui->labelComplianceUnits->setText("V");
   }
   else {
     ui->labelSourceVal->setText("Voltage");
     ui->labelUnits->setText("V");
+    ui->labelComplianceUnits->setText("A");
   }
 }
 
@@ -191,26 +204,38 @@ ConfigureRvsTDialog::setCaptions(bool bSourceI) {
 void
 ConfigureRvsTDialog::on_radioButtonSourceI_clicked() {
   bSourceI = true;
-  ui->testValueEdit->setToolTip(QString("Enter values in range [%1 : %2]").arg(currentMin).arg(currentMax));
+  ui->testValueEdit->setToolTip(sHeader.arg(currentMin).arg(currentMax));
+  ui->complianceValueEdit->setToolTip(sHeader.arg(voltageMin).arg(voltageMax));
   setCaptions(bSourceI);
   if(!isSourceValueValid()) {
     dSourceValue = 0.0;
     ui->testValueEdit->setText(QString("%1").arg(dSourceValue, 0, 'g', 2));
   }
+  if(!isComplianceValueValid()) {
+    dCompliance = 0.0;
+    ui->complianceValueEdit->setText(QString("%1").arg(dCompliance, 0, 'g', 2));
+  }
   ui->testValueEdit->setStyleSheet(sNormalStyle);
+  ui->complianceValueEdit->setStyleSheet(sNormalStyle);
 }
 
 
 void
 ConfigureRvsTDialog::on_radioButtonSourceV_clicked() {
   bSourceI = false;
-  ui->testValueEdit->setToolTip(QString("Enter values in range [%1 : %2]").arg(voltageMin).arg(voltageMax));
+  ui->testValueEdit->setToolTip(sHeader.arg(voltageMin).arg(voltageMax));
+  ui->complianceValueEdit->setToolTip(sHeader.arg(currentMin).arg(currentMax));
   setCaptions(bSourceI);
   if(!isSourceValueValid()) {
     dSourceValue = 0.0;
     ui->testValueEdit->setText(QString("%1").arg(dSourceValue, 0, 'g', 2));
   }
+  if(!isComplianceValueValid()) {
+    dCompliance = 0.0;
+    ui->complianceValueEdit->setText(QString("%1").arg(dCompliance, 0, 'g', 2));
+  }
   ui->testValueEdit->setStyleSheet(sNormalStyle);
+  ui->complianceValueEdit->setStyleSheet(sNormalStyle);
 }
 
 
@@ -231,6 +256,31 @@ ConfigureRvsTDialog::isSourceValueValid() {
   }
   else
     if((tmp >= voltageMin) && (tmp <= voltageMax)) {
+      return true;
+    }
+    else {
+      return false;
+    }
+}
+
+
+bool
+ConfigureRvsTDialog::isComplianceValueValid() {
+  bool ok;
+  double tmp = ui->complianceValueEdit->text().toDouble(&ok);
+  if(!ok) {
+    return false;
+  }
+  if(bSourceI) {
+    if((tmp >= voltageMin) &&(tmp <= voltageMax)) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+  else
+    if((tmp >= currentMin) && (tmp <= currentMax)) {
       return true;
     }
     else {
@@ -274,6 +324,19 @@ ConfigureRvsTDialog::on_testValueEdit_textChanged(const QString &arg1) {
   }
   else {
     ui->testValueEdit->setStyleSheet(sErrorStyle);
+  }
+}
+
+
+void
+ConfigureRvsTDialog::on_complianceValueEdit_textChanged(const QString &arg1) {
+  Q_UNUSED(arg1)
+  if(isComplianceValueValid()) {
+    dCompliance = ui->complianceValueEdit->text().toDouble();
+    ui->complianceValueEdit->setStyleSheet(sNormalStyle);
+  }
+  else {
+    ui->complianceValueEdit->setStyleSheet(sErrorStyle);
   }
 }
 
@@ -381,3 +444,4 @@ void
 ConfigureRvsTDialog::on_cancelButton_clicked() {
   reject();
 }
+
