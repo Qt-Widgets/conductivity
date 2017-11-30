@@ -193,6 +193,19 @@
       <string>Voltage</string>
      </property>
     </widget>
+    <widget class="QRadioButton" name="photoButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>160</y>
+       <width>112</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Photo/Dark</string>
+     </property>
+    </widget>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>

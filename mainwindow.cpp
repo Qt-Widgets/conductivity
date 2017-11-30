@@ -87,6 +87,7 @@ MainWindow::~MainWindow() {
   if(pPlotTemperature) delete pPlotTemperature;
   pPlotTemperature = Q_NULLPTR;
 
+  serialPort.close();
   delete ui;
 }
 
@@ -198,6 +199,7 @@ MainWindow::CheckInstruments() {
 
 bool
 MainWindow::switchLampOn() {
+  ui->photoButton->setChecked(true);
   requestData = QByteArray(1, SwitchON);
   return writeToArduino(requestData);
 }
@@ -205,6 +207,7 @@ MainWindow::switchLampOn() {
 
 bool
 MainWindow::switchLampOff() {
+  ui->photoButton->setChecked(false);
   requestData = QByteArray(1, SwitchOFF);
   return writeToArduino(requestData);
 }
@@ -319,19 +322,21 @@ MainWindow::on_startRvsTButton_clicked() {
   pOutputFile->flush();
   // Init the Plots
   initRvsTPlots();
-  // Configure Source-Measure Unit
-  double dAppliedCurrent = configureRvsTDialog.dSourceValue;
-  double dVoltageCompliance = configureRvsTDialog.dCompliance;
-  pKeithley->initVvsT(dAppliedCurrent, dVoltageCompliance);
   // Configure Thermostat
   pLakeShore->setTemperature(configureRvsTDialog.dTempStart);
   pLakeShore->switchPowerOn(3);
-
-  if(configureRvsTDialog.bSourceI)
+  // Configure Source-Measure Unit
+  double dCompliance = configureRvsTDialog.dCompliance;
+  if(configureRvsTDialog.bSourceI) {
     presentMeasure = RvsTSourceI;
-  else
+    double dAppliedCurrent = configureRvsTDialog.dSourceValue;
+    pKeithley->initVvsTSourceI(dAppliedCurrent, dCompliance);
+  }
+  else {
     presentMeasure = RvsTSourceV;
-
+    double dAppliedVoltage = configureRvsTDialog.dSourceValue;
+    pKeithley->initVvsTSourceV(dAppliedVoltage, dCompliance);
+  }
   // Configure the needed timers
   connect(&waitingTStartTimer, SIGNAL(timeout()),
           this, SLOT(onTimeToCheckReachedT()));
@@ -716,8 +721,15 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
   double currentTemperature = pLakeShore->getTemperature();
   double t = double(startMeasuringTime.msecsTo(dataTime))/1000.0;
   Q_UNUSED(t)
-  double current = sMeasures.at(1).toDouble();
-  double voltage = sMeasures.at(0).toDouble();
+  double current, voltage;
+  if(configureRvsTDialog.bSourceI) {
+    current = sMeasures.at(0).toDouble();
+    voltage = sMeasures.at(1).toDouble();
+  }
+  else {
+    current = sMeasures.at(1).toDouble();
+    voltage = sMeasures.at(0).toDouble();
+  }
   ui->temperatureEdit->setText(QString("%1").arg(currentTemperature));
   ui->currentEdit->setText(QString("%1").arg(current, 12, 'g', 6, ' '));
   ui->voltageEdit->setText(QString("%1").arg(voltage, 12, 'g', 6, ' '));
@@ -727,8 +739,8 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
 
   pOutputFile->write(QString("%1 %2 %3")
                      .arg(currentTemperature, 12, 'g', 6, ' ')
-                     .arg(current, 12, 'g', 6, ' ')
                      .arg(voltage, 12, 'g', 6, ' ')
+                     .arg(current, 12, 'g', 6, ' ')
                      .toLocal8Bit());
   pOutputFile->flush();
   if(currentLampStatus == LAMP_OFF) {

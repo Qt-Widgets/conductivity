@@ -34,7 +34,8 @@ public:
   explicit Keithley236(int gpio, int address, QObject *parent = 0);
   virtual ~Keithley236();
   int      init();
-  int      initVvsT(double dAppliedCurrent, double dVoltageCompliance);
+  int      initVvsTSourceI(double dAppliedCurrent, double dCompliance);
+  int      initVvsTSourceV(double dAppliedVoltage, double dCompliance);
   int      endVvsT();
   void     onGpibCallback(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
   int      junctionCheck(double v1, double v2);

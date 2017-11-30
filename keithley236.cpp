@@ -116,34 +116,34 @@ Keithley236::init() {
 
 
 int
-Keithley236::initVvsT(double dAppliedCurrent, double dVoltageCompliance) {
+Keithley236::initVvsTSourceI(double dAppliedCurrent, double dCompliance) {
   uint iErr = 0;
   iErr |= gpibWrite(k236, "M0,0");      // SRQ Disabled, SRQ on Compliance
   iErr |= gpibWrite(k236, "R0");        // Disarm Trigger
   iErr |= gpibWrite(k236, "O1");        // Remote Sense
   iErr |= gpibWrite(k236, "T1,1,0,0");  // Trigger on GET ^SRC DLY MSR
-  iErr |= gpibWrite(k236, "F1,1");      // Place for a moment in Source V Measure I dc
+  iErr |= gpibWrite(k236, "F1,1X");     // Place for a moment in Source I Measure V Sweep Mode
                                         // For some reason the Compliance command does not
-                                        // works when in Source I Measure V condition
-  sCommand = QString("L%1,0X").arg(dVoltageCompliance);
+                                        // works when in Source I Measure V dc condition
+  sCommand = QString("L%1,0X").arg(dCompliance);
   iErr |= gpibWrite(k236, sCommand);    // Set Compliance, Autorange Measure
-  iErr |= gpibWrite(k236, "F1,0");      // Source I Measure V dc
   iErr |= gpibWrite(k236, "G5,2,0");    // Output Source, Measure, No Prefix, DC
   iErr |= gpibWrite(k236, "Z0");        // Disable Zero suppression
   iErr |= gpibWrite(k236, "P5");        // 32 Reading Filter
   iErr |= gpibWrite(k236, "S3");        // 20ms integration time
+  iErr |= gpibWrite(k236, "F1,0");      // Place in Source I Measure V
   sCommand = QString("B%1,0,0X").arg(dAppliedCurrent);
   iErr |= gpibWrite(k236, sCommand);    // Set Applied Current
   iErr |= gpibWrite(k236, "R1");        // Arm Trigger
   iErr |= gpibWrite(k236, "N1");        // Operate !
   if(iErr & ERR) {
     QString sError;
-    sError = QString("Keithley236::initVvsT(): GPIB Error in gpibWrite(): - Status= %1")
+    sError = QString("Keithley236::initVvsTSourceI(): GPIB Error in gpibWrite(): - Status= %1")
                      .arg(ThreadIbsta(), 4, 16, QChar('0'));
     qCritical() <<  sError;
     sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
     qCritical() << sError;
-    return false;
+    return -1;
   }
   // Give the instrument time to execute commands
   QThread::sleep(1);
@@ -155,9 +155,55 @@ Keithley236::initVvsT(double dAppliedCurrent, double dVoltageCompliance) {
       WARNING;
   sCommand = QString("M%1,0X").arg(srqMask);
   gpibWrite(k236, sCommand);   // SRQ Mask, Interrupt on Compliance
-  if(isGpibError(QString("Keithley236::initVvsT: %1").arg(sCommand)))
+  if(isGpibError(QString("Keithley236::initVvsTSourceI(): %1").arg(sCommand)))
     exit(-1);
   return NO_ERROR;
+}
+
+
+int
+Keithley236::initVvsTSourceV(double dAppliedVoltage, double dCompliance) {
+    uint iErr = 0;
+    iErr |= gpibWrite(k236, "M0,0");      // SRQ Disabled, SRQ on Compliance
+    iErr |= gpibWrite(k236, "R0");        // Disarm Trigger
+    iErr |= gpibWrite(k236, "O1");        // Remote Sense
+    iErr |= gpibWrite(k236, "T1,1,0,0");  // Trigger on GET ^SRC DLY MSR
+    iErr |= gpibWrite(k236, "F0,1X");     // Place for a moment in Source V Measure I Sweep Mode
+                                          // For some reason the Compliance command does not
+                                          // works when in Source I Measure V dc condition
+    sCommand = QString("L%1,0X").arg(dCompliance);
+    iErr |= gpibWrite(k236, sCommand);    // Set Compliance, Autorange Measure
+    iErr |= gpibWrite(k236, "F0,0");      // Source V Measure I dc
+    iErr |= gpibWrite(k236, "G5,2,0");    // Output Source, Measure, No Prefix, DC
+    iErr |= gpibWrite(k236, "Z0");        // Disable Zero suppression
+    iErr |= gpibWrite(k236, "P5");        // 32 Reading Filter
+    iErr |= gpibWrite(k236, "S3");        // 20ms integration time
+    sCommand = QString("B%1,0,0X").arg(dAppliedVoltage);
+    iErr |= gpibWrite(k236, sCommand);    // Set Applied Current
+    iErr |= gpibWrite(k236, "R1");        // Arm Trigger
+    iErr |= gpibWrite(k236, "N1");        // Operate !
+    if(iErr & ERR) {
+      QString sError;
+      sError = QString("Keithley236::initVvsTSourceV(): GPIB Error in gpibWrite(): - Status= %1")
+                       .arg(ThreadIbsta(), 4, 16, QChar('0'));
+      qCritical() <<  sError;
+      sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
+      qCritical() << sError;
+      return -1;
+    }
+    // Give the instrument time to execute commands
+    QThread::sleep(1);
+    int srqMask =
+        COMPLIANCE +
+        K236_ERROR +
+        READY_FOR_TRIGGER +
+        READING_DONE +
+        WARNING;
+    sCommand = QString("M%1,0X").arg(srqMask);
+    gpibWrite(k236, sCommand);   // SRQ Mask, Interrupt on Compliance
+    if(isGpibError(QString("Keithley236::initVvsTSourceV(): %1").arg(sCommand)))
+      exit(-1);
+    return NO_ERROR;
 }
 
 
