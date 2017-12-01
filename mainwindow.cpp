@@ -258,6 +258,7 @@ MainWindow::on_startRvsTButton_clicked() {
   QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
   // Start the Tasks to switch the lamp on or off
   ui->statusBar->showMessage("Checking for the Presence of Lamp Switch");
+  if(serialPort.isOpen()) serialPort.close();
   if(!connectToArduino()) {
     qCritical() << QString("No Arduino Ready to Use !");
     exit(-1);
