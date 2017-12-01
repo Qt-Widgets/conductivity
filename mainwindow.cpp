@@ -231,12 +231,7 @@ MainWindow::stopRvsT() {
       pOutputFile = Q_NULLPTR;
     }
     pKeithley->endVvsT();
-    disconnect(pKeithley, SIGNAL(complianceEvent()),
-               this, SLOT(onComplianceEvent()));
-    disconnect(pKeithley, SIGNAL(readyForTrigger()),
-               this, SLOT(onKeithleyReadyForTrigger()));
-    disconnect(pKeithley, SIGNAL(newReading(QDateTime, QString)),
-               this, SLOT(onNewKeithleyReading(QDateTime, QString)));
+    disconnect(pKeithley, 0, 0, 0);
     pLakeShore->switchPowerOff();
     pKeithley->deleteLater();
     pKeithley = Q_NULLPTR;
@@ -473,12 +468,7 @@ MainWindow::stopIvsV() {
     }
     readingTTimer.stop();
     disconnect(&readingTTimer, 0, 0, 0);
-    disconnect(pKeithley, SIGNAL(complianceEvent()),
-               this, SLOT(onComplianceEvent()));
-    disconnect(pKeithley, SIGNAL(readyForTrigger()),
-              this, SLOT(onKeithleyReadyForSweepTrigger()));
-    disconnect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)),
-              this, SLOT(onKeithleySweepDone(QDateTime, QString)));
+    disconnect(pKeithley, 0, 0, 0);
     pKeithley->endISweep();
     pLakeShore->switchPowerOff();
     ui->startIvsVButton->setText("Start I vs V");
