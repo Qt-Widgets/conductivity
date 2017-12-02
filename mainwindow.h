@@ -131,7 +131,7 @@ private:
                 baudRate;
   int           waitTimeout;
   int           nSweepPoints;
-
+  int           junctionDirection;
 };
 
 #endif // MAINWINDOW_H

@@ -418,19 +418,13 @@ MainWindow::on_startIvsVButton_clicked() {
   ui->statusBar->showMessage("Checking the presence of a Junction...");
   double vStart = configureIvsVDialog.dVStart;
   double vStop =  configureIvsVDialog.dVStop;
-  int junctionDirection = pKeithley->junctionCheck(vStart, vStop);
+  junctionDirection = pKeithley->junctionCheck(vStart, vStop);
   if(junctionDirection == pKeithley->ERROR_JUNCTION) {
     ui->statusBar->showMessage("Error Checking the presence of a Junction...");
     QApplication::restoreOverrideCursor();
     return;
   }
   // Now we know how to proceed... (maybe...)
-
-//  if(configureIvsVDialog.bSourceI)
-  presentMeasure = IvsVSourceI;
-//  else
-//    presentMeasure = IvsVSourceV;
-
   initIvsVPlots();
   isK236ReadyForTrigger = false;
   connect(&readingTTimer, SIGNAL(timeout()),
@@ -445,15 +439,24 @@ MainWindow::on_startIvsVButton_clicked() {
     double dIStart = configureIvsVDialog.dIStart;
     double dIStop = configureIvsVDialog.dIStop;
     double dIStep = (dIStop - dIStart) / double(nSweepPoints);
+    presentMeasure = IvsVSourceI;
     pKeithley->initISweep(dIStart, dIStop, dIStep, 1000.0);
   }
-  else if(junctionDirection > 0) {
+  else if(junctionDirection > 0) {// Forward junction
     qDebug() << "Forward Direction Handling";
-    // Forward junction
+    double dIStart = 0.0;
+    double dIStop = configureIvsVDialog.dIStop;
+    double dIStep = (dIStop - dIStart) / double(nSweepPoints);
+    presentMeasure = IvsVSourceI;
+    pKeithley->initISweep(dIStart, dIStop, dIStep, 1000.0);
+//TODO:
   }
-  else {
-    // Reverse junction
+  else {// Reverse junction
+    presentMeasure = IvsVSourceV;
     qDebug() << "Reverse Direction Handling";
+    QMessageBox::critical(this, "Reverse Junction", "Condition still to be managed");
+    ui->statusBar->showMessage("Reverse Junction is not still managed...");
+    stopIvsV();
   }
   QApplication::restoreOverrideCursor();
 }
