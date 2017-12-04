@@ -121,6 +121,64 @@ MainWindow::closeEvent(QCloseEvent *event) {
 
 
 bool
+MainWindow::connectToArduino() {
+  bool found = false;
+  QList<QSerialPortInfo> serialPorts = QSerialPortInfo::availablePorts();
+  if(serialPorts.isEmpty()) {
+    qCritical() << QString("Empty COM port list: No Arduino connected !");
+  }
+  else {
+    QSerialPortInfo info;
+    for(int i=0; i<serialPorts.size()&& !found; i++) {
+      info = serialPorts.at(i);
+//      qInfo() << "Conntecting to: " << info.portName();
+      serialPort.setPortName(info.portName());
+      serialPort.setBaudRate(QSerialPort::Baud115200);
+      serialPort.setDataBits(QSerialPort::Data8);
+      serialPort.setParity(QSerialPort::NoParity);
+      serialPort.setStopBits(QSerialPort::OneStop);
+      if(serialPort.open(QIODevice::ReadWrite)) {
+        // Arduino will reset upon opening the seial port
+        // so we need to give it time to boot
+        QThread::sleep(3);
+        requestData = QByteArray(2, AreYouThere);
+        found = writeToArduino(requestData);
+        if(found) break;
+        serialPort.close();
+      }
+    }
+  }
+  return found;
+}
+
+
+bool
+MainWindow::writeToArduino(QByteArray requestData) {
+  serialPort.write(requestData.append(uchar(EOS)));
+  if (serialPort.waitForBytesWritten(waitTimeout)) {
+    if (serialPort.waitForReadyRead(waitTimeout)) {
+      QByteArray responseData = serialPort.readAll();
+      while(serialPort.waitForReadyRead(10))
+        responseData += serialPort.readAll();
+      if(responseData.at(0) != uchar(ACK)) {
+        qCritical() << "MainWindow::writeRequest(): not an ACK";
+        return false;
+      }
+    }
+    else {
+      qCritical() << "MainWindow::writeRequest(): Wait read response timeout";
+      return false;
+    }
+  }
+  else {
+    qCritical() <<"MainWindow::writeRequest(): Wait write request timeout %1";
+    return false;
+  }
+  return true;
+}
+
+
+bool
 MainWindow::CheckInstruments() {
   Addr4882_t padlist[31];
   Addr4882_t resultlist[31];
@@ -787,62 +845,4 @@ MainWindow::getNewSigmaMeasure() {
     return false;
   isK236ReadyForTrigger = false;
   return pKeithley->sendTrigger();
-}
-
-
-bool
-MainWindow::connectToArduino() {
-  bool found = false;
-  QList<QSerialPortInfo> serialPorts = QSerialPortInfo::availablePorts();
-  if(serialPorts.isEmpty()) {
-    qCritical() << QString("Empty COM port list: No Arduino connected !");
-  }
-  else {
-    QSerialPortInfo info;
-    for(int i=0; i<serialPorts.size()&& !found; i++) {
-      info = serialPorts.at(i);
-//      qInfo() << "Conntecting to: " << info.portName();
-      serialPort.setPortName(info.portName());
-      serialPort.setBaudRate(QSerialPort::Baud115200);
-      serialPort.setDataBits(QSerialPort::Data8);
-      serialPort.setParity(QSerialPort::NoParity);
-      serialPort.setStopBits(QSerialPort::OneStop);
-      if(serialPort.open(QIODevice::ReadWrite)) {
-        // Arduino will reset upon opening the seial port
-        // so we need to give it time to boot
-        QThread::sleep(3);
-        requestData = QByteArray(2, AreYouThere);
-        found = writeToArduino(requestData);
-        if(found) break;
-        serialPort.close();
-      }
-    }
-  }
-  return found;
-}
-
-
-bool
-MainWindow::writeToArduino(QByteArray requestData) {
-  serialPort.write(requestData.append(uchar(EOS)));
-  if (serialPort.waitForBytesWritten(waitTimeout)) {
-    if (serialPort.waitForReadyRead(waitTimeout)) {
-      QByteArray responseData = serialPort.readAll();
-      while(serialPort.waitForReadyRead(10))
-        responseData += serialPort.readAll();
-      if(responseData.at(0) != uchar(ACK)) {
-        qCritical() << "MainWindow::writeRequest(): not an ACK";
-        return false;
-      }
-    }
-    else {
-      qCritical() << "MainWindow::writeRequest(): Wait read response timeout";
-      return false;
-    }
-  }
-  else {
-    qCritical() <<"MainWindow::writeRequest(): Wait write request timeout %1";
-    return false;
-  }
-  return true;
 }
