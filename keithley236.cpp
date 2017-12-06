@@ -451,12 +451,12 @@ Keithley236::sendTrigger() {
 }
 
 
-#if defined(Q_OS_LINUX)
 void
 Keithley236::checkNotify() {
+#if defined(Q_OS_LINUX)
   ibrsp(k236, &spollByte);
   if(!(spollByte & 64))
     return; // SRQ not enabled
   onGpibCallback(k236, ThreadIbsta(), ThreadIberr(), ThreadIbcnt());
-}
 #endif
+}

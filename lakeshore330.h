@@ -45,12 +45,10 @@ public:
 signals:
 
 public slots:
-#if defined(Q_OS_LINUX)
   void checkNotify();
 
 protected:
   QTimer pollTimer;
-#endif
 
 private:
   int gpibNumber;

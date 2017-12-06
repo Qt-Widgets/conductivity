@@ -380,14 +380,16 @@ MainWindow::on_startRvsTButton_clicked() {
   ui->statusBar->showMessage("Checking for the Presence of Lamp Switch");
 #if defined(Q_PROCESSOR_ARM)
   if(!initPWM()) {
-    qCritical() << QString("Unable to use PWM !");
-    exit(-1);
+    ui->statusBar->showMessage("Unable to use PWM !");
+    QApplication::restoreOverrideCursor();
+    return;
   }
 #else
   if(serialPort.isOpen()) serialPort.close();
   if(!connectToArduino()) {
-    qCritical() << QString("No Arduino Ready to Use !");
-    exit(-1);
+    ui->statusBar->showMessage("No Arduino Ready to Use !");
+    QApplication::restoreOverrideCursor();
+    return;
   }
 #endif
   switchLampOff();

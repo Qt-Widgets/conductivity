@@ -53,15 +53,11 @@ signals:
   void     newReading(QDateTime currentTime, QString sReading);
   void     sweepDone(QDateTime currentTime, QString sSweepData);
 
-protected:
-
 public slots:
-#if defined(Q_OS_LINUX)
   void checkNotify();
 
 protected:
   QTimer pollTimer;
-#endif
 
 public:
   const int ERROR_JUNCTION;

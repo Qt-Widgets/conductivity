@@ -273,12 +273,12 @@ LakeShore330::isRamping() {
 }
 
 
-#if defined(Q_OS_LINUX)
 void
 LakeShore330::checkNotify() {
+#if defined(Q_OS_LINUX)
   ibrsp(ls330, &spollByte);
   if(!(spollByte & 64))
     return; // SRQ not enabled
   onGpibCallback(ls330, ThreadIbsta(), ThreadIberr(), ThreadIbcnt());
-}
 #endif
+}
