@@ -26,6 +26,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "plot2d.h"
 #include "math.h"
 
+#if defined(Q_PROCESSOR_ARM)
+    #include "pigpiod_if2.h"
+#endif
+
+
 #include <QMessageBox>
 #include <QDebug>
 #include <QSettings>
@@ -59,6 +64,10 @@ MainWindow::MainWindow(QWidget *parent)
   , baudRate(QSerialPort::Baud115200)
   , waitTimeout(1000)
   , nSweepPoints(100)
+  , lampPin(14) // GPIO Numbers are Broadcom (BCM) numbers
+                // BCM14 is Pin 8 in the 40 pin GPIO connector.
+  , gpioHostHandle(-1)
+
 
 {
   ui->setupUi(this);
@@ -88,6 +97,11 @@ MainWindow::~MainWindow() {
   pPlotTemperature = Q_NULLPTR;
 
   serialPort.close();
+#if defined(Q_PROCESSOR_ARM)
+    if(gpioHostHandle>=0) {
+        pigpio_stop(gpioHostHandle);
+    }
+#endif
   delete ui;
 }
 
@@ -117,6 +131,61 @@ MainWindow::closeEvent(QCloseEvent *event) {
     if(pKeithley) pKeithley->endVvsT();
     if(pLakeShore) pLakeShore->switchPowerOff();
   }
+}
+
+
+void
+MainWindow::initCamera() {
+    QString sFunctionName = " ScorePanel::initCamera ";
+    Q_UNUSED(sFunctionName)
+    // Get the initial camera position from the past stored values
+    cameraPanAngle  = pSettings->value(tr("camera/panAngle"),  0.0).toDouble();
+    cameraTiltAngle = pSettings->value(tr("camera/tiltAngle"), 0.0).toDouble();
+
+    PWMfrequency    = 50;     // in Hz
+    pulseWidthAt_90 = 600.0;  // in us
+    pulseWidthAt90  = 2200;   // in us
+
+#if defined(Q_PROCESSOR_ARM) && !defined(Q_OS_ANDROID)
+    gpioHostHandle = pigpio_start((char*)"localhost", (char*)"8888");
+    if(gpioHostHandle < 0) {
+        logMessage(logFile,
+                   sFunctionName,
+                   QString("Non riesco ad inizializzare la GPIO."));
+    }
+    int iResult;
+    if(gpioHostHandle >= 0) {
+        iResult = set_PWM_frequency(gpioHostHandle, panPin, PWMfrequency);
+        if(iResult < 0) {
+            logMessage(logFile,
+                       sFunctionName,
+                       QString("Non riesco a definire la frequenza del PWM per il Pan."));
+        }
+        double pulseWidth = pulseWidthAt_90 +(pulseWidthAt90-pulseWidthAt_90)/180.0 * (cameraPanAngle+90.0);// In us
+        iResult = set_servo_pulsewidth(gpioHostHandle, panPin, u_int32_t(pulseWidth));
+        if(iResult < 0) {
+            logMessage(logFile,
+                       sFunctionName,
+                       QString("Non riesco a far partire il PWM per il Pan."));
+        }
+        set_PWM_frequency(gpioHostHandle, panPin, 0);
+
+        iResult = set_PWM_frequency(gpioHostHandle, tiltPin, PWMfrequency);
+        if(iResult < 0) {
+            logMessage(logFile,
+                       sFunctionName,
+                       QString("Non riesco a definire la frequenza del PWM per il Tilt."));
+        }
+        pulseWidth = pulseWidthAt_90 +(pulseWidthAt90-pulseWidthAt_90)/180.0 * (cameraTiltAngle+90.0);// In us
+        iResult = set_servo_pulsewidth(gpioHostHandle, tiltPin, u_int32_t(pulseWidth));
+        if(iResult < 0) {
+            logMessage(logFile,
+                       sFunctionName,
+                       QString("Non riesco a far partire il PWM per il Tilt."));
+        }
+        set_PWM_frequency(gpioHostHandle, tiltPin, 0);
+    }
+#endif
 }
 
 
