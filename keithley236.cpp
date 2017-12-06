@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utility.h"
 #include "math.h"
 
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX)
 #include <gpib/ib.h>
 #else
 #include <ni4882.h>
@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace keithley236 {
 int rearmMask;
-#ifndef Q_OS_LINUX
+#if !defined(Q_OS_LINUX)
 int __stdcall
 myCallback(int LocalUd, unsigned long LocalIbsta, unsigned long LocalIberr, long LocalIbcntl, void* callbackData) {
     reinterpret_cast<Keithley236*>(callbackData)->onGpibCallback(LocalUd, LocalIbsta, LocalIberr, LocalIbcntl);
@@ -67,8 +67,8 @@ Keithley236::Keithley236(int gpio, int address, QObject *parent)
 
 Keithley236::~Keithley236() {
   if(k236 != -1) {
-#ifdef Q_OS_LINUX
-    pollTimer.stop();
+#if defined(Q_OS_LINUX)
+   pollTimer.stop();
     disconnect(&pollTimer, 0, 0, 0);
 #else
     ibnotify (k236, 0, NULL, NULL);// disable notification
@@ -97,7 +97,7 @@ Keithley236::init() {
     return GPIB_DEVICE_NOT_PRESENT;
   }
   // set up the asynchronous event notification routine on RQS
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX)
   connect(&pollTimer, SIGNAL(timeout()),
           this, SLOT(checkNotify()));
   pollTimer.start(10);
@@ -209,7 +209,7 @@ Keithley236::initVvsTSourceV(double dAppliedVoltage, double dCompliance) {
 
 int
 Keithley236::endVvsT() {
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX)
     pollTimer.stop();
     disconnect(&pollTimer, 0, 0, 0);
 #else
@@ -359,7 +359,7 @@ Keithley236::initISweep(double startCurrent, double stopCurrent, double currentS
 
 int
 Keithley236::endISweep() {
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX)
   pollTimer.stop();
   disconnect(&pollTimer, 0, 0, 0);
 #else
@@ -451,7 +451,7 @@ Keithley236::sendTrigger() {
 }
 
 
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX)
 void
 Keithley236::checkNotify() {
   ibrsp(k236, &spollByte);

@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define UTILITY_H
 
 #include <QString>
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX)
 #include <gpib/ib.h>
 #include <QObject>
 #include <QTimer>

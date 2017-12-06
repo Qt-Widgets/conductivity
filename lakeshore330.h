@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QtGlobal>
 #include <QObject>
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX)
 #include <QTimer>
 #endif
 
@@ -45,7 +45,7 @@ public:
 signals:
 
 public slots:
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX)
   void checkNotify();
 
 protected:
