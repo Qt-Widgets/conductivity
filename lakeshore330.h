@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef LAKESHORE330_H
 #define LAKESHORE330_H
 
+#include <QtGlobal>
 #include <QObject>
 #ifdef Q_OS_LINUX
 #include <QTimer>

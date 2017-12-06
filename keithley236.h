@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef KEITHLEY236_H
 #define KEITHLEY236_H
 
+#include <QtGlobal>
+
 #include <QObject>
 #include <QDateTime>
 #ifdef Q_OS_LINUX

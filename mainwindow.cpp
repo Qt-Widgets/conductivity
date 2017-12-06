@@ -84,6 +84,11 @@ MainWindow::MainWindow(QWidget *parent)
   QSettings settings;
   restoreGeometry(settings.value("mainWindowGeometry").toByteArray());
   restoreState(settings.value("mainWindowState").toByteArray());
+#if defined(Q_PROCESSOR_ARM)
+  PWMfrequency    = 50;     // in Hz
+  pulseWidthAt0   = 600.0;  // in us
+  pulseWidthAt180 = 2200;   // in us
+#endif
 }
 
 
@@ -99,7 +104,7 @@ MainWindow::~MainWindow() {
   pPlotTemperature = Q_NULLPTR;
 
 #if defined(Q_PROCESSOR_ARM)
-  if(gpioHostHandle>=0) {
+  if(gpioHostHandle >= 0) {
     pigpio_stop(gpioHostHandle);
   }
 #else
@@ -115,7 +120,9 @@ MainWindow::closeEvent(QCloseEvent *event) {
   QSettings settings;
   settings.setValue("mainWindowGeometry", saveGeometry());
   settings.setValue("mainWindowState", saveState());
+#if !defined(Q_PROCESSOR_ARM)
   serialPort.close();
+#endif
   if(bRunning) {
     waitingTStartTimer.stop();
     stabilizingTimer.stop();
@@ -137,34 +144,11 @@ MainWindow::closeEvent(QCloseEvent *event) {
 }
 
 
-/*
-    sToken = XML_Parse(sMessage, "tilt");
-    if(sToken != sNoData) {
-#if defined(Q_PROCESSOR_ARM) && !defined(Q_OS_ANDROID)
-    if(gpioHostHandle >= 0) {
-        cameraTiltAngle = sToken.toDouble();
-        pSettings->setValue(tr("camera/tiltAngle"), cameraTiltAngle);
-        set_PWM_frequency(gpioHostHandle, tiltPin, PWMfrequency);
-        double pulseWidth = pulseWidthAt_90 +(pulseWidthAt90-pulseWidthAt_90)/180.0 * (cameraTiltAngle+90.0);// In ms
-        int iResult = set_servo_pulsewidth(gpioHostHandle, tiltPin, u_int32_t(pulseWidth));
-        if(iResult < 0) {
-          logMessage(logFile,
-                     sFunctionName,
-                     QString("Non riesco a far partire il PWM per il Tilt."));
-        }
-        set_PWM_frequency(gpioHostHandle, tiltPin, 0);
-    }
-#endif
-    }// tilt
-*/
-
-
 #if defined(Q_PROCESSOR_ARM)
 bool
 MainWindow::initPWM() {
-  PWMfrequency    = 50;     // in Hz
-  pulseWidthAt0   = 600.0;  // in us
-  pulseWidthAt180 = 2200;   // in us
+  if(gpioHostHandle >= 0)
+    return true;
 
   gpioHostHandle = pigpio_start((char*)"localhost", (char*)"8888");
   if(gpioHostHandle < 0) {
@@ -182,11 +166,7 @@ MainWindow::initPWM() {
      qCritical() << QString("Non riesco a far partire il PWM.");
      return false;
   }
-  iResult = set_PWM_frequency(gpioHostHandle, lampPin, 0);
-  if(iResult < 0) {
-    qCritical() << QString("Non riesco ad azzerare la frequenza del PWM.");
-    return false;
-  }
+  return true;
 }
 
 #else
@@ -330,16 +310,24 @@ MainWindow::CheckInstruments() {
 bool
 MainWindow::switchLampOn() {
   ui->photoButton->setChecked(true);
+#if defined(Q_PROCESSOR_ARM)
+  return set_servo_pulsewidth(gpioHostHandle, lampPin, u_int32_t(pulseWidthAt180)) >= 0;
+#else
   requestData = QByteArray(1, SwitchON);
   return writeToArduino(requestData);
+#endif
 }
 
 
 bool
 MainWindow::switchLampOff() {
   ui->photoButton->setChecked(false);
+#if defined(Q_PROCESSOR_ARM)
+  return set_servo_pulsewidth(gpioHostHandle, lampPin, u_int32_t(pulseWidthAt0)) >= 0;
+#else
   requestData = QByteArray(1, SwitchOFF);
   return writeToArduino(requestData);
+#endif
 }
 
 
@@ -368,7 +356,9 @@ MainWindow::stopRvsT() {
     pLakeShore->deleteLater();
     pLakeShore = Q_NULLPTR;
     switchLampOff();
+#if !defined(Q_PROCESSOR_ARM)
     serialPort.close();
+#endif
     ui->startRvsTButton->setText("Start R vs T");
     ui->startIvsVButton->setEnabled(true);
 }
@@ -390,7 +380,8 @@ MainWindow::on_startRvsTButton_clicked() {
   ui->statusBar->showMessage("Checking for the Presence of Lamp Switch");
 #if defined(Q_PROCESSOR_ARM)
   if(!initPWM()) {
-
+    qCritical() << QString("Unable to use PWM !");
+    exit(-1);
   }
 #else
   if(serialPort.isOpen()) serialPort.close();

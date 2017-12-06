@@ -35,7 +35,7 @@ windows {
 }
 
 contains(QMAKE_HOST.arch, "armv7l") || contains(QMAKE_HOST.arch, "armv6l"): {
-    message("Running on Raspberry: Including Camera libraries")
+    message("Running on Raspberry")
     INCLUDEPATH += /usr/local/include
 }
 
