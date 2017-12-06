@@ -22,7 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMainWindow>
 #include <QDateTime>
 #include <QTimer>
+#if !defined(Q_PROCESSOR_ARM)
 #include <QSerialPort>
+#endif
 
 #include "configureRvsTdialog.h"
 #include "configureIvsVdialog.h"
@@ -54,8 +56,12 @@ protected:
   void stopIvsV();
   void initIvsVPlots();
   bool prepareOutputFile(QString sBaseDir, QString sFileName);
+#if defined(Q_PROCESSOR_ARM)
+  bool initPWM();
+#else
   bool connectToArduino();
   bool writeToArduino(QByteArray requestData);
+#endif
   bool switchLampOn();
   bool switchLampOff();
 
@@ -125,13 +131,23 @@ private:
   int           iPlotPhoto;
   volatile bool isK236ReadyForTrigger;
   bool          bRunning;
+  int           nSweepPoints;
+  int           junctionDirection;
+
+#if defined(Q_PROCESSOR_ARM)
+  unsigned      lampPin;
+  int           gpioHostHandle;
+  unsigned      PWMfrequency;
+  quint32       dutyCycle;
+  double        pulseWidthAt0;
+  double        pulseWidthAt180;
+#else
   QSerialPort   serialPort;
   QByteArray    requestData;
   enum QSerialPort::BaudRate
                 baudRate;
   int           waitTimeout;
-  int           nSweepPoints;
-  int           junctionDirection;
+#endif
 };
 
 #endif // MAINWINDOW_H
