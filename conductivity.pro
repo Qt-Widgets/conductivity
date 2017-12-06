@@ -34,6 +34,11 @@ windows {
   INCLUDEPATH += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/include"
 }
 
+contains(QMAKE_HOST.arch, "armv7l") || contains(QMAKE_HOST.arch, "armv6l"): {
+    message("Running on Raspberry: Including Camera libraries")
+    INCLUDEPATH += /usr/local/include
+}
+
 SOURCES += main.cpp
 SOURCES += cdatastream2d.cpp
 SOURCES += plot2d.cpp
@@ -82,6 +87,10 @@ win64 {
 linux {
   message("Running on Linux")
   LIBS += -L"/usr/local/lib" -lgpib # To include libgpib.so from /usr/local/lib
+}
+ # To include libpigpiod_if2.so from /usr/local/lib
+contains(QMAKE_HOST.arch, "armv7l") || contains(QMAKE_HOST.arch, "armv6l"): {
+    LIBS += -L"/usr/local/lib" -lpigpiod_if2
 }
 
 DISTFILES += \
