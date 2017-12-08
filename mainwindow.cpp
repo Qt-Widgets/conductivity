@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "math.h"
 
 #if defined(Q_PROCESSOR_ARM)
-    #include "pigpiod_if2.h"
+  #include "pigpiod_if2.h"
 #endif
 
 
