@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
 
-#include "stripchart.h"
+#include "plot2d.h"
 #include "cdatastream2d.h"
 #include "AxisLimits.h"
 #include "AxisFrame.h"
@@ -53,14 +53,14 @@ signals:
 public slots:
 
 public:
-  const int iline;
-  const int ipoint;
-  const int iplus;
-  const int iper;
-  const int istar;
-  const int iuptriangle;
-  const int idntriangle;
-  const int icircle;
+  static const int iline       = 0;
+  static const int ipoint      = 1;
+  static const int iplus       = 2;
+  static const int iper        = 3;
+  static const int istar       = 4;
+  static const int iuptriangle = 5;
+  static const int idntriangle = 6;
+  static const int icircle     = 7;
 
 protected:
   void closeEvent(QCloseEvent *event);

@@ -43,7 +43,7 @@ public:
   int      junctionCheck(double v1, double v2);
   bool     initISweep(double startCurrent, double stopCurrent, double currentStep, double delay);
   bool     initVSweep(double startVoltage, double stopVoltage, double voltageStep, double delay);
-  int      endSweep();
+  int      stopSweep();
   bool     sendTrigger();
   bool     triggerSweep();
   bool     isReadyForTrigger();

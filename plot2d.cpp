@@ -10,14 +10,6 @@
 
 Plot2D::Plot2D(QWidget *parent, QString Title)
   : QDialog(parent)
-  , iline      (0)
-  , ipoint     (1)
-  , iplus      (2)
-  , iper       (3)
-  , istar      (4)
-  , iuptriangle(5)
-  , idntriangle(6)
-  , icircle    (7)
   , sTitle(Title)
 {
   setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);

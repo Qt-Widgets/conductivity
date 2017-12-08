@@ -404,7 +404,7 @@ Keithley236::initVSweep(double startVoltage, double stopVoltage, double voltageS
 
 
 int
-Keithley236::endSweep() {
+Keithley236::stopSweep() {
 #if defined(Q_OS_LINUX)
   pollTimer.stop();
   disconnect(&pollTimer, 0, 0, 0);

@@ -632,7 +632,7 @@ MainWindow::stopIvsV() {
     readingTTimer.stop();
     disconnect(&readingTTimer, 0, 0, 0);
     disconnect(pKeithley, 0, 0, 0);
-    pKeithley->endSweep();
+    pKeithley->stopSweep();
     pLakeShore->switchPowerOff();
     ui->startIvsVButton->setText("Start I vs V");
     ui->startRvsTButton->setEnabled(true);
@@ -678,7 +678,7 @@ MainWindow::initRvsTPlots() {
   pPlotMeasurements->NewDataSet(iPlotDark,//Id
                                 3, //Pen Width
                                 QColor(192, 192, 192),// Color
-                                pPlotMeasurements->ipoint,// Symbol
+                                Plot2D::ipoint,// Symbol
                                 "Dark"// Title
                                 );
   pPlotMeasurements->SetShowDataSet(iPlotDark, true);
@@ -687,7 +687,7 @@ MainWindow::initRvsTPlots() {
   pPlotMeasurements->NewDataSet(iPlotPhoto,//Id
                                 3, //Pen Width
                                 QColor(255, 255, 0),// Color
-                                pPlotMeasurements->ipoint,// Symbol
+                                Plot2D::ipoint,// Symbol
                                 "Photo"// Title
                                 );
   pPlotMeasurements->SetShowDataSet(iPlotPhoto, true);
@@ -705,7 +705,7 @@ MainWindow::initRvsTPlots() {
   pPlotTemperature->NewDataSet(1,//Id
                                3, //Pen Width
                                QColor(255, 0, 0),// Color
-                               pPlotTemperature->ipoint,// Symbol
+                               Plot2D::ipoint,// Symbol
                                "T"// Title
                                );
   pPlotTemperature->SetShowDataSet(1, true);
@@ -731,7 +731,7 @@ MainWindow::initIvsVPlots() {
   pPlotMeasurements->NewDataSet(1,//Id
                                 3, //Pen Width
                                 QColor(255, 255, 0),// Color
-                                pPlotMeasurements->ipoint,// Symbol
+                                Plot2D::ipoint,// Symbol
                                 "IvsV"// Title
                                 );
   pPlotMeasurements->SetShowDataSet(1, true);
@@ -746,7 +746,7 @@ MainWindow::initIvsVPlots() {
   pPlotTemperature->NewDataSet(1,//Id
                                3, //Pen Width
                                QColor(255, 255, 0),// Color
-                               pPlotTemperature->ipoint,// Symbol
+                               Plot2D::ipoint,// Symbol
                                "T"// Title
                                );
   pPlotTemperature->SetShowDataSet(1, true);
@@ -798,7 +798,7 @@ MainWindow::onTimerStabilizeT() {
   pPlotTemperature->NewDataSet(2,//Id
                                3, //Pen Width
                                QColor(255, 255, 0),// Color
-                               StripChart::ipoint,// Symbol
+                               Plot2D::ipoint,// Symbol
                                "Tm"// Title
                                );
   pPlotTemperature->SetShowDataSet(2, true);
