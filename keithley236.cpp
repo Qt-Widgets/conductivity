@@ -314,13 +314,18 @@ Keithley236::junctionCheck(double v1, double v2) {
 
 
 bool
-Keithley236::initISweep(double startCurrent, double stopCurrent, double currentStep, double delay) {
+Keithley236::initISweep(double startCurrent,
+                        double stopCurrent,
+                        double currentStep,
+                        double delay,
+                        double voltageCompliance) {
   uint iErr = 0;
   iErr |= gpibWrite(k236, "M0,0X");    // SRQ Disabled, SRQ on Compliance
   iErr |= gpibWrite(k236, "F1,1");     // Source I, Sweep mode
   iErr |= gpibWrite(k236, "O1");       // Remote Sense
   iErr |= gpibWrite(k236, "T1,0,0,0"); // Trigger on GET, Continuous
-  iErr |= gpibWrite(k236, "L10.0,0");  // 10V Compliance, Autorange Measure
+  sCommand = QString("L%1,0X").arg(voltageCompliance);
+  iErr |= gpibWrite(k236, sCommand);   // Set Compliance, Autorange Measure
   iErr |= gpibWrite(k236, "G5,2,2");   // Output Source and Measure, No Prefix, All Lines Sweep Data
   iErr |= gpibWrite(k236, "Z0");       // Disable suppression
   sCommand = QString("Q1,%1,%2,%3,0,%4X")
@@ -358,15 +363,18 @@ Keithley236::initISweep(double startCurrent, double stopCurrent, double currentS
 
 
 bool
-Keithley236::initVSweep(double startVoltage, double stopVoltage, double voltageStep, double delay) {
+Keithley236::initVSweep(double startVoltage,
+                        double stopVoltage,
+                        double voltageStep,
+                        double delay,
+                        double currentCompliance) {
     uint iErr = 0;
     iErr |= gpibWrite(k236, "M0,0X");    // SRQ Disabled, SRQ on Compliance
     iErr |= gpibWrite(k236, "F0,1");     // Source V, Sweep mode
     iErr |= gpibWrite(k236, "O1");       // Remote Sense
     iErr |= gpibWrite(k236, "T1,0,0,0"); // Trigger on GET, Continuous
-
-//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>iErr |= gpibWrite(k236, "L10.0,0");  // 10V Compliance, Autorange Measure
-
+    sCommand = QString("L%1,0X").arg(currentCompliance);
+    iErr |= gpibWrite(k236, sCommand);   // Set Compliance, Autorange Measure
     iErr |= gpibWrite(k236, "G5,2,2");   // Output Source and Measure, No Prefix, All Lines Sweep Data
     iErr |= gpibWrite(k236, "Z0");       // Disable suppression
     sCommand = QString("Q1,%1,%2,%3,0,%4X")
@@ -388,7 +396,7 @@ Keithley236::initVSweep(double startVoltage, double stopVoltage, double voltageS
     iErr |= gpibWrite(k236, "N1X");      // Operate !
     if(iErr & ERR) {
       QString sError;
-      sError = QString("Keithley236::initISweep(): GPIB Error in gpibWrite(): - Status= %1")
+      sError = QString("Keithley236::initVSweep(): GPIB Error in gpibWrite(): - Status= %1")
                        .arg(ThreadIbsta(), 4, 16, QChar('0'));
       qCritical() <<  sError;
       sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());

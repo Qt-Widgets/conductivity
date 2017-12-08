@@ -566,10 +566,11 @@ MainWindow::on_startIvsVButton_clicked() {
     double dIStart = configureIvsVDialog.dIStart;
     double dIStop = configureIvsVDialog.dIStop;
     double dIStep = (dIStop - dIStart) / double(nSweepPoints);
+    double dDelayms = 1000.0;
     presentMeasure = IvsVSourceI;
     connect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)),
             this, SLOT(onKeithleySweepDone(QDateTime, QString)));
-    pKeithley->initISweep(dIStart, dIStop, dIStep, 1000.0);
+    pKeithley->initISweep(dIStart, dIStop, dIStep, dDelayms);
   }
   else if(junctionDirection > 0) {// Forward junction
     qDebug() << "Forward Direction Handling";
