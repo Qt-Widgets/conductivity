@@ -831,7 +831,7 @@ MainWindow::onTimerStabilizeT() {
 
 void
 MainWindow::onTimeToGetNewMeasure() {
-  getNewSigmaMeasure();
+  getNewMeasure();
   if(!pLakeShore->isRamping()) {// Ramp is Done
     stopRvsT();
 //    qDebug() << "End Temperature Reached: Measure is Done";
@@ -958,7 +958,7 @@ MainWindow::onKeithleySweepDone(QDateTime dataTime, QString sData) {
 
 
 bool
-MainWindow::getNewSigmaMeasure() {
+MainWindow::getNewMeasure() {
   if(!isK236ReadyForTrigger)
     return false;
   isK236ReadyForTrigger = false;
