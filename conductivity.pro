@@ -47,9 +47,7 @@ SOURCES += utility.cpp
 SOURCES += keithley236.cpp
 SOURCES += axesdialog.cpp
 SOURCES += AxisLimits.cpp
-SOURCES +=
 SOURCES += AxisFrame.cpp
-SOURCES += cdatastream.cpp
 SOURCES += DataSetProperties.cpp
 SOURCES += lakeshore330.cpp
 SOURCES += configureIvsVdialog.cpp
@@ -62,9 +60,7 @@ HEADERS += utility.h
 HEADERS += keithley236.h
 HEADERS += axesdialog.h
 HEADERS += AxisLimits.h
-HEADERS +=
 HEADERS += AxisFrame.h
-HEADERS += cdatastream.h
 HEADERS += DataSetProperties.h
 HEADERS += lakeshore330.h
 HEADERS += configureIvsVdialog.h
@@ -76,19 +72,16 @@ FORMS   += configureRvsTdialog.ui
 FORMS   += axesdialog.ui
 
 # For National Instruments GPIB Boards
-win32 {
-  message("Running on Windows 32 bit")
-  LIBS += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/lib32/msvc/gpib-32.obj"
-}
-win64 {
-  message("Running on Windows 64 bit")
+windows {
+  message("Running on Windows")
   LIBS += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/lib32/msvc/gpib-32.obj"
 }
 linux {
   message("Running on Linux")
   LIBS += -L"/usr/local/lib" -lgpib # To include libgpib.so from /usr/local/lib
 }
- # To include libpigpiod_if2.so from /usr/local/lib
+
+# To include libpigpiod_if2.so from /usr/local/lib
 contains(QMAKE_HOST.arch, "armv7l") || contains(QMAKE_HOST.arch, "armv6l"): {
     LIBS += -L"/usr/local/lib" -lpigpiod_if2
 }
