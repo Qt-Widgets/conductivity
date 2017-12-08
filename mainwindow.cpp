@@ -567,10 +567,12 @@ MainWindow::on_startIvsVButton_clicked() {
     double dIStop = configureIvsVDialog.dIStop;
     double dIStep = (dIStop - dIStart) / double(nSweepPoints);
     double dDelayms = 1000.0;
+    double dCompliance = qMax(qAbs(configureIvsVDialog.dVStart),
+                              qAbs(configureIvsVDialog.dVStop));
     presentMeasure = IvsVSourceI;
     connect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)),
             this, SLOT(onKeithleySweepDone(QDateTime, QString)));
-    pKeithley->initISweep(dIStart, dIStop, dIStep, dDelayms);
+    pKeithley->initISweep(dIStart, dIStop, dIStep, dDelayms, dCompliance);
   }
   else if(junctionDirection > 0) {// Forward junction
     qDebug() << "Forward Direction Handling";
@@ -578,20 +580,24 @@ MainWindow::on_startIvsVButton_clicked() {
     double dIStop = configureIvsVDialog.dIStop;
     double dIStep = (dIStop - dIStart) / double(nSweepPoints);
     double dDelayms = 1000.0;
+    double dCompliance = qMax(qAbs(configureIvsVDialog.dVStart),
+                              qAbs(configureIvsVDialog.dVStop));
     presentMeasure = IvsVSourceI;
     connect(this, SIGNAL(sweepDone(QDateTime,QString)),
             this, SLOT(onIForwardDone(QDateTime,QString)));
-    pKeithley->initISweep(dIStart, dIStop, dIStep, dDelayms);
+    pKeithley->initISweep(dIStart, dIStop, dIStep, dDelayms, dCompliance);
   }
   else {// Reverse junction
     double dVStart = 0.0;
     double dVStop = configureIvsVDialog.dVStop;
     double dVStep = (dVStop - dVStart) / double(nSweepPoints);
     double dDelayms = 1000.0;
+    double dCompliance = qMax(qAbs(configureIvsVDialog.dIStart),
+                              qAbs(configureIvsVDialog.dIStop));
     presentMeasure = IvsVSourceV;
     connect(this, SIGNAL(sweepDone(QDateTime,QString)),
             this, SLOT(onVReverseDone(QDateTime,QString)));
-    pKeithley->initVSweep(dVStart, dVStop, dVStep, dDelayms);
+    pKeithley->initVSweep(dVStart, dVStop, dVStep, dDelayms, dCompliance);
   }
   QApplication::restoreOverrideCursor();
 }
@@ -603,10 +609,12 @@ MainWindow::onIForwardDone(QDateTime,QString) {
   double dVStop = configureIvsVDialog.dVStop;
   double dVStep = (dVStop - dVStart) / double(nSweepPoints);
   double dDelayms = 1000.0;
+  double dCompliance = qMax(qAbs(configureIvsVDialog.dIStart),
+                            qAbs(configureIvsVDialog.dIStop));
   presentMeasure = IvsVSourceV;
   connect(this, SIGNAL(sweepDone(QDateTime,QString)),
           this, SLOT(onKeithleySweepDone(QDateTime,QString)));
-  pKeithley->initVSweep(dVStart, dVStop, dVStep, dDelayms);
+  pKeithley->initVSweep(dVStart, dVStop, dVStep, dDelayms, dCompliance);
 }
 
 
@@ -617,10 +625,12 @@ MainWindow::onVReverseDone(QDateTime,QString) {
   double dIStop = configureIvsVDialog.dIStop;
   double dIStep = (dIStop - dIStart) / double(nSweepPoints);
   double dDelayms = 1000.0;
+  double dCompliance = qMax(qAbs(configureIvsVDialog.dVStart),
+                            qAbs(configureIvsVDialog.dVStop));
   presentMeasure = IvsVSourceI;
   connect(this, SIGNAL(sweepDone(QDateTime,QString)),
           this, SLOT(onKeithleySweepDone(QDateTime,QString)));
-  pKeithley->initISweep(dIStart, dIStop, dIStep, dDelayms);
+  pKeithley->initISweep(dIStart, dIStop, dIStep, dDelayms, dCompliance);
 }
 void
 MainWindow::stopIvsV() {
