@@ -42,7 +42,8 @@ public:
   void     onGpibCallback(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
   int      junctionCheck(double v1, double v2);
   bool     initISweep(double startCurrent, double stopCurrent, double currentStep, double delay);
-  int      endISweep();
+  bool     initVSweep(double startVoltage, double stopVoltage, double voltageStep, double delay);
+  int      endSweep();
   bool     sendTrigger();
   bool     triggerSweep();
   bool     isReadyForTrigger();

@@ -47,6 +47,10 @@ public:
   explicit MainWindow(QWidget *parent = 0);
   ~MainWindow();
 
+signals:
+  void IForwardDone();
+  void VReverseDone();
+
 protected:
   void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
   bool CheckInstruments();
@@ -77,6 +81,8 @@ private slots:
   void onNewKeithleyReading(QDateTime dataTime, QString sDataRead);
   bool onKeithleyReadyForSweepTrigger();
   void onKeithleySweepDone(QDateTime dataTime, QString sData);
+  void onIForwardDone(QDateTime, QString);
+  void onVReverseDone(QDateTime,QString);
 
 private:
   Ui::MainWindow *ui;

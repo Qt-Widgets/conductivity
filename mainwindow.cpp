@@ -519,8 +519,6 @@ MainWindow::on_startIvsVButton_clicked() {
             this, SLOT(onComplianceEvent()));
     connect(pKeithley, SIGNAL(readyForTrigger()),
             this, SLOT(onKeithleyReadyForSweepTrigger()));
-    connect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)),
-            this, SLOT(onKeithleySweepDone(QDateTime, QString)));
   }
   if(pLakeShore != Q_NULLPTR) {
     ui->statusBar->showMessage("Initializing LakeShore 330...");
@@ -569,6 +567,8 @@ MainWindow::on_startIvsVButton_clicked() {
     double dIStop = configureIvsVDialog.dIStop;
     double dIStep = (dIStop - dIStart) / double(nSweepPoints);
     presentMeasure = IvsVSourceI;
+    connect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)),
+            this, SLOT(onKeithleySweepDone(QDateTime, QString)));
     pKeithley->initISweep(dIStart, dIStop, dIStep, 1000.0);
   }
   else if(junctionDirection > 0) {// Forward junction
@@ -576,21 +576,51 @@ MainWindow::on_startIvsVButton_clicked() {
     double dIStart = 0.0;
     double dIStop = configureIvsVDialog.dIStop;
     double dIStep = (dIStop - dIStart) / double(nSweepPoints);
+    double dDelayms = 1000.0;
     presentMeasure = IvsVSourceI;
-    pKeithley->initISweep(dIStart, dIStop, dIStep, 1000.0);
-//TODO:
+    connect(this, SIGNAL(sweepDone(QDateTime,QString)),
+            this, SLOT(onIForwardDone(QDateTime,QString)));
+    pKeithley->initISweep(dIStart, dIStop, dIStep, dDelayms);
   }
   else {// Reverse junction
+    double dVStart = 0.0;
+    double dVStop = configureIvsVDialog.dVStop;
+    double dVStep = (dVStop - dVStart) / double(nSweepPoints);
+    double dDelayms = 1000.0;
     presentMeasure = IvsVSourceV;
-    qDebug() << "Reverse Direction Handling";
-    QMessageBox::critical(this, "Reverse Junction", "Condition still to be managed");
-    ui->statusBar->showMessage("Reverse Junction is not still managed...");
-    stopIvsV();
+    connect(this, SIGNAL(sweepDone(QDateTime,QString)),
+            this, SLOT(onVReverseDone(QDateTime,QString)));
+    pKeithley->initVSweep(dVStart, dVStop, dVStep, dDelayms);
   }
   QApplication::restoreOverrideCursor();
 }
 
 
+void
+MainWindow::onIForwardDone(QDateTime,QString) {
+  double dVStart = 0.0;
+  double dVStop = configureIvsVDialog.dVStop;
+  double dVStep = (dVStop - dVStart) / double(nSweepPoints);
+  double dDelayms = 1000.0;
+  presentMeasure = IvsVSourceV;
+  connect(this, SIGNAL(sweepDone(QDateTime,QString)),
+          this, SLOT(onKeithleySweepDone(QDateTime,QString)));
+  pKeithley->initVSweep(dVStart, dVStop, dVStep, dDelayms);
+}
+
+
+void
+MainWindow::onVReverseDone(QDateTime,QString) {
+  qDebug() << "Forward Direction Handling";
+  double dIStart = 0.0;
+  double dIStop = configureIvsVDialog.dIStop;
+  double dIStep = (dIStop - dIStart) / double(nSweepPoints);
+  double dDelayms = 1000.0;
+  presentMeasure = IvsVSourceI;
+  connect(this, SIGNAL(sweepDone(QDateTime,QString)),
+          this, SLOT(onKeithleySweepDone(QDateTime,QString)));
+  pKeithley->initISweep(dIStart, dIStop, dIStep, dDelayms);
+}
 void
 MainWindow::stopIvsV() {
     presentMeasure = NoMeasure;
@@ -602,7 +632,7 @@ MainWindow::stopIvsV() {
     readingTTimer.stop();
     disconnect(&readingTTimer, 0, 0, 0);
     disconnect(pKeithley, 0, 0, 0);
-    pKeithley->endISweep();
+    pKeithley->endSweep();
     pLakeShore->switchPowerOff();
     ui->startIvsVButton->setText("Start I vs V");
     ui->startRvsTButton->setEnabled(true);
@@ -894,8 +924,14 @@ MainWindow::onKeithleySweepDone(QDateTime dataTime, QString sData) {
   ui->statusBar->showMessage("Sweep Done: Updating Plot...Please wait");
   double current, voltage;
   for(int i=0; i<sMeasures.count(); i+=2) {
-    current = sMeasures.at(i).toDouble();
-    voltage = sMeasures.at(i+1).toDouble();
+    if(presentMeasure == IvsVSourceI) {
+      current = sMeasures.at(i).toDouble();
+      voltage = sMeasures.at(i+1).toDouble();
+    }
+    else {
+      voltage = sMeasures.at(i).toDouble();
+      current = sMeasures.at(i+1).toDouble();
+    }
     pOutputFile->write(QString("%1 %2\n")
                        .arg(voltage, 12, 'g', 6, ' ')
                        .arg(current, 12, 'g', 6, ' ')

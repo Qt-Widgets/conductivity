@@ -357,8 +357,54 @@ Keithley236::initISweep(double startCurrent, double stopCurrent, double currentS
 }
 
 
+bool
+Keithley236::initVSweep(double startVoltage, double stopVoltage, double voltageStep, double delay) {
+    uint iErr = 0;
+    iErr |= gpibWrite(k236, "M0,0X");    // SRQ Disabled, SRQ on Compliance
+    iErr |= gpibWrite(k236, "F0,1");     // Source V, Sweep mode
+    iErr |= gpibWrite(k236, "O1");       // Remote Sense
+    iErr |= gpibWrite(k236, "T1,0,0,0"); // Trigger on GET, Continuous
+
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>iErr |= gpibWrite(k236, "L10.0,0");  // 10V Compliance, Autorange Measure
+
+    iErr |= gpibWrite(k236, "G5,2,2");   // Output Source and Measure, No Prefix, All Lines Sweep Data
+    iErr |= gpibWrite(k236, "Z0");       // Disable suppression
+    sCommand = QString("Q1,%1,%2,%3,0,%4X")
+              .arg(startVoltage)
+              .arg(stopVoltage)
+              .arg(voltageStep)
+              .arg(delay);
+    iErr |= gpibWrite(k236, sCommand);   // Program Sweep
+    if(iErr & ERR) {
+      QString sError;
+      sError = QString("Keithley236::initVSweep(): GPIB Error in gpibWrite(): - Status= %1")
+                       .arg(ThreadIbsta(), 4, 16, QChar('0'));
+      qCritical() <<  sError;
+      sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
+      qCritical() << sError;
+      return false;
+    }
+    iErr  = gpibWrite(k236, "R1");        // Arm Trigger
+    iErr |= gpibWrite(k236, "N1X");      // Operate !
+    if(iErr & ERR) {
+      QString sError;
+      sError = QString("Keithley236::initISweep(): GPIB Error in gpibWrite(): - Status= %1")
+                       .arg(ThreadIbsta(), 4, 16, QChar('0'));
+      qCritical() <<  sError;
+      sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
+      qCritical() << sError;
+      return false;
+    }
+    sCommand = QString("M%1,0X").arg(SWEEP_DONE + READY_FOR_TRIGGER);
+    gpibWrite(k236, sCommand);   // SRQ On Sweep Done
+    if(isGpibError("Keithley236::initVSweep(): Error enabling SRQ Mask"))
+      return false;
+    return true;
+}
+
+
 int
-Keithley236::endISweep() {
+Keithley236::endSweep() {
 #if defined(Q_OS_LINUX)
   pollTimer.stop();
   disconnect(&pollTimer, 0, 0, 0);
