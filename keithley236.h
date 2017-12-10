@@ -23,9 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QObject>
 #include <QDateTime>
-#if defined(Q_OS_LINUX)
 #include <QTimer>
-#endif
 
 
 class Keithley236 : public QObject

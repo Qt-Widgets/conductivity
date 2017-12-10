@@ -53,6 +53,9 @@
     <property name="text">
      <string>T Value</string>
     </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
    </widget>
    <widget class="QLineEdit" name="TValueEdit">
     <property name="geometry">
@@ -167,6 +170,9 @@
     <property name="text">
      <string>V Start</string>
     </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
    </widget>
    <widget class="QLabel" name="labelVStop">
     <property name="geometry">
@@ -235,6 +241,9 @@
     <property name="text">
      <string>I Start</string>
     </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
    </widget>
    <widget class="QLabel" name="labelIStop">
     <property name="geometry">
@@ -278,7 +287,7 @@
      <string>Wait T</string>
     </property>
     <property name="alignment">
-     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
     </property>
    </widget>
    <widget class="QLineEdit" name="waitTimeEdit">

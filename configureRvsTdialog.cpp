@@ -137,7 +137,7 @@ ConfigureRvsTDialog::restoreSettings() {
   bSourceI         = settings.value("ConfigureRvsTSourceI", true).toBool();
   dSourceValue     = settings.value("ConfigureRvsTSourceValue", 0.0).toDouble();
   dCompliance      = settings.value("ConfigureRvsTCompliance", 0.0).toDouble();
-  dInterval        = settings.value(("ConfigureRvsTMeasureInterval")).toDouble();
+  dInterval        = settings.value("ConfigureRvsTMeasureInterval", 0.1).toDouble();
   dTempStart       = settings.value("ConfigureRvsTTempertureStart", 300.0).toDouble();
   dTempEnd         = settings.value("ConfigureRvsTTempertureEnd", 300.0).toDouble();
   dTRate           = settings.value("ConfigureRvsTTRate", 1.0).toDouble();
