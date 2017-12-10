@@ -156,12 +156,12 @@
      <rect>
       <x>10</x>
       <y>30</y>
-      <width>71</width>
+      <width>61</width>
       <height>21</height>
      </rect>
     </property>
     <property name="text">
-     <string>Starting T</string>
+     <string>T Start</string>
     </property>
    </widget>
    <widget class="QLabel" name="labelTEnd">
@@ -174,13 +174,16 @@
      </rect>
     </property>
     <property name="text">
-     <string>Ending T</string>
+     <string>T End</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
     </property>
    </widget>
    <widget class="QLineEdit" name="TStartEdit">
     <property name="geometry">
      <rect>
-      <x>90</x>
+      <x>80</x>
       <y>28</y>
       <width>71</width>
       <height>20</height>
@@ -221,18 +224,21 @@
      <rect>
       <x>10</x>
       <y>60</y>
-      <width>47</width>
-      <height>16</height>
+      <width>61</width>
+      <height>21</height>
      </rect>
     </property>
     <property name="text">
      <string>T Rate</string>
     </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
    </widget>
    <widget class="QLineEdit" name="TRateEdit">
     <property name="geometry">
      <rect>
-      <x>62</x>
+      <x>80</x>
       <y>59</y>
       <width>71</width>
       <height>20</height>
@@ -245,7 +251,7 @@
    <widget class="QLabel" name="labelUnitsTime">
     <property name="geometry">
      <rect>
-      <x>140</x>
+      <x>160</x>
       <y>60</y>
       <width>41</width>
       <height>16</height>

@@ -70,7 +70,6 @@ MainWindow::MainWindow(QWidget *parent)
   , baudRate(QSerialPort::Baud115200)
   , waitTimeout(1000)
 #endif
-
 {
   ui->setupUi(this);
   // To remove the resize-handle in the lower right corner
@@ -97,12 +96,10 @@ MainWindow::~MainWindow() {
   pKeithley = Q_NULLPTR;
   if(pLakeShore != Q_NULLPTR) delete pLakeShore;
   pLakeShore = Q_NULLPTR;
-
   if(pPlotMeasurements) delete pPlotMeasurements;
   pPlotMeasurements = Q_NULLPTR;
   if(pPlotTemperature) delete pPlotTemperature;
   pPlotTemperature = Q_NULLPTR;
-
 #if defined(Q_PROCESSOR_ARM)
   if(gpioHostHandle >= 0) {
     pigpio_stop(gpioHostHandle);
@@ -149,7 +146,6 @@ bool
 MainWindow::initPWM() {
   if(gpioHostHandle >= 0)
     return true;
-
   gpioHostHandle = pigpio_start((char*)"localhost", (char*)"8888");
   if(gpioHostHandle < 0) {
     qCritical() << QString("Non riesco ad inizializzare la GPIO.");
@@ -565,8 +561,9 @@ MainWindow::on_startIvsVButton_clicked() {
     ui->statusBar->showMessage("Sweeping...Please Wait");
     double dIStart = configureIvsVDialog.dIStart;
     double dIStop = configureIvsVDialog.dIStop;
+    nSweepPoints = configureIvsVDialog.iNSweepPoints;
     double dIStep = (dIStop - dIStart) / double(nSweepPoints);
-    double dDelayms = 1000.0;
+    double dDelayms = double(configureIvsVDialog.iWaitTime);
     double dCompliance = qMax(qAbs(configureIvsVDialog.dVStart),
                               qAbs(configureIvsVDialog.dVStop));
     presentMeasure = IvsVSourceI;
@@ -578,8 +575,9 @@ MainWindow::on_startIvsVButton_clicked() {
     qDebug() << "Forward Direction Handling";
     double dIStart = 0.0;
     double dIStop = configureIvsVDialog.dIStop;
+    nSweepPoints = configureIvsVDialog.iNSweepPoints;
     double dIStep = (dIStop - dIStart) / double(nSweepPoints);
-    double dDelayms = 1000.0;
+    double dDelayms = double(configureIvsVDialog.iWaitTime);
     double dCompliance = qMax(qAbs(configureIvsVDialog.dVStart),
                               qAbs(configureIvsVDialog.dVStop));
     presentMeasure = IvsVSourceI;
@@ -590,8 +588,9 @@ MainWindow::on_startIvsVButton_clicked() {
   else {// Reverse junction
     double dVStart = 0.0;
     double dVStop = configureIvsVDialog.dVStop;
+    nSweepPoints = configureIvsVDialog.iNSweepPoints;
     double dVStep = (dVStop - dVStart) / double(nSweepPoints);
-    double dDelayms = 1000.0;
+    double dDelayms = double(configureIvsVDialog.iWaitTime);
     double dCompliance = qMax(qAbs(configureIvsVDialog.dIStart),
                               qAbs(configureIvsVDialog.dIStop));
     presentMeasure = IvsVSourceV;
@@ -607,8 +606,9 @@ void
 MainWindow::onIForwardDone(QDateTime,QString) {
   double dVStart = 0.0;
   double dVStop = configureIvsVDialog.dVStop;
+  nSweepPoints = configureIvsVDialog.iNSweepPoints;
   double dVStep = (dVStop - dVStart) / double(nSweepPoints);
-  double dDelayms = 1000.0;
+  double dDelayms = double(configureIvsVDialog.iWaitTime);
   double dCompliance = qMax(qAbs(configureIvsVDialog.dIStart),
                             qAbs(configureIvsVDialog.dIStop));
   presentMeasure = IvsVSourceV;
@@ -623,8 +623,9 @@ MainWindow::onVReverseDone(QDateTime,QString) {
   qDebug() << "Forward Direction Handling";
   double dIStart = 0.0;
   double dIStop = configureIvsVDialog.dIStop;
+  nSweepPoints = configureIvsVDialog.iNSweepPoints;
   double dIStep = (dIStop - dIStart) / double(nSweepPoints);
-  double dDelayms = 1000.0;
+  double dDelayms = double(configureIvsVDialog.iWaitTime);
   double dCompliance = qMax(qAbs(configureIvsVDialog.dVStart),
                             qAbs(configureIvsVDialog.dVStop));
   presentMeasure = IvsVSourceI;

@@ -37,6 +37,10 @@ ConfigureIvsVDialog::ConfigureIvsVDialog(QWidget *parent)
   , voltageMax(10.0)
   , temperatureMin(0.0)
   , temperatureMax(450.0)
+  , waitTimeMin(100)
+  , waitTimeMax(10000)
+  , nSweepPointsMin(10)
+  , nSweepPointsMax(500)
   , ui(new Ui::ConfigureIvsVDialog)
 {
   setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
@@ -64,6 +68,14 @@ ConfigureIvsVDialog::ConfigureIvsVDialog(QWidget *parent)
   if(!isVoltageValid(dVStop))
     dVStop = 0.0;
   ui->VStopEdit->setText(QString("%1").arg(dVStop, 0, 'g', 2));
+  //
+  if(!isWaitTimeValid(iWaitTime))
+      iWaitTime = 100.0;
+  ui->waitTimeEdit->setText(QString("%1").arg(iWaitTime));
+  //
+  if(!isSweepPointNumberValid(iNSweepPoints))
+      iNSweepPoints = 100;
+  ui->sweepPointsEdit->setText(QString("%1").arg(iNSweepPoints));
 
   // Temperature Control
   if(!isTemperatureValid(dTemperature))
@@ -106,6 +118,8 @@ ConfigureIvsVDialog::restoreSettings() {
   dIStop         = settings.value("ConfigureIvsVIStop", 0.0).toDouble();
   dVStart        = settings.value("ConfigureIvsVVStart", 0.0).toDouble();
   dVStop         = settings.value("ConfigureIvsVVStop", 0.0).toDouble();
+  iWaitTime      = settings.value("ConfigureIvsVWaitTime", 100).toInt();
+  iNSweepPoints  = settings.value("ConfigureIvsVSweepPoints", 100).toInt();
 
   dTemperature   = settings.value("ConfigureIvsVTemperture", 300.0).toDouble();
   bUseThermostat = settings.value("ConfigureIvsVUseThermostat", false).toBool();
@@ -124,6 +138,8 @@ ConfigureIvsVDialog::saveSettings() {
   settings.setValue("ConfigureIvsVIStop", dIStop);
   settings.setValue("ConfigureIvsVVStart", dVStart);
   settings.setValue("ConfigureIvsVVStop", dVStop);
+  settings.setValue("ConfigureIvsVWaitTime", iWaitTime);
+  settings.setValue("ConfigureIvsVSweepPoints", iNSweepPoints);
 
   settings.setValue("ConfigureIvsVTemperture", dTemperature);
   settings.setValue("ConfigureIvsVUseThermostat", bUseThermostat);
@@ -143,6 +159,8 @@ ConfigureIvsVDialog::setToolTips() {
   ui->IStopEdit->setToolTip(sHeader.arg(currentMin).arg(currentMax));
   ui->VStartEdit->setToolTip(sHeader.arg(voltageMin).arg(voltageMax));
   ui->VStopEdit->setToolTip(sHeader.arg(voltageMin).arg(voltageMax));
+  ui->waitTimeEdit->setToolTip(sHeader.arg(waitTimeMin).arg(waitTimeMax));
+  ui->sweepPointsEdit->setToolTip((sHeader.arg(nSweepPointsMin).arg(nSweepPointsMax)));
 
   ui->ThermostatCheckBox->setToolTip(QString("Enable/Disable Thermostat Use"));
   ui->TValueEdit->setToolTip(sHeader.arg(temperatureMin).arg(temperatureMax));
@@ -173,6 +191,20 @@ bool
 ConfigureIvsVDialog::isTemperatureValid(double dTemperature) {
   return (dTemperature >= temperatureMin) &&
          (dTemperature <= temperatureMax);
+}
+
+
+bool
+ConfigureIvsVDialog::isWaitTimeValid(int iWaitTime) {
+  return (iWaitTime >= waitTimeMin) &&
+         (iWaitTime <= waitTimeMax);
+}
+
+
+bool
+ConfigureIvsVDialog::isSweepPointNumberValid(int nSweepPoints) {
+    return (nSweepPoints >= nSweepPointsMin) &&
+           (nSweepPoints <= nSweepPointsMax);
 }
 
 
@@ -297,5 +329,29 @@ ConfigureIvsVDialog::on_TValueEdit_textChanged(const QString &arg1) {
   }
   else {
     ui->TValueEdit->setStyleSheet(sErrorStyle);
+  }
+}
+
+
+void
+ConfigureIvsVDialog::on_waitTimeEdit_textChanged(const QString &arg1) {
+  if(isWaitTimeValid(arg1.toInt())) {
+    iWaitTime = arg1.toInt();
+    ui->waitTimeEdit->setStyleSheet(sNormalStyle);
+  }
+  else {
+    ui->waitTimeEdit->setStyleSheet(sErrorStyle);
+  }
+}
+
+
+void
+ConfigureIvsVDialog::on_sweepPointsEdit_textChanged(const QString &arg1) {
+  if(isSweepPointNumberValid(arg1.toInt())) {
+    iNSweepPoints = arg1.toInt();
+    ui->sweepPointsEdit->setStyleSheet(sNormalStyle);
+  }
+  else {
+    ui->sweepPointsEdit->setStyleSheet(sErrorStyle);
   }
 }

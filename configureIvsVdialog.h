@@ -40,6 +40,8 @@ public:
   double dVStop;
   double dTemperature;
   bool   bUseThermostat;
+  int    iWaitTime;
+  int    iNSweepPoints;
   QString sSampleInfo;
   QString sBaseDir;
   QString sOutFileName;
@@ -53,6 +55,8 @@ protected:
   bool isCurrentValid(double dCurrent);
   bool isVoltageValid(double dVoltage);
   bool isTemperatureValid(double dTemperature);
+  bool isWaitTimeValid(int iWaitTime);
+  bool isSweepPointNumberValid(int nSweepPoints);
 
 private slots:
   void on_outFilePathButton_clicked();
@@ -64,6 +68,8 @@ private slots:
   void on_VStartEdit_textChanged(const QString &arg1);
   void on_VStopEdit_textChanged(const QString &arg1);
   void on_TValueEdit_textChanged(const QString &arg1);
+  void on_waitTimeEdit_textChanged(const QString &arg1);
+  void on_sweepPointsEdit_textChanged(const QString &arg1);
 
 private:
   // QLineEdit styles
@@ -76,6 +82,11 @@ private:
   const double voltageMax;
   const double temperatureMin;
   const double temperatureMax;
+  const int    waitTimeMin;
+  const int    waitTimeMax;
+  const int    nSweepPointsMin;
+  const int    nSweepPointsMax;
+
   // Dialog user interace
   Ui::ConfigureIvsVDialog *ui;
 };

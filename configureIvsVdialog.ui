@@ -33,7 +33,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>120</y>
+     <y>160</y>
      <width>381</width>
      <height>91</height>
     </rect>
@@ -60,7 +60,7 @@
       <x>102</x>
       <y>38</y>
       <width>71</width>
-      <height>20</height>
+      <height>25</height>
      </rect>
     </property>
     <property name="alignment">
@@ -123,7 +123,7 @@
      <x>10</x>
      <y>10</y>
      <width>381</width>
-     <height>91</height>
+     <height>131</height>
     </rect>
    </property>
    <property name="title">
@@ -132,10 +132,10 @@
    <widget class="QLineEdit" name="VStartEdit">
     <property name="geometry">
      <rect>
-      <x>60</x>
+      <x>70</x>
       <y>58</y>
       <width>71</width>
-      <height>20</height>
+      <height>25</height>
      </rect>
     </property>
     <property name="alignment">
@@ -171,7 +171,7 @@
    <widget class="QLabel" name="labelVStop">
     <property name="geometry">
      <rect>
-      <x>220</x>
+      <x>216</x>
       <y>61</y>
       <width>51</width>
       <height>16</height>
@@ -180,6 +180,9 @@
     <property name="text">
      <string>V Stop</string>
     </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
    </widget>
    <widget class="QLineEdit" name="VStopEdit">
     <property name="geometry">
@@ -187,7 +190,7 @@
       <x>270</x>
       <y>58</y>
       <width>71</width>
-      <height>20</height>
+      <height>25</height>
      </rect>
     </property>
     <property name="alignment">
@@ -200,7 +203,7 @@
       <x>270</x>
       <y>28</y>
       <width>71</width>
-      <height>20</height>
+      <height>25</height>
      </rect>
     </property>
     <property name="alignment">
@@ -236,7 +239,7 @@
    <widget class="QLabel" name="labelIStop">
     <property name="geometry">
      <rect>
-      <x>220</x>
+      <x>216</x>
       <y>31</y>
       <width>51</width>
       <height>16</height>
@@ -245,15 +248,89 @@
     <property name="text">
      <string>I Stop</string>
     </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
    </widget>
    <widget class="QLineEdit" name="IStartEdit">
     <property name="geometry">
      <rect>
-      <x>60</x>
+      <x>70</x>
       <y>28</y>
       <width>71</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="labelWaitTime">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>94</y>
+      <width>51</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Wait T</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="waitTimeEdit">
+    <property name="geometry">
+     <rect>
+      <x>70</x>
+      <y>90</y>
+      <width>71</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="labelWaitUnits">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>94</y>
+      <width>31</width>
       <height>20</height>
      </rect>
+    </property>
+    <property name="text">
+     <string>ms</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="sweepPointsEdit">
+    <property name="geometry">
+     <rect>
+      <x>270</x>
+      <y>90</y>
+      <width>71</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="labelNpoints">
+    <property name="geometry">
+     <rect>
+      <x>200</x>
+      <y>94</y>
+      <width>67</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string># Points</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -329,6 +406,22 @@
    </property>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>IStartEdit</tabstop>
+  <tabstop>IStopEdit</tabstop>
+  <tabstop>VStartEdit</tabstop>
+  <tabstop>VStopEdit</tabstop>
+  <tabstop>waitTimeEdit</tabstop>
+  <tabstop>sweepPointsEdit</tabstop>
+  <tabstop>ThermostatCheckBox</tabstop>
+  <tabstop>TValueEdit</tabstop>
+  <tabstop>sampleInformationEdit</tabstop>
+  <tabstop>outFilePathButton</tabstop>
+  <tabstop>outPathEdit</tabstop>
+  <tabstop>outFileEdit</tabstop>
+  <tabstop>doneButton</tabstop>
+  <tabstop>cancelButton</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
