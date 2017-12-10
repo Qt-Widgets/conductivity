@@ -35,6 +35,8 @@ ConfigureRvsTDialog::ConfigureRvsTDialog(QWidget *parent)
   , currentMax(1.0e-2)
   , voltageMin(-110.0)
   , voltageMax(110.0)
+  , intervalMin(0.1)
+  , intervalMax(10.0)
   , temperatureMin(0.0)
   , temperatureMax(450.0)
   , TRateMin(0.01)
@@ -70,6 +72,11 @@ ConfigureRvsTDialog::ConfigureRvsTDialog(QWidget *parent)
     dCompliance = 0.0;
     ui->complianceValueEdit->setText(QString("%1").arg(dCompliance, 0, 'g', 4));
   }
+  if(!isIntervalValid(dInterval)) {
+    qDebug() << QString("Invalid Measurement Interval %1").arg(dInterval);
+    dInterval = intervalMin;
+  }
+  ui->measureIntervalEdit->setText(QString("%1").arg(dInterval, 0, 'f', 2));
 
   // Temperature parameters
   if(!isTemperatureValueValid(dTempStart)) {
@@ -130,6 +137,7 @@ ConfigureRvsTDialog::restoreSettings() {
   bSourceI         = settings.value("ConfigureRvsTSourceI", true).toBool();
   dSourceValue     = settings.value("ConfigureRvsTSourceValue", 0.0).toDouble();
   dCompliance      = settings.value("ConfigureRvsTCompliance", 0.0).toDouble();
+  dInterval        = settings.value(("ConfigureRvsTMeasureInterval")).toDouble();
   dTempStart       = settings.value("ConfigureRvsTTempertureStart", 300.0).toDouble();
   dTempEnd         = settings.value("ConfigureRvsTTempertureEnd", 300.0).toDouble();
   dTRate           = settings.value("ConfigureRvsTTRate", 1.0).toDouble();
@@ -149,6 +157,7 @@ ConfigureRvsTDialog::saveSettings() {
   settings.setValue("ConfigureRvsTSourceI", bSourceI);
   settings.setValue("ConfigureRvsTSourceValue", dSourceValue);
   settings.setValue("ConfigureRvsTCompliance", dCompliance);
+  settings.setValue("ConfigureRvsTMeasureInterval", dInterval);
   settings.setValue("ConfigureRvsTTempertureStart", dTempStart);
   settings.setValue("ConfigureRvsTTempertureEnd", dTempEnd);
   settings.setValue("ConfigureRvsTTRate", dTRate);
@@ -171,6 +180,7 @@ ConfigureRvsTDialog::setToolTips() {
     ui->testValueEdit->setToolTip(sHeader.arg(voltageMin).arg(voltageMax));
     ui->complianceValueEdit->setToolTip(sHeader.arg(currentMin).arg(currentMax));
   }
+  ui->measureIntervalEdit->setToolTip(sHeader.arg(intervalMin).arg(intervalMax));
   ui->TStartEdit->setToolTip(sHeader.arg(temperatureMin).arg(temperatureMax));
   ui->TEndEdit->setToolTip(sHeader.arg(temperatureMin).arg(temperatureMax));
   ui->TRateEdit->setToolTip(sHeader.arg(TRateMin).arg(TRateMax));
@@ -286,6 +296,12 @@ ConfigureRvsTDialog::isComplianceValueValid() {
     else {
       return false;
     }
+}
+
+
+bool
+ConfigureRvsTDialog::isIntervalValid(double interval) {
+  return (interval >= intervalMin) && (interval <= intervalMax);
 }
 
 
@@ -445,3 +461,14 @@ ConfigureRvsTDialog::on_cancelButton_clicked() {
   reject();
 }
 
+
+void
+ConfigureRvsTDialog::on_measureIntervalEdit_textChanged(const QString &arg1) {
+  if(isIntervalValid(arg1.toDouble())){
+    dInterval = arg1.toDouble();
+    ui->measureIntervalEdit->setStyleSheet(sNormalStyle);
+  }
+  else {
+    ui->measureIntervalEdit->setStyleSheet(sErrorStyle);
+  }
+}

@@ -55,12 +55,10 @@ MainWindow::MainWindow(QWidget *parent)
   , pPlotTemperature(Q_NULLPTR)
   , maxPlotPoints(3000)
   , maxReachingTTime(120)// In seconds
-  , timeBetweenMeasurements(10000)
   , iPlotDark(1)
   , iPlotPhoto(2)
   , isK236ReadyForTrigger(false)
   , bRunning(false)
-  , nSweepPoints(100)
 #if defined(Q_PROCESSOR_ARM)
   , lampPin(14) // GPIO Numbers are Broadcom (BCM) numbers
                 // BCM14 is Pin 8 in the 40 pin GPIO connector.
@@ -561,7 +559,7 @@ MainWindow::on_startIvsVButton_clicked() {
     ui->statusBar->showMessage("Sweeping...Please Wait");
     double dIStart = configureIvsVDialog.dIStart;
     double dIStop = configureIvsVDialog.dIStop;
-    nSweepPoints = configureIvsVDialog.iNSweepPoints;
+    int nSweepPoints = configureIvsVDialog.iNSweepPoints;
     double dIStep = (dIStop - dIStart) / double(nSweepPoints);
     double dDelayms = double(configureIvsVDialog.iWaitTime);
     double dCompliance = qMax(qAbs(configureIvsVDialog.dVStart),
@@ -575,7 +573,7 @@ MainWindow::on_startIvsVButton_clicked() {
     qDebug() << "Forward Direction Handling";
     double dIStart = 0.0;
     double dIStop = configureIvsVDialog.dIStop;
-    nSweepPoints = configureIvsVDialog.iNSweepPoints;
+    int nSweepPoints = configureIvsVDialog.iNSweepPoints;
     double dIStep = (dIStop - dIStart) / double(nSweepPoints);
     double dDelayms = double(configureIvsVDialog.iWaitTime);
     double dCompliance = qMax(qAbs(configureIvsVDialog.dVStart),
@@ -588,7 +586,7 @@ MainWindow::on_startIvsVButton_clicked() {
   else {// Reverse junction
     double dVStart = 0.0;
     double dVStop = configureIvsVDialog.dVStop;
-    nSweepPoints = configureIvsVDialog.iNSweepPoints;
+    int nSweepPoints = configureIvsVDialog.iNSweepPoints;
     double dVStep = (dVStop - dVStart) / double(nSweepPoints);
     double dDelayms = double(configureIvsVDialog.iWaitTime);
     double dCompliance = qMax(qAbs(configureIvsVDialog.dIStart),
@@ -606,7 +604,7 @@ void
 MainWindow::onIForwardDone(QDateTime,QString) {
   double dVStart = 0.0;
   double dVStop = configureIvsVDialog.dVStop;
-  nSweepPoints = configureIvsVDialog.iNSweepPoints;
+  int nSweepPoints = configureIvsVDialog.iNSweepPoints;
   double dVStep = (dVStop - dVStart) / double(nSweepPoints);
   double dDelayms = double(configureIvsVDialog.iWaitTime);
   double dCompliance = qMax(qAbs(configureIvsVDialog.dIStart),
@@ -623,7 +621,7 @@ MainWindow::onVReverseDone(QDateTime,QString) {
   qDebug() << "Forward Direction Handling";
   double dIStart = 0.0;
   double dIStop = configureIvsVDialog.dIStop;
-  nSweepPoints = configureIvsVDialog.iNSweepPoints;
+  int nSweepPoints = configureIvsVDialog.iNSweepPoints;
   double dIStep = (dIStop - dIStart) / double(nSweepPoints);
   double dDelayms = double(configureIvsVDialog.iWaitTime);
   double dCompliance = qMax(qAbs(configureIvsVDialog.dVStart),
@@ -825,6 +823,7 @@ MainWindow::onTimerStabilizeT() {
     ui->statusBar->showMessage(QString("Error Starting the Measure"));
     return;
   }
+  double timeBetweenMeasurements = configureRvsTDialog.dInterval;
   measuringTimer.start(timeBetweenMeasurements);
   bRunning = true;
 }

@@ -39,6 +39,7 @@ public:
   bool   bSourceI;
   double dSourceValue;
   double dCompliance;
+  double dInterval;
   double dTempStart;
   double dTempEnd;
   double dTRate;
@@ -56,6 +57,7 @@ protected:
   void setCaptions(bool bSourceI);
   bool isSourceValueValid();
   bool isComplianceValueValid();
+  bool isIntervalValid(double interval);
   bool isTemperatureValueValid(double dTemperature);
   bool isTRateValid(double dTRate);
   bool isReachingTimeValid(int iReachingTime);
@@ -73,18 +75,20 @@ private slots:
   void on_outFilePathButton_clicked();
   void on_doneButton_clicked();
   void on_cancelButton_clicked();
-
   void on_complianceValueEdit_textChanged(const QString &arg1);
+  void on_measureIntervalEdit_textChanged(const QString &arg1);
 
 private:
   // QLineEdit styles
-  QString     sNormalStyle;
-  QString     sErrorStyle;
+  QString      sNormalStyle;
+  QString      sErrorStyle;
   // Limit Values
   const double currentMin;
   const double currentMax;
   const double voltageMin;
   const double voltageMax;
+  const double intervalMin;
+  const double intervalMax;
   const double temperatureMin;
   const double temperatureMax;
   const double TRateMin;

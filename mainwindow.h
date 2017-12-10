@@ -132,12 +132,10 @@ private:
   QString       sTemperaturePlotLabel;
   int           maxPlotPoints;
   quint64       maxReachingTTime;
-  double        timeBetweenMeasurements;
   int           iPlotDark;
   int           iPlotPhoto;
   volatile bool isK236ReadyForTrigger;
   bool          bRunning;
-  int           nSweepPoints;
   int           junctionDirection;
 
 #if defined(Q_PROCESSOR_ARM)
