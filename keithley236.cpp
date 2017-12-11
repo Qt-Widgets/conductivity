@@ -444,7 +444,7 @@ Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long
                    .arg(lastReading);
     QThread::msleep(300);
     if(iComplianceEvents > MAX_COMPLIANCE_EVENTS) {
-      qCritical() << QString("Keithley236::onGpibCallback:  Measure Stopped");
+      qCritical() << QString("Keithley236::onGpibCallback:  Compliance Event");
       emit complianceEvent();
     }
   }
@@ -464,8 +464,8 @@ Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long
   if(spollByte & SWEEP_DONE) {// Sweep Done
     QDateTime currentTime = QDateTime::currentDateTime();
     QString sString = gpibRead(LocalUd);
+    keithley236::rearmMask = RQS;
     emit sweepDone(currentTime, sString);
-    keithley236::rearmMask = 0;
     return;
   }
 

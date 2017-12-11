@@ -81,8 +81,8 @@ private slots:
   void onNewKeithleyReading(QDateTime dataTime, QString sDataRead);
   bool onKeithleyReadyForSweepTrigger();
   void onKeithleySweepDone(QDateTime dataTime, QString sData);
-  void onIForwardDone(QDateTime, QString);
-  void onVReverseDone(QDateTime,QString);
+  void onIForwardDone(QDateTime, QString sData);
+  void onVReverseDone(QDateTime, QString sData);
 
 private:
   Ui::MainWindow *ui;

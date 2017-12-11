@@ -556,11 +556,12 @@ MainWindow::on_startIvsVButton_clicked() {
   readingTTimer.start(5000);
   if(junctionDirection == 0) {
     // No diode junction
-    ui->statusBar->showMessage("Sweeping...Please Wait");
+    qDebug() << "No junctions in device";
+    ui->statusBar->showMessage("No junctions: Sweeping...Please Wait");
     double dIStart = configureIvsVDialog.dIStart;
     double dIStop = configureIvsVDialog.dIStop;
     int nSweepPoints = configureIvsVDialog.iNSweepPoints;
-    double dIStep = (dIStop - dIStart) / double(nSweepPoints);
+    double dIStep = qAbs(dIStop - dIStart) / double(nSweepPoints);
     double dDelayms = double(configureIvsVDialog.iWaitTime);
     double dCompliance = qMax(qAbs(configureIvsVDialog.dVStart),
                               qAbs(configureIvsVDialog.dVStop));
@@ -571,10 +572,11 @@ MainWindow::on_startIvsVButton_clicked() {
   }
   else if(junctionDirection > 0) {// Forward junction
     qDebug() << "Forward Direction Handling";
+    ui->statusBar->showMessage("Forward junction: Sweeping...Please Wait");
     double dIStart = 0.0;
     double dIStop = configureIvsVDialog.dIStop;
     int nSweepPoints = configureIvsVDialog.iNSweepPoints;
-    double dIStep = (dIStop - dIStart) / double(nSweepPoints);
+    double dIStep = qAbs(dIStop - dIStart) / double(nSweepPoints);
     double dDelayms = double(configureIvsVDialog.iWaitTime);
     double dCompliance = qMax(qAbs(configureIvsVDialog.dVStart),
                               qAbs(configureIvsVDialog.dVStop));
@@ -584,15 +586,17 @@ MainWindow::on_startIvsVButton_clicked() {
     pKeithley->initISweep(dIStart, dIStop, dIStep, dDelayms, dCompliance);
   }
   else {// Reverse junction
+    qDebug() << "Reverse Direction Handling";
+    ui->statusBar->showMessage("Reverse junction: Sweeping...Please Wait");
     double dVStart = 0.0;
     double dVStop = configureIvsVDialog.dVStop;
     int nSweepPoints = configureIvsVDialog.iNSweepPoints;
-    double dVStep = (dVStop - dVStart) / double(nSweepPoints);
+    double dVStep = qAbs(dVStop - dVStart) / double(nSweepPoints);
     double dDelayms = double(configureIvsVDialog.iWaitTime);
     double dCompliance = qMax(qAbs(configureIvsVDialog.dIStart),
                               qAbs(configureIvsVDialog.dIStop));
     presentMeasure = IvsVSourceV;
-    connect(this, SIGNAL(sweepDone(QDateTime,QString)),
+    connect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)),
             this, SLOT(onVReverseDone(QDateTime,QString)));
     pKeithley->initVSweep(dVStart, dVStop, dVStep, dDelayms, dCompliance);
   }
@@ -601,36 +605,95 @@ MainWindow::on_startIvsVButton_clicked() {
 
 
 void
-MainWindow::onIForwardDone(QDateTime,QString) {
+MainWindow::onIForwardDone(QDateTime dataTime, QString sData) {
+  Q_UNUSED(dataTime)
+  qDebug() << "Reverse Direction Handling";
+  ui->statusBar->showMessage("Reverse Direction: Sweeping...Please Wait");
+  disconnect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)), this, 0);
+  QStringList sMeasures = QStringList(sData.split(",", QString::SkipEmptyParts));
+  if(sMeasures.count() < 2) {
+    qCritical() << "No Sweep Values ";
+    return;
+  }
+  double current, voltage;
+  for(int i=0; i<sMeasures.count(); i+=2) {
+    if(presentMeasure == IvsVSourceI) {
+      current = sMeasures.at(i).toDouble();
+      voltage = sMeasures.at(i+1).toDouble();
+    }
+    else {
+      voltage = sMeasures.at(i).toDouble();
+      current = sMeasures.at(i+1).toDouble();
+    }
+    pOutputFile->write(QString("%1 %2\n")
+                       .arg(voltage, 12, 'g', 6, ' ')
+                       .arg(current, 12, 'g', 6, ' ')
+                       .toLocal8Bit());
+    pPlotMeasurements->NewPoint(1, voltage, current);
+  }
+  pPlotMeasurements->UpdatePlot();
+  pOutputFile->flush();
   double dVStart = 0.0;
   double dVStop = configureIvsVDialog.dVStop;
   int nSweepPoints = configureIvsVDialog.iNSweepPoints;
-  double dVStep = (dVStop - dVStart) / double(nSweepPoints);
+  double dVStep = qAbs(dVStop - dVStart) / double(nSweepPoints);
   double dDelayms = double(configureIvsVDialog.iWaitTime);
   double dCompliance = qMax(qAbs(configureIvsVDialog.dIStart),
                             qAbs(configureIvsVDialog.dIStop));
   presentMeasure = IvsVSourceV;
-  connect(this, SIGNAL(sweepDone(QDateTime,QString)),
+  connect(pKeithley, SIGNAL(readyForTrigger()),
+          this, SLOT(onKeithleyReadyForSweepTrigger()));
+  connect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)),
           this, SLOT(onKeithleySweepDone(QDateTime,QString)));
   pKeithley->initVSweep(dVStart, dVStop, dVStep, dDelayms, dCompliance);
 }
 
 
 void
-MainWindow::onVReverseDone(QDateTime,QString) {
+MainWindow::onVReverseDone(QDateTime dataTime, QString sData) {
+  Q_UNUSED(dataTime)
   qDebug() << "Forward Direction Handling";
-  double dIStart = 0.0;
-  double dIStop = configureIvsVDialog.dIStop;
+  ui->statusBar->showMessage("Forward Direction: Sweeping...Please Wait");
+  disconnect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)), this, 0);
+  QStringList sMeasures = QStringList(sData.split(",", QString::SkipEmptyParts));
+  if(sMeasures.count() < 2) {
+    qCritical() << "No Sweep Values ";
+    return;
+  }
+  double current, voltage;
+  for(int i=0; i<sMeasures.count(); i+=2) {
+    if(presentMeasure == IvsVSourceI) {
+      current = sMeasures.at(i).toDouble();
+      voltage = sMeasures.at(i+1).toDouble();
+    }
+    else {
+      voltage = sMeasures.at(i).toDouble();
+      current = sMeasures.at(i+1).toDouble();
+    }
+    pOutputFile->write(QString("%1 %2\n")
+                       .arg(voltage, 12, 'g', 6, ' ')
+                       .arg(current, 12, 'g', 6, ' ')
+                       .toLocal8Bit());
+    pPlotMeasurements->NewPoint(1, voltage, current);
+  }
+  pPlotMeasurements->UpdatePlot();
+  pOutputFile->flush();
+  double dIStart = configureIvsVDialog.dIStart;
+  double dIStop = 0.0;
   int nSweepPoints = configureIvsVDialog.iNSweepPoints;
-  double dIStep = (dIStop - dIStart) / double(nSweepPoints);
+  double dIStep = qAbs(dIStop - dIStart) / double(nSweepPoints);
   double dDelayms = double(configureIvsVDialog.iWaitTime);
   double dCompliance = qMax(qAbs(configureIvsVDialog.dVStart),
                             qAbs(configureIvsVDialog.dVStop));
   presentMeasure = IvsVSourceI;
-  connect(this, SIGNAL(sweepDone(QDateTime,QString)),
+  connect(pKeithley, SIGNAL(readyForTrigger()),
+          this, SLOT(onKeithleyReadyForSweepTrigger()));
+  connect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)),
           this, SLOT(onKeithleySweepDone(QDateTime,QString)));
   pKeithley->initISweep(dIStart, dIStop, dIStep, dDelayms, dCompliance);
 }
+
+
 void
 MainWindow::stopIvsV() {
     presentMeasure = NoMeasure;
@@ -856,7 +919,6 @@ MainWindow::onTimeToReadT() {
 void
 MainWindow::onComplianceEvent() {
   qCritical() << "MainWindow::onComplianceEvent()";
-  on_startRvsTButton_clicked();
 }
 
 
