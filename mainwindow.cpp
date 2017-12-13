@@ -256,19 +256,13 @@ MainWindow::CheckInstruments() {
   int nDevices = ThreadIbcnt();
   qInfo() << QString("Found %1 Instruments connected to the GPIB Bus").arg(nDevices);
   // Identify the instruments connected to the GPIB Bus
-//  char readBuf[257];
-  QString sCommand = "*IDN?";
+  QString sCommand, sInstrumentID;
   for(int i=0; i<nDevices; i++) {
+    sCommand = "*IDN?";
     gpibWrite(resultlist[i], sCommand);
-//    Send(gpibBoardID, resultlist[i], sCommand.toUtf8().constData(), sCommand.length(), DABend);
     if(isGpibError("MainWindow::CheckInstruments() - *IDN? Failed"))
       return false;
-//    Receive(gpibBoardID, resultlist[i], readBuf, 256, STOPend);
-//    if(isGpibError("MainWindow::CheckInstruments() - Receive() Failed"))
-//      return false;
-//    readBuf[ibcnt] = 0;
-//    QString sInstrumentID = QString(readBuf);
-    QString sInstrumentID = gpibRead(resultlist[i]);
+    sInstrumentID = gpibRead(resultlist[i]);
     if(isGpibError("MainWindow::CheckInstruments() - *IDN? Read() Failed"))
       return false;
     qDebug() << QString("InstrumentID= %1").arg(sInstrumentID);
@@ -277,13 +271,21 @@ MainWindow::CheckInstruments() {
         pLakeShore = new LakeShore330(gpibBoardID, resultlist[i], this);
       }
     }
-    // La source Measure Unit K236 non risponde al comando di identificazione !!!!
-    else if(sInstrumentID.contains("NS", Qt::CaseInsensitive) ||
-            sInstrumentID.contains("OS", Qt::CaseInsensitive) ||
-            sInstrumentID.contains("SS", Qt::CaseInsensitive))
-    {
-      if(pKeithley == Q_NULLPTR) {
-        pKeithley = new Keithley236(gpibBoardID, resultlist[i], this);
+    // La source Measure Unit K236 non risponde al comando "*IDN"
+    // ma risponde al comando "U0X"
+    else {
+      sCommand = "U0X";
+      gpibWrite(resultlist[i], sCommand);
+      if(isGpibError("MainWindow::CheckInstruments() - U0X Failed"))
+        return false;
+      sInstrumentID = gpibRead(resultlist[i]);
+      if(isGpibError("MainWindow::CheckInstruments() - U0X Read() Failed"))
+        return false;
+      qDebug() << QString("InstrumentID= %1").arg(sInstrumentID);
+      if(sInstrumentID.contains("236")) {
+        if(pKeithley == Q_NULLPTR) {
+          pKeithley = new Keithley236(gpibBoardID, resultlist[i], this);
+        }
       }
     }
   }
