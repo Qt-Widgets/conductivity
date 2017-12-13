@@ -249,7 +249,6 @@ MainWindow::CheckInstruments() {
   DevClearList(gpibBoardID, &addrlist);
   if(isGpibError("MainWindow::CheckInstruments() - DevClearList() failed. Are the Instruments Connected and Switced On ?"))
     return false;
-
   FindLstn(gpibBoardID, padlist, resultlist, 30);
   if(isGpibError("MainWindow::CheckInstruments() - FindLstn() failed. Are the Instruments Connected and Switced On ?"))
     return false;
@@ -266,13 +265,10 @@ MainWindow::CheckInstruments() {
     if(isGpibError("MainWindow::CheckInstruments() - *IDN? Read() Failed"))
       return false;
     qDebug() << QString("InstrumentID= %1").arg(sInstrumentID);
-    if(sInstrumentID.contains("MODEL330", Qt::CaseInsensitive)) {
-      if(pLakeShore == NULL) {
+    if(sInstrumentID.contains("MODEL330", Qt::CaseInsensitive))
+      if(pLakeShore == NULL)
         pLakeShore = new LakeShore330(gpibBoardID, resultlist[i], this);
-      }
-    }
-    // La source Measure Unit K236 non risponde al comando "*IDN"
-    // ma risponde al comando "U0X"
+    // Il Keithley 236 non risponde al comando "*IDN" ma risponde al comando "U0X"
     else {
       sCommand = "U0X";
       gpibWrite(resultlist[i], sCommand);
@@ -282,11 +278,9 @@ MainWindow::CheckInstruments() {
       if(isGpibError("MainWindow::CheckInstruments() - U0X Read() Failed"))
         return false;
       qDebug() << QString("InstrumentID= %1").arg(sInstrumentID);
-      if(sInstrumentID.contains("236")) {
-        if(pKeithley == Q_NULLPTR) {
+      if(sInstrumentID.contains("236"))
+        if(pKeithley == Q_NULLPTR)
           pKeithley = new Keithley236(gpibBoardID, resultlist[i], this);
-        }
-      }
     }
   }
 
