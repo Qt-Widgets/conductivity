@@ -253,27 +253,31 @@ MainWindow::CheckInstruments() {
   FindLstn(gpibBoardID, padlist, resultlist, 30);
   if(isGpibError("MainWindow::CheckInstruments() - FindLstn() failed. Are the Instruments Connected and Switced On ?"))
     return false;
-  int nDevices = ThreadIbcntl();
+  int nDevices = ThreadIbcnt();
   qInfo() << QString("Found %1 Instruments connected to the GPIB Bus").arg(nDevices);
   // Identify the instruments connected to the GPIB Bus
-  char readBuf[257];
+//  char readBuf[257];
   QString sCommand = "*IDN?";
   for(int i=0; i<nDevices; i++) {
-    Send(gpibBoardID, resultlist[i], sCommand.toUtf8().constData(), sCommand.length(), DABend);
+    gpibWrite(resultlist[i], sCommand);
+//    Send(gpibBoardID, resultlist[i], sCommand.toUtf8().constData(), sCommand.length(), DABend);
     if(isGpibError("MainWindow::CheckInstruments() - *IDN? Failed"))
       return false;
-    Receive(gpibBoardID, resultlist[i], readBuf, 256, STOPend);
-    if(isGpibError("MainWindow::CheckInstruments() - Receive() Failed"))
+//    Receive(gpibBoardID, resultlist[i], readBuf, 256, STOPend);
+//    if(isGpibError("MainWindow::CheckInstruments() - Receive() Failed"))
+//      return false;
+//    readBuf[ibcnt] = 0;
+//    QString sInstrumentID = QString(readBuf);
+    QString sInstrumentID = gpibRead(resultlist[i]);
+    if(isGpibError("MainWindow::CheckInstruments() - *IDN? Read() Failed"))
       return false;
-    readBuf[ibcnt] = 0;
-    QString sInstrumentID = QString(readBuf);
     qDebug() << QString("InstrumentID= %1").arg(sInstrumentID);
-    // La source Measure Unit K236 non risponde al comando di identificazione !!!!
     if(sInstrumentID.contains("MODEL330", Qt::CaseInsensitive)) {
       if(pLakeShore == NULL) {
         pLakeShore = new LakeShore330(gpibBoardID, resultlist[i], this);
       }
     }
+    // La source Measure Unit K236 non risponde al comando di identificazione !!!!
     else if(sInstrumentID.contains("NS", Qt::CaseInsensitive) ||
             sInstrumentID.contains("OS", Qt::CaseInsensitive) ||
             sInstrumentID.contains("SS", Qt::CaseInsensitive))
