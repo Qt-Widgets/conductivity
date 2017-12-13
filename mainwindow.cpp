@@ -256,34 +256,35 @@ MainWindow::CheckInstruments() {
   qInfo() << QString("Found %1 Instruments connected to the GPIB Bus").arg(nDevices);
   // Identify the instruments connected to the GPIB Bus
   QString sCommand, sInstrumentID;
+  // Identify the instruments connected to the GPIB Bus
+  char readBuf[257];
   for(int i=0; i<nDevices; i++) {
     sCommand = "*IDN?";
-    gpibWrite(resultlist[i], sCommand);
+    Send(gpibBoardID, resultlist[i], sCommand.toUtf8().constData(), sCommand.length(), DABend);
     if(isGpibError("MainWindow::CheckInstruments() - *IDN? Failed"))
       return false;
-    sInstrumentID = gpibRead(resultlist[i]);
-    if(isGpibError("MainWindow::CheckInstruments() - *IDN? Read() Failed"))
+    Receive(gpibBoardID, resultlist[i], readBuf, 256, STOPend);
+    if(isGpibError("MainWindow::CheckInstruments() - Receive() Failed"))
       return false;
-    qDebug() << QString("InstrumentID= %1").arg(sInstrumentID);
-    if(sInstrumentID.contains("MODEL330", Qt::CaseInsensitive))
+    readBuf[ThreadIbcnt()] = '\0';
+    sInstrumentID = QString(readBuf);
+    qDebug() << QString("Address= %1 - InstrumentID= %2")
+                .arg(resultlist[i])
+                .arg(sInstrumentID);
+    if(sInstrumentID.contains("MODEL330", Qt::CaseInsensitive)) {
       if(pLakeShore == NULL)
         pLakeShore = new LakeShore330(gpibBoardID, resultlist[i], this);
-    // Il Keithley 236 non risponde al comando "*IDN" ma risponde al comando "U0X"
-    else {
-      sCommand = "U0X";
-      gpibWrite(resultlist[i], sCommand);
-      if(isGpibError("MainWindow::CheckInstruments() - U0X Failed"))
-        return false;
-      sInstrumentID = gpibRead(resultlist[i]);
-      if(isGpibError("MainWindow::CheckInstruments() - U0X Read() Failed"))
-        return false;
-      qDebug() << QString("InstrumentID= %1").arg(sInstrumentID);
-      if(sInstrumentID.contains("236"))
-        if(pKeithley == Q_NULLPTR)
-          pKeithley = new Keithley236(gpibBoardID, resultlist[i], this);
+    }
+    // Il Keithley 236 non risponde al comando "*IDN"
+    else if(sInstrumentID.contains("NS", Qt::CaseInsensitive) ||
+            sInstrumentID.contains("OS", Qt::CaseInsensitive) ||
+            sInstrumentID.contains("SS", Qt::CaseInsensitive))
+    {
+      if(pKeithley == Q_NULLPTR) {
+        pKeithley = new Keithley236(gpibBoardID, resultlist[i], this);
+      }
     }
   }
-
   if(pKeithley == Q_NULLPTR) {
     int iAnswer = QMessageBox::warning(this,
                                        "Warning",
@@ -587,7 +588,7 @@ MainWindow::on_startIvsVButton_clicked() {
     double dCompliance = qMax(qAbs(configureIvsVDialog.dVStart),
                               qAbs(configureIvsVDialog.dVStop));
     presentMeasure = IvsVSourceI;
-    connect(this, SIGNAL(sweepDone(QDateTime,QString)),
+    connect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)),
             this, SLOT(onIForwardDone(QDateTime,QString)));
     pKeithley->initISweep(dIStart, dIStop, dIStep, dDelayms, dCompliance);
   }
@@ -639,8 +640,16 @@ MainWindow::onIForwardDone(QDateTime dataTime, QString sData) {
   }
   pPlotMeasurements->UpdatePlot();
   pOutputFile->flush();
-  double dVStart = 0.0;
-  double dVStop = configureIvsVDialog.dVStop;
+  double dVStart;
+  double dVStop;
+  if(junctionDirection > 0) {// Forward junction
+    dVStart = configureIvsVDialog.dVStart;
+    dVStop = 0.0;
+  }
+  else {// Reverse Junction
+    dVStart = 0.0;
+    dVStop = configureIvsVDialog.dVStop;
+  }
   int nSweepPoints = configureIvsVDialog.iNSweepPoints;
   double dVStep = qAbs(dVStop - dVStart) / double(nSweepPoints);
   double dDelayms = double(configureIvsVDialog.iWaitTime);
