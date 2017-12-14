@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>535</height>
+    <height>595</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>220</x>
-     <y>490</y>
+     <y>550</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -35,33 +35,33 @@
      <x>10</x>
      <y>160</y>
      <width>381</width>
-     <height>91</height>
+     <height>151</height>
     </rect>
    </property>
    <property name="title">
     <string>Temperature Control</string>
    </property>
-   <widget class="QLabel" name="labelTValue">
+   <widget class="QLabel" name="labelTStart">
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>40</y>
+      <y>28</y>
       <width>61</width>
       <height>21</height>
      </rect>
     </property>
     <property name="text">
-     <string>T Value</string>
+     <string>T Start</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
     </property>
    </widget>
-   <widget class="QLineEdit" name="TValueEdit">
+   <widget class="QLineEdit" name="TStartEdit">
     <property name="geometry">
      <rect>
       <x>102</x>
-      <y>38</y>
+      <y>28</y>
       <width>71</width>
       <height>25</height>
      </rect>
@@ -74,7 +74,7 @@
     <property name="geometry">
      <rect>
       <x>180</x>
-      <y>40</y>
+      <y>28</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -87,7 +87,7 @@
     <property name="geometry">
      <rect>
       <x>260</x>
-      <y>40</y>
+      <y>28</y>
       <width>101</width>
       <height>20</height>
      </rect>
@@ -96,12 +96,180 @@
      <string>Use Thermostat</string>
     </property>
    </widget>
+   <widget class="QLabel" name="labelTStop">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>58</y>
+      <width>61</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>T Stop</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="TStopEdit">
+    <property name="geometry">
+     <rect>
+      <x>102</x>
+      <y>58</y>
+      <width>71</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="labelUnitsT_2">
+    <property name="geometry">
+     <rect>
+      <x>180</x>
+      <y>58</y>
+      <width>21</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>K</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="labelTStep">
+    <property name="geometry">
+     <rect>
+      <x>200</x>
+      <y>58</y>
+      <width>61</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>T Step</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="TStepEdit">
+    <property name="geometry">
+     <rect>
+      <x>270</x>
+      <y>58</y>
+      <width>71</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="labelUnitsT_3">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>58</y>
+      <width>21</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>K</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_3">
+    <property name="geometry">
+     <rect>
+      <x>300</x>
+      <y>118</y>
+      <width>31</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>min</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="labelReachingTStart">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>88</y>
+      <width>191</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Max Time waiting T Start</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="MaxTimeToTStartEdit">
+    <property name="geometry">
+     <rect>
+      <x>220</x>
+      <y>88</y>
+      <width>71</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>300</x>
+      <y>88</y>
+      <width>31</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>min</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="labelReachingTStep">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>118</y>
+      <width>191</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Max Time waiting T Step</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="MaxTimeToTStepEdit">
+    <property name="geometry">
+     <rect>
+      <x>220</x>
+      <y>118</y>
+      <width>71</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
   </widget>
   <widget class="QGroupBox" name="SampleGroupBox">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>270</y>
+     <y>330</y>
      <width>381</width>
      <height>91</height>
     </rect>
@@ -350,7 +518,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>380</y>
+     <y>440</y>
      <width>381</width>
      <height>91</height>
     </rect>
@@ -402,7 +570,7 @@
    <property name="geometry">
     <rect>
      <x>110</x>
-     <y>490</y>
+     <y>550</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -423,7 +591,7 @@
   <tabstop>waitTimeEdit</tabstop>
   <tabstop>sweepPointsEdit</tabstop>
   <tabstop>ThermostatCheckBox</tabstop>
-  <tabstop>TValueEdit</tabstop>
+  <tabstop>TStartEdit</tabstop>
   <tabstop>sampleInformationEdit</tabstop>
   <tabstop>outFilePathButton</tabstop>
   <tabstop>outPathEdit</tabstop>

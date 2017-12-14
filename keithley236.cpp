@@ -414,16 +414,17 @@ Keithley236::initVSweep(double startVoltage,
 int
 Keithley236::stopSweep() {
 #if defined(Q_OS_LINUX)
-  pollTimer.stop();
-  disconnect(&pollTimer, 0, 0, 0);
+    if(pollTimer.isActive())
+        pollTimer.stop();
+    disconnect(&pollTimer, 0, 0, 0);
 #else
-  ibnotify (k236, 0, NULL, NULL);// disable notification
+    ibnotify (k236, 0, NULL, NULL);// disable notification
 #endif
-  gpibWrite(k236, "M0,0X");      // SRQ Disabled, SRQ on Compliance
-  gpibWrite(k236, "R0");         // Disarm Trigger
-  gpibWrite(k236, "N0X");        // Place in Stand By
-  ibclr(k236);
-  return NO_ERROR;
+    gpibWrite(k236, "M0,0X");      // SRQ Disabled, SRQ on Compliance
+    gpibWrite(k236, "R0");         // Disarm Trigger
+    gpibWrite(k236, "N0X");        // Place in Stand By
+    ibclr(k236);
+    return NO_ERROR;
 }
 
 

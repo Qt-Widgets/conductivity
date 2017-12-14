@@ -38,15 +38,22 @@ public:
   double dIStop;
   double dVStart;
   double dVStop;
-  double dTemperature;
-  bool   bUseThermostat;
   int    iWaitTime;
   int    iNSweepPoints;
+
+  double dTStart;
+  double dTStop;
+  double dTStep;
+  bool   bUseThermostat;
+  int    iReachingTStart;
+  int    iReachingTStep;
+
   QString sSampleInfo;
   QString sBaseDir;
   QString sOutFileName;
 
 protected:
+  void initUI();
   void restoreSettings();
   void saveSettings();
   void setToolTips();
@@ -54,9 +61,11 @@ protected:
   void setCaptions();
   bool isCurrentValid(double dCurrent);
   bool isVoltageValid(double dVoltage);
-  bool isTemperatureValid(double dTemperature);
   bool isWaitTimeValid(int iWaitTime);
   bool isSweepPointNumberValid(int nSweepPoints);
+  bool isTemperatureValid(double dTemperature);
+  bool isTStepValid(double dTStep);
+  bool isReachingTimeValid(int iReachingTime);
 
 private slots:
   void on_outFilePathButton_clicked();
@@ -67,14 +76,19 @@ private slots:
   void on_IStopEdit_textChanged(const QString &arg1);
   void on_VStartEdit_textChanged(const QString &arg1);
   void on_VStopEdit_textChanged(const QString &arg1);
-  void on_TValueEdit_textChanged(const QString &arg1);
+  void on_TStartEdit_textChanged(const QString &arg1);
+  void on_TStopEdit_textChanged(const QString &arg1);
+  void on_TStepEdit_textChanged(const QString &arg1);
   void on_waitTimeEdit_textChanged(const QString &arg1);
   void on_sweepPointsEdit_textChanged(const QString &arg1);
+  void on_MaxTimeToTStartEdit_textChanged(const QString &arg1);
+  void on_MaxTimeToTStepEdit_textChanged(const QString &arg1);
 
 private:
   // QLineEdit styles
   QString     sNormalStyle;
   QString     sErrorStyle;
+
   // Limit Values
   const double currentMin;
   const double currentMax;
@@ -86,6 +100,8 @@ private:
   const int    waitTimeMax;
   const int    nSweepPointsMin;
   const int    nSweepPointsMax;
+  const int    reachingTMin;
+  const int    reachingTMax;
 
   // Dialog user interace
   Ui::ConfigureIvsVDialog *ui;

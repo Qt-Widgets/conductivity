@@ -349,19 +349,25 @@ MainWindow::stopRvsT() {
       pOutputFile->deleteLater();
       pOutputFile = Q_NULLPTR;
     }
-    pKeithley->endVvsT();
-    disconnect(pKeithley, 0, 0, 0);
-    pLakeShore->switchPowerOff();
-    pKeithley->deleteLater();
-    pKeithley = Q_NULLPTR;
-    pLakeShore->deleteLater();
-    pLakeShore = Q_NULLPTR;
+    if(pKeithley != Q_NULLPTR) {
+        disconnect(pKeithley, 0, 0, 0);
+        pKeithley->endVvsT();
+        pKeithley->deleteLater();
+        pKeithley = Q_NULLPTR;
+    }
+    if(pLakeShore != Q_NULLPTR) {
+        disconnect(pLakeShore, 0, 0, 0);
+        pLakeShore->switchPowerOff();
+        pLakeShore->deleteLater();
+        pLakeShore = Q_NULLPTR;
+    }
     switchLampOff();
 #if !defined(Q_PROCESSOR_ARM)
     serialPort.close();
 #endif
     ui->startRvsTButton->setText("Start R vs T");
     ui->startIvsVButton->setEnabled(true);
+    QApplication::restoreOverrideCursor();
 }
 
 
@@ -482,7 +488,6 @@ MainWindow::on_startRvsTButton_clicked() {
   ui->statusBar->showMessage(QString("%1 Waiting Initial T[%2K]")
                              .arg(waitingTStartTime.toString())
                              .arg(configureRvsTDialog.dTempStart));
-  QApplication::restoreOverrideCursor();
 }
 
 
@@ -505,14 +510,14 @@ MainWindow::on_startIvsVButton_clicked() {
   ui->statusBar->showMessage("Checking for the GPIB Instruments");
   if(!CheckInstruments()) {
     ui->statusBar->showMessage("GPIB Instruments not found");
-    QApplication::restoreOverrideCursor();
+    stopIvsV();
     return;
   }
   if(pKeithley != Q_NULLPTR)  {
     ui->statusBar->showMessage("Initializing Keithley 236...");
     if(pKeithley->init()) {
       ui->statusBar->showMessage("Unable to Initialize Keithley 236...");
-      QApplication::restoreOverrideCursor();
+      stopIvsV();
       return;
     }
     isK236ReadyForTrigger = false;
@@ -525,7 +530,7 @@ MainWindow::on_startIvsVButton_clicked() {
     ui->statusBar->showMessage("Initializing LakeShore 330...");
     if(pLakeShore->init()) {
       ui->statusBar->showMessage("Unable to Initialize LakeShore 330...");
-      QApplication::restoreOverrideCursor();
+      stopIvsV();
       return;
     }
   }
@@ -535,8 +540,8 @@ MainWindow::on_startIvsVButton_clicked() {
   if(!prepareOutputFile(configureIvsVDialog.sBaseDir,
                         configureIvsVDialog.sOutFileName))
   {
-    QApplication::restoreOverrideCursor();
-    return;
+      stopIvsV();
+      return;
   }
   pOutputFile->write(QString("%1 %2\n").arg("Voltage[V]", 12). arg("Current[A]", 12).toLocal8Bit());
   pOutputFile->write(configureIvsVDialog.sSampleInfo.toLocal8Bit());
@@ -549,7 +554,7 @@ MainWindow::on_startIvsVButton_clicked() {
   junctionDirection = pKeithley->junctionCheck(vStart, vStop);
   if(junctionDirection == pKeithley->ERROR_JUNCTION) {
     ui->statusBar->showMessage("Error Checking the presence of a Junction...");
-    QApplication::restoreOverrideCursor();
+    stopIvsV();
     return;
   }
   // Now we know how to proceed... (maybe...)
@@ -561,6 +566,12 @@ MainWindow::on_startIvsVButton_clicked() {
   startReadingTTime = QDateTime::currentDateTime();
   onTimeToReadT();
   readingTTimer.start(5000);
+  startI_V();
+}
+
+
+void
+MainWindow::startI_V() {
   if(junctionDirection == 0) {
     // No diode junction
     qDebug() << "No junctions in device";
@@ -607,7 +618,6 @@ MainWindow::on_startIvsVButton_clicked() {
             this, SLOT(onVReverseDone(QDateTime,QString)));
     pKeithley->initVSweep(dVStart, dVStop, dVStep, dDelayms, dCompliance);
   }
-  QApplication::restoreOverrideCursor();
 }
 
 
@@ -719,14 +729,21 @@ MainWindow::stopIvsV() {
     }
     readingTTimer.stop();
     disconnect(&readingTTimer, 0, 0, 0);
-    disconnect(pKeithley, 0, 0, 0);
-    pKeithley->stopSweep();
-    pLakeShore->switchPowerOff();
+    if(pKeithley != Q_NULLPTR) {
+        disconnect(pKeithley, 0, 0, 0);
+        pKeithley->stopSweep();
+        pKeithley->deleteLater();
+        pKeithley = Q_NULLPTR;
+    }
+    if(pLakeShore != Q_NULLPTR) {
+        disconnect(pLakeShore, 0, 0, 0);
+        pLakeShore->switchPowerOff();
+        pLakeShore->deleteLater();
+        pLakeShore = Q_NULLPTR;
+    }
     ui->startIvsVButton->setText("Start I vs V");
     ui->startRvsTButton->setEnabled(true);
-    ui->statusBar->showMessage("Sweep Done");
-    pKeithley->deleteLater();
-    pKeithley = Q_NULLPTR;
+    QApplication::restoreOverrideCursor();
 }
 
 

@@ -41,6 +41,8 @@ ConfigureIvsVDialog::ConfigureIvsVDialog(QWidget *parent)
   , waitTimeMax(10000)
   , nSweepPointsMin(10)
   , nSweepPointsMax(500)
+  , reachingTMin(0)// In minutes
+  , reachingTMax(30)// In minutes
   , ui(new Ui::ConfigureIvsVDialog)
 {
   setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
@@ -52,47 +54,7 @@ ConfigureIvsVDialog::ConfigureIvsVDialog(QWidget *parent)
 
   restoreSettings();
   setToolTips();
-  // Measurement parameters
-  if(!isCurrentValid(dIStart))
-    dIStart = 0.0;
-  ui->IStartEdit->setText(QString("%1").arg(dIStart, 0, 'g', 2));
-  //
-  if(!isCurrentValid(dIStop))
-    dIStop = 0.0;
-  ui->IStopEdit->setText(QString("%1").arg(dIStop, 0, 'g', 2));
-  //
-  if(!isVoltageValid(dVStart))
-    dVStart = 0.0;
-  ui->VStartEdit->setText(QString("%1").arg(dVStart, 0, 'g', 2));
-  //
-  if(!isVoltageValid(dVStop))
-    dVStop = 0.0;
-  ui->VStopEdit->setText(QString("%1").arg(dVStop, 0, 'g', 2));
-  //
-  if(!isWaitTimeValid(iWaitTime))
-      iWaitTime = 100.0;
-  ui->waitTimeEdit->setText(QString("%1").arg(iWaitTime));
-  //
-  if(!isSweepPointNumberValid(iNSweepPoints))
-      iNSweepPoints = 100;
-  ui->sweepPointsEdit->setText(QString("%1").arg(iNSweepPoints));
-
-  // Temperature Control
-  if(!isTemperatureValid(dTemperature))
-    dTemperature = 300.0;
-  ui->TValueEdit->setText(QString("%1").arg(dTemperature, 0, 'f', 2));
-
-  ui->ThermostatCheckBox->setChecked(bUseThermostat);
-  ui->TValueEdit->setEnabled(bUseThermostat);
-
-  // Sample information
-  ui->sampleInformationEdit->setPlainText(sSampleInfo);
-
-  // Output Path
-  ui->outPathEdit->setText(sBaseDir);
-
-  // Output File Name
-  ui->outFileEdit->setText(sOutFileName);
+  initUI();
 }
 
 
@@ -109,6 +71,67 @@ ConfigureIvsVDialog::closeEvent(QCloseEvent *event) {
 
 
 void
+ConfigureIvsVDialog::initUI() {
+  // Measurement parameters
+  if(!isCurrentValid(dIStart))
+    dIStart = 0.0;
+  ui->IStartEdit->setText(QString("%1").arg(dIStart, 0, 'g', 2));
+  if(!isCurrentValid(dIStop))
+    dIStop = 0.0;
+  ui->IStopEdit->setText(QString("%1").arg(dIStop, 0, 'g', 2));
+  if(!isVoltageValid(dVStart))
+    dVStart = 0.0;
+  ui->VStartEdit->setText(QString("%1").arg(dVStart, 0, 'g', 2));
+  if(!isVoltageValid(dVStop))
+    dVStop = 0.0;
+  ui->VStopEdit->setText(QString("%1").arg(dVStop, 0, 'g', 2));
+  if(!isWaitTimeValid(iWaitTime))
+      iWaitTime = 100.0;
+  ui->waitTimeEdit->setText(QString("%1").arg(iWaitTime));
+  if(!isSweepPointNumberValid(iNSweepPoints))
+      iNSweepPoints = 100;
+  ui->sweepPointsEdit->setText(QString("%1").arg(iNSweepPoints));
+
+  // Temperature Control
+  if(!isTemperatureValid(dTStart))
+    dTStart = 300.0;
+  ui->TStartEdit->setText(QString("%1").arg(dTStart, 0, 'f', 2));
+  if(!isTemperatureValid(dTStop))
+    dTStop = dTStart;
+  ui->TStopEdit->setText(QString("%1").arg(dTStop, 0, 'f', 2));
+  if(!isTemperatureValid(dTStep))
+    dTStep = dTStop-dTStart+1.0;
+  ui->TStepEdit->setText(QString("%1").arg(dTStep, 0, 'f', 2));
+
+  ui->ThermostatCheckBox->setChecked(bUseThermostat);
+  ui->TStartEdit->setEnabled(bUseThermostat);
+  ui->TStopEdit->setEnabled(bUseThermostat);
+  ui->TStepEdit->setEnabled(bUseThermostat);
+  ui->MaxTimeToTStartEdit->setEnabled(bUseThermostat);
+  ui->MaxTimeToTStepEdit->setEnabled(bUseThermostat);
+
+  // Timing parameters
+  if(!isReachingTimeValid(iReachingTStart)) {
+    iReachingTStart = reachingTMin;
+  }
+  ui->MaxTimeToTStartEdit->setText(QString("%1").arg(iReachingTStart));
+  if(!isReachingTimeValid(iReachingTStep)) {
+    iReachingTStep = reachingTMin;
+  }
+  ui->MaxTimeToTStepEdit->setText(QString("%1").arg(iReachingTStep));
+
+  // Sample information
+  ui->sampleInformationEdit->setPlainText(sSampleInfo);
+
+  // Output Path
+  ui->outPathEdit->setText(sBaseDir);
+
+  // Output File Name
+  ui->outFileEdit->setText(sOutFileName);
+}
+
+
+void
 ConfigureIvsVDialog::restoreSettings() {
   QSettings settings;
 
@@ -121,7 +144,11 @@ ConfigureIvsVDialog::restoreSettings() {
   iWaitTime      = settings.value("ConfigureIvsVWaitTime", 100).toInt();
   iNSweepPoints  = settings.value("ConfigureIvsVSweepPoints", 100).toInt();
 
-  dTemperature   = settings.value("ConfigureIvsVTemperture", 300.0).toDouble();
+  dTStart        = settings.value("ConfigureIvsVTStart", 300.0).toDouble();
+  dTStop         = settings.value("ConfigureIvsVTStop", dTStart).toDouble();
+  dTStep         = settings.value("ConfigureIvsVTStep", 1.0).toDouble();
+  iReachingTStart= settings.value("ConfigureReachingTStart", 0).toInt();
+  iReachingTStep = settings.value("ConfigureReachingTStep", 0).toInt();
   bUseThermostat = settings.value("ConfigureIvsVUseThermostat", false).toBool();
 
   sSampleInfo    = settings.value("ConfigureIvsVSampleInfo", "").toString();
@@ -141,7 +168,11 @@ ConfigureIvsVDialog::saveSettings() {
   settings.setValue("ConfigureIvsVWaitTime", iWaitTime);
   settings.setValue("ConfigureIvsVSweepPoints", iNSweepPoints);
 
-  settings.setValue("ConfigureIvsVTemperture", dTemperature);
+  settings.setValue("ConfigureIvsVTStart", dTStart);
+  settings.setValue("ConfigureIvsVTStop", dTStop);
+  settings.setValue("ConfigureIvsVTStep", dTStep);
+  settings.setValue("ConfigureReachingTStart", iReachingTStart);
+  settings.setValue("ConfigureReachingTStep", iReachingTStep);
   settings.setValue("ConfigureIvsVUseThermostat", bUseThermostat);
 
   sSampleInfo = ui->sampleInformationEdit->toPlainText();
@@ -163,7 +194,11 @@ ConfigureIvsVDialog::setToolTips() {
   ui->sweepPointsEdit->setToolTip((sHeader.arg(nSweepPointsMin).arg(nSweepPointsMax)));
 
   ui->ThermostatCheckBox->setToolTip(QString("Enable/Disable Thermostat Use"));
-  ui->TValueEdit->setToolTip(sHeader.arg(temperatureMin).arg(temperatureMax));
+  ui->TStartEdit->setToolTip(sHeader.arg(temperatureMin).arg(temperatureMax));
+  ui->TStopEdit->setToolTip(sHeader.arg(temperatureMin).arg(temperatureMax));
+  ui->TStepEdit->setToolTip("Enter values greater than 1.0");
+  ui->MaxTimeToTStartEdit->setToolTip(sHeader.arg(reachingTMin).arg(reachingTMax));
+  ui->MaxTimeToTStartEdit->setToolTip(sHeader.arg(reachingTMin).arg(reachingTMax));
 
   ui->sampleInformationEdit->setToolTip(QString("Enter Sample description (multiline)"));
   ui->outPathEdit->setToolTip(QString("Output File Folder"));
@@ -191,6 +226,19 @@ bool
 ConfigureIvsVDialog::isTemperatureValid(double dTemperature) {
   return (dTemperature >= temperatureMin) &&
          (dTemperature <= temperatureMax);
+}
+
+
+bool
+ConfigureIvsVDialog::isTStepValid(double dTStep) {
+  return (dTStep >= 1.0);
+}
+
+
+bool
+ConfigureIvsVDialog::isReachingTimeValid(int iReachingTime) {
+   return (iReachingTime >= reachingTMin) &&
+          (iReachingTime <= reachingTMax);
 }
 
 
@@ -234,8 +282,11 @@ ConfigureIvsVDialog::on_ThermostatCheckBox_stateChanged(int arg1) {
   else {
     bUseThermostat = false;
   }
-  ui->labelTValue->setEnabled(bUseThermostat);
-  ui->TValueEdit->setEnabled(bUseThermostat);
+  ui->TStartEdit->setEnabled(bUseThermostat);
+  ui->TStopEdit->setEnabled(bUseThermostat);
+  ui->TStepEdit->setEnabled(bUseThermostat);
+  ui->MaxTimeToTStartEdit->setEnabled(bUseThermostat);
+  ui->MaxTimeToTStepEdit->setEnabled(bUseThermostat);
 }
 
 
@@ -322,14 +373,62 @@ ConfigureIvsVDialog::on_VStopEdit_textChanged(const QString &arg1) {
 
 
 void
-ConfigureIvsVDialog::on_TValueEdit_textChanged(const QString &arg1) {
-  if(isTemperatureValid(arg1.toDouble())){
-    dTemperature = arg1.toDouble();
-    ui->TValueEdit->setStyleSheet(sNormalStyle);
-  }
-  else {
-    ui->TValueEdit->setStyleSheet(sErrorStyle);
-  }
+ConfigureIvsVDialog::on_TStartEdit_textChanged(const QString &arg1) {
+    if(isTemperatureValid(arg1.toDouble())){
+      dTStart = arg1.toDouble();
+      ui->TStartEdit->setStyleSheet(sNormalStyle);
+    }
+    else {
+      ui->TStartEdit->setStyleSheet(sErrorStyle);
+    }
+}
+
+
+void
+ConfigureIvsVDialog::on_TStopEdit_textChanged(const QString &arg1) {
+    if(isTemperatureValid(arg1.toDouble())){
+      dTStop = arg1.toDouble();
+      ui->TStopEdit->setStyleSheet(sNormalStyle);
+    }
+    else {
+      ui->TStopEdit->setStyleSheet(sErrorStyle);
+    }
+}
+
+
+void
+ConfigureIvsVDialog::on_TStepEdit_textChanged(const QString &arg1) {
+    if(isTStepValid(arg1.toDouble())){
+        dTStep = arg1.toDouble();
+        ui->TStepEdit->setStyleSheet(sNormalStyle);
+    }
+    else {
+        ui->TStepEdit->setStyleSheet(sErrorStyle);
+    }
+}
+
+
+void
+ConfigureIvsVDialog::on_MaxTimeToTStartEdit_textChanged(const QString &arg1) {
+    if(isReachingTimeValid(arg1.toInt())) {
+        iReachingTStart = arg1.toInt();
+        ui->MaxTimeToTStartEdit->setStyleSheet(sNormalStyle);
+    }
+    else {
+        ui->MaxTimeToTStartEdit->setStyleSheet(sErrorStyle);
+    }
+}
+
+
+void
+ConfigureIvsVDialog::on_MaxTimeToTStepEdit_textChanged(const QString &arg1) {
+    if(isReachingTimeValid(arg1.toInt())) {
+        iReachingTStep = arg1.toInt();
+        ui->MaxTimeToTStartEdit->setStyleSheet(sNormalStyle);
+    }
+    else {
+        ui->MaxTimeToTStartEdit->setStyleSheet(sErrorStyle);
+    }
 }
 
 
