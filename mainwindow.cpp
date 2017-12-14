@@ -503,8 +503,6 @@ MainWindow::on_startIvsVButton_clicked() {
     return;
 
   QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-  ui->startRvsTButton->setDisabled(true);
-  ui->startIvsVButton->setText("Stop I vs V");
 
   // Are the GPIB instruments connectd and ready to start ?
   ui->statusBar->showMessage("Checking for the GPIB Instruments");
@@ -560,13 +558,31 @@ MainWindow::on_startIvsVButton_clicked() {
   // Now we know how to proceed... (maybe...)
   initIvsVPlots();
   isK236ReadyForTrigger = false;
+  presentMeasure = IvsV;
   connect(&readingTTimer, SIGNAL(timeout()),
           this, SLOT(onTimeToReadT()));
+  readingTTimer.start(5000);
   // Read and plot initial value of Temperature
   startReadingTTime = QDateTime::currentDateTime();
   onTimeToReadT();
-  readingTTimer.start(5000);
-  startI_V();
+  if(configureIvsVDialog.bUseThermostat) {
+      connect(&waitingTStartTimer, SIGNAL(timeout()),
+              this, SLOT(onTimeToCheckReachedT()));
+      waitingTStartTime = QDateTime::currentDateTime();
+      // Start the reaching of the Initial Temperature
+      waitingTStartTimer.start(5000);
+      // Configure Thermostat
+      pLakeShore->setTemperature(configureIvsVDialog.dTStart);
+      pLakeShore->switchPowerOn(3);
+      ui->statusBar->showMessage(QString("%1 Waiting Initial T[%2K]")
+                                 .arg(waitingTStartTime.toString())
+                                 .arg(configureIvsVDialog.dTStart));
+  }
+  else {
+      startI_V();
+  }
+  ui->startRvsTButton->setDisabled(true);
+  ui->startIvsVButton->setText("Stop I vs V");
 }
 
 

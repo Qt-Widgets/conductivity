@@ -103,6 +103,7 @@ private:
       RvsTSourceV = 2,
       IvsVSourceI = 3,
       IvsVSourceV = 4,
+      IvsV        = 5
   };
   measure presentMeasure;
 
