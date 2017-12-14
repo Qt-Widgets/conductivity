@@ -183,7 +183,7 @@ MainWindow::connectToArduino() {
       serialPort.setParity(QSerialPort::NoParity);
       serialPort.setStopBits(QSerialPort::OneStop);
       if(serialPort.open(QIODevice::ReadWrite)) {
-        // Arduino will reset upon opening the seial port
+        // Arduino will reset upon opening the serial port
         // so we need to give it time to boot
         QThread::sleep(3);
         requestData = QByteArray(2, AreYouThere);
@@ -275,7 +275,7 @@ MainWindow::CheckInstruments() {
       if(pLakeShore == NULL)
         pLakeShore = new LakeShore330(gpibBoardID, resultlist[i], this);
     }
-    // Il Keithley 236 non risponde al comando "*IDN"
+    // The Keithley 236 does not answer to "*IDN" command
     else if(sInstrumentID.contains("NS", Qt::CaseInsensitive) ||
             sInstrumentID.contains("OS", Qt::CaseInsensitive) ||
             sInstrumentID.contains("SS", Qt::CaseInsensitive))
