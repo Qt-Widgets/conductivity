@@ -74,7 +74,7 @@ private slots:
   void on_startRvsTButton_clicked();
   void on_startIvsVButton_clicked();
   void onTimeToCheckReachedT();
-  void onTimeToCheckTStart();
+  void onTimeToCheckT();
   void onTimerStabilizeT();
   void onTimeToReadT();
   void onTimeToGetNewMeasure();
@@ -83,8 +83,8 @@ private slots:
   void onNewKeithleyReading(QDateTime dataTime, QString sDataRead);
   bool onKeithleyReadyForSweepTrigger();
   void onKeithleySweepDone(QDateTime dataTime, QString sData);
-  void onIForwardDone(QDateTime, QString sData);
-  void onVReverseDone(QDateTime, QString sData);
+  void onIForwardSweepDone(QDateTime, QString sData);
+  void onVReverseSweepDone(QDateTime, QString sData);
 
 private:
   Ui::MainWindow *ui;
@@ -124,6 +124,7 @@ private:
   ConfigureRvsTDialog configureRvsTDialog;
   ConfigureIvsVDialog configureIvsVDialog;
 
+  double        setPointT;
   const quint8  LAMP_ON;
   const quint8  LAMP_OFF;
   int           iCurrentTPlot;
