@@ -790,7 +790,7 @@ MainWindow::initIvsVPlots() {
 void
 MainWindow::onTimeToCheckT() {
     double T = pLakeShore->getTemperature();
-    if(fabs(T-setPointT) < 0.1) {
+    if(fabs(T-setPointT) < 0.15) {
         waitingTStartTimer.stop();
         disconnect(&waitingTStartTimer, 0, 0, 0);
         startI_V();
@@ -811,7 +811,7 @@ MainWindow::onTimeToCheckT() {
 void
 MainWindow::onTimeToCheckReachedT() {
     double T = pLakeShore->getTemperature();
-    if(fabs(T-configureRvsTDialog.dTempStart) < 0.1) {
+    if(fabs(T-configureRvsTDialog.dTempStart) < 0.15) {
         disconnect(&waitingTStartTimer, 0, 0, 0);
         waitingTStartTimer.stop();
         connect(&stabilizingTimer, SIGNAL(timeout()),
