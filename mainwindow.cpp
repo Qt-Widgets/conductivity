@@ -472,7 +472,6 @@ MainWindow::on_startRvsTButton_clicked() {
     // Configure the needed timers
     connect(&waitingTStartTimer, SIGNAL(timeout()),
             this, SLOT(onTimeToCheckReachedT()));
-    qDebug() << "-2";
     connect(&readingTTimer, SIGNAL(timeout()),
             this, SLOT(onTimeToReadT()));
     waitingTStartTime = QDateTime::currentDateTime();
@@ -542,7 +541,10 @@ MainWindow::on_startIvsVButton_clicked() {
         stopIvsV();
         return;
     }
-    pOutputFile->write(QString("%1 %2\n").arg("Voltage[V]", 12). arg("Current[A]", 12).toLocal8Bit());
+    pOutputFile->write(QString("%1 %2 %3\n")
+                       .arg("Voltage[V]", 12)
+                       .arg("Current[A]", 12)
+                       .arg("Temp.[K]", 12).toLocal8Bit());
     pOutputFile->write(configureIvsVDialog.sSampleInfo.toLocal8Bit());
     pOutputFile->write("\n");
     pOutputFile->flush();
@@ -569,7 +571,6 @@ MainWindow::on_startIvsVButton_clicked() {
     if(configureIvsVDialog.bUseThermostat) {
         connect(&waitingTStartTimer, SIGNAL(timeout()),
                 this, SLOT(onTimeToCheckT()));
-        qDebug() << "-3";
         waitingTStartTime = QDateTime::currentDateTime();
         // Start the reaching of the Initial Temperature
         // Configure Thermostat
@@ -652,7 +653,6 @@ MainWindow::stopIvsV() {
     disconnect(&readingTTimer, 0, 0, 0);
     waitingTStartTimer.stop();
     disconnect(&waitingTStartTimer, 0, 0, 0);
-    qDebug() << "3";
     if(pKeithley != Q_NULLPTR) {
         disconnect(pKeithley, 0, 0, 0);
         pKeithley->stopSweep();
@@ -793,7 +793,6 @@ MainWindow::onTimeToCheckT() {
     if(fabs(T-setPointT) < 0.1) {
         waitingTStartTimer.stop();
         disconnect(&waitingTStartTimer, 0, 0, 0);
-        qDebug() << "1";
         startI_V();
     }
     else {
@@ -803,7 +802,6 @@ MainWindow::onTimeToCheckT() {
         if(elapsedMsec > quint64(configureRvsTDialog.iReachingTime)*60*1000) {
             waitingTStartTimer.stop();
             disconnect(&waitingTStartTimer, 0, 0, 0);
-            qDebug() << "2";
             startI_V();
         }
     }
@@ -983,9 +981,10 @@ MainWindow::onKeithleySweepDone(QDateTime dataTime, QString sData) {
             voltage = sMeasures.at(i).toDouble();
             current = sMeasures.at(i+1).toDouble();
         }
-        pOutputFile->write(QString("%1 %2\n")
+        pOutputFile->write(QString("%1 %2 %3\n")
                            .arg(voltage, 12, 'g', 6, ' ')
                            .arg(current, 12, 'g', 6, ' ')
+                           .arg(setPointT, 12, 'g', 6, ' ')
                            .toLocal8Bit());
         pPlotMeasurements->NewPoint(1, voltage, current);
     }
@@ -1006,7 +1005,6 @@ MainWindow::onKeithleySweepDone(QDateTime dataTime, QString sData) {
                 this, SLOT(onKeithleyReadyForSweepTrigger()));
         connect(&waitingTStartTimer, SIGNAL(timeout()),
                 this, SLOT(onTimeToCheckT()));
-        qDebug() << "-1";
         waitingTStartTime = QDateTime::currentDateTime();
         // Start the reaching of the Next Temperature
         waitingTStartTimer.start(5000);
@@ -1045,9 +1043,10 @@ MainWindow::onIForwardSweepDone(QDateTime dataTime, QString sData) {
             voltage = sMeasures.at(i).toDouble();
             current = sMeasures.at(i+1).toDouble();
         }
-        pOutputFile->write(QString("%1 %2\n")
+        pOutputFile->write(QString("%1 %2 %3\n")
                            .arg(voltage, 12, 'g', 6, ' ')
                            .arg(current, 12, 'g', 6, ' ')
+                           .arg(setPointT, 12, 'g', 6, ' ')
                            .toLocal8Bit());
         pPlotMeasurements->NewPoint(1, voltage, current);
     }
@@ -1098,9 +1097,10 @@ MainWindow::onVReverseSweepDone(QDateTime dataTime, QString sData) {
             voltage = sMeasures.at(i).toDouble();
             current = sMeasures.at(i+1).toDouble();
         }
-        pOutputFile->write(QString("%1 %2\n")
+        pOutputFile->write(QString("%1 %2 %3\n")
                            .arg(voltage, 12, 'g', 6, ' ')
                            .arg(current, 12, 'g', 6, ' ')
+                           .arg(setPointT, 12, 'g', 6, ' ')
                            .toLocal8Bit());
         pPlotMeasurements->NewPoint(1, voltage, current);
     }
