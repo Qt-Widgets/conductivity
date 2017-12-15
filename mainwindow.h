@@ -74,6 +74,7 @@ private slots:
   void on_startRvsTButton_clicked();
   void on_startIvsVButton_clicked();
   void onTimeToCheckReachedT();
+  void onTimeToCheckTStart();
   void onTimerStabilizeT();
   void onTimeToReadT();
   void onTimeToGetNewMeasure();
