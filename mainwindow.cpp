@@ -650,9 +650,11 @@ MainWindow::stopIvsV() {
         pOutputFile = Q_NULLPTR;
     }
     readingTTimer.stop();
-    disconnect(&readingTTimer, 0, 0, 0);
     waitingTStartTimer.stop();
+    stabilizingTimer.stop();
+    disconnect(&readingTTimer, 0, 0, 0);
     disconnect(&waitingTStartTimer, 0, 0, 0);
+    disconnect(&stabilizingTimer, 0, 0, 0);
     if(pKeithley != Q_NULLPTR) {
         disconnect(pKeithley, 0, 0, 0);
         pKeithley->stopSweep();
