@@ -48,12 +48,10 @@ public:
   ~MainWindow();
 
 signals:
-  void IForwardDone();
-  void VReverseDone();
 
 protected:
   void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
-  bool CheckInstruments();
+  bool checkInstruments();
   bool getNewMeasure();
   void initRvsTPlots();
   void stopRvsT();

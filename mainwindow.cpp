@@ -225,7 +225,7 @@ MainWindow::writeToArduino(QByteArray requestData) {
 
 
 bool
-MainWindow::CheckInstruments() {
+MainWindow::checkInstruments() {
     Addr4882_t padlist[31];
     Addr4882_t resultlist[31];
     for(short i=0; i<30; i++) padlist[i] = i+1;
@@ -402,7 +402,7 @@ MainWindow::on_startRvsTButton_clicked() {
     switchLampOff();
     // Are the GPIB instruments connectd and ready to start ?
     ui->statusBar->showMessage("Checking for the GPIB Instruments");
-    if(!CheckInstruments()) {
+    if(!checkInstruments()) {
         ui->statusBar->showMessage("GPIB Instruments not found");
         QApplication::restoreOverrideCursor();
         return;
@@ -506,7 +506,7 @@ MainWindow::on_startIvsVButton_clicked() {
 
     // Are the GPIB instruments connectd and ready to start ?
     ui->statusBar->showMessage("Checking for the GPIB Instruments");
-    if(!CheckInstruments()) {
+    if(!checkInstruments()) {
         ui->statusBar->showMessage("GPIB Instruments not found");
         stopIvsV();
         return;
