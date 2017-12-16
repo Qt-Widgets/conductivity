@@ -76,6 +76,7 @@ private slots:
   void onTimeToCheckReachedT();
   void onTimeToCheckT();
   void onTimerStabilizeT();
+  void onSteadyTReached();
   void onTimeToReadT();
   void onTimeToGetNewMeasure();
   void onComplianceEvent();

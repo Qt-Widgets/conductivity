@@ -793,18 +793,34 @@ MainWindow::onTimeToCheckT() {
     if(fabs(T-setPointT) < 0.15) {
         waitingTStartTimer.stop();
         disconnect(&waitingTStartTimer, 0, 0, 0);
-        startI_V();
+        connect(&stabilizingTimer, SIGNAL(timeout()),
+                this, SLOT(onSteadyTReached()));
+        stabilizingTimer.start(configureIvsVDialog.iTimeToSteadyT*60*1000);
+        ui->statusBar->showMessage(QString("T Reached: Thermal Stabilization for %1 min.")
+                                   .arg(configureRvsTDialog.iStabilizingTime));
     }
     else {
         currentTime = QDateTime::currentDateTime();
         quint64 elapsedMsec = waitingTStartTime.secsTo(currentTime);
-        //      qDebug() << "Elapsed:" << elapsedMsec << "Maximum:" << quint64(configureRvsTDialog.iReachingTime)*60*1000;
         if(elapsedMsec > quint64(configureRvsTDialog.iReachingTime)*60*1000) {
             waitingTStartTimer.stop();
             disconnect(&waitingTStartTimer, 0, 0, 0);
-            startI_V();
+            connect(&stabilizingTimer, SIGNAL(timeout()),
+                    this, SLOT(onSteadyTReached()));
+            stabilizingTimer.start(configureIvsVDialog.iTimeToSteadyT*60*1000);
+            ui->statusBar->showMessage(QString("T Reached: Thermal Stabilization for %1 min.")
+                                       .arg(configureRvsTDialog.iStabilizingTime));
         }
     }
+}
+
+
+void
+MainWindow::onSteadyTReached() {
+    stabilizingTimer.stop();
+    disconnect(&stabilizingTimer, 0, 0, 0);
+    startMeasuringTime = QDateTime::currentDateTime();
+    startI_V();
 }
 
 
