@@ -198,7 +198,7 @@ ConfigureIvsVDialog::setToolTips() {
   ui->TStopEdit->setToolTip(sHeader.arg(temperatureMin).arg(temperatureMax));
   ui->TStepEdit->setToolTip("Enter values greater than 1.0");
   ui->MaxTimeToTStartEdit->setToolTip(sHeader.arg(reachingTMin).arg(reachingTMax));
-  ui->MaxTimeToTStartEdit->setToolTip(sHeader.arg(reachingTMin).arg(reachingTMax));
+  ui->MaxTimeToTStepEdit->setToolTip(sHeader.arg(reachingTMin).arg(reachingTMax));
 
   ui->sampleInformationEdit->setToolTip(QString("Enter Sample description (multiline)"));
   ui->outPathEdit->setToolTip(QString("Output File Folder"));
