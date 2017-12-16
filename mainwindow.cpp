@@ -206,17 +206,17 @@ MainWindow::writeToArduino(QByteArray requestData) {
             while(serialPort.waitForReadyRead(10))
                 responseData += serialPort.readAll();
             if(responseData.at(0) != uchar(ACK)) {
-                qCritical() << "MainWindow::writeRequest(): not an ACK";
+                qCritical() << "Not an ACK";
                 return false;
             }
         }
         else {
-            qCritical() << "MainWindow::writeRequest(): Wait read response timeout";
+            qCritical() << "Wait read response timeout";
             return false;
         }
     }
     else {
-        qCritical() <<"MainWindow::writeRequest(): Wait write request timeout %1";
+        qCritical() <<"Wait write request timeout %1";
         return false;
     }
     return true;
@@ -234,11 +234,11 @@ MainWindow::checkInstruments() {
     // Enable assertion of REN when System Controller
     // This is required by the Keithley 236
     SendIFC(gpibBoardID);
-    if(isGpibError("MainWindow::CheckInstruments(): SendIFC Error. Is the GPIB Interface connected ?"))
+    if(isGpibError("SendIFC Error. Is the GPIB Interface connected ?"))
         return false;
 
     ibconfig(gpibBoardID, IbcSRE, 1);
-    if(isGpibError("MainWindow::CheckInstruments(): ibconfig() Unable to set REN When SC"))
+    if(isGpibError("ibconfig() Unable to set REN When SC"))
         return false;
 
     // If addrlist contains only the constant NOADDR,
@@ -247,10 +247,10 @@ MainWindow::checkInstruments() {
     Addr4882_t addrlist;
     addrlist = NOADDR;
     DevClearList(gpibBoardID, &addrlist);
-    if(isGpibError("MainWindow::CheckInstruments() - DevClearList() failed. Are the Instruments Connected and Switced On ?"))
+    if(isGpibError("DevClearList() failed. Are the Instruments Connected and Switced On ?"))
         return false;
     FindLstn(gpibBoardID, padlist, resultlist, 30);
-    if(isGpibError("MainWindow::CheckInstruments() - FindLstn() failed. Are the Instruments Connected and Switced On ?"))
+    if(isGpibError("FindLstn() failed. Are the Instruments Connected and Switced On ?"))
         return false;
     int nDevices = ThreadIbcnt();
     qInfo() << QString("Found %1 Instruments connected to the GPIB Bus").arg(nDevices);
@@ -261,10 +261,10 @@ MainWindow::checkInstruments() {
     for(int i=0; i<nDevices; i++) {
         sCommand = "*IDN?";
         Send(gpibBoardID, resultlist[i], sCommand.toUtf8().constData(), sCommand.length(), DABend);
-        if(isGpibError("MainWindow::CheckInstruments() - *IDN? Failed"))
+        if(isGpibError("*IDN? Failed"))
             return false;
         Receive(gpibBoardID, resultlist[i], readBuf, 256, STOPend);
-        if(isGpibError("MainWindow::CheckInstruments() - Receive() Failed"))
+        if(isGpibError("Receive() Failed"))
             return false;
         readBuf[ThreadIbcnt()] = '\0';
         sInstrumentID = QString(readBuf);
@@ -609,7 +609,7 @@ MainWindow::startI_V() {
         pKeithley->initISweep(dIStart, dIStop, dIStep, dDelayms, dCompliance);
     }
     else if(junctionDirection > 0) {// Forward junction
-        qDebug() << "Forward Direction Handling";
+//        qDebug() << "Forward Direction Handling";
         ui->statusBar->showMessage("Forward junction: Sweeping...Please Wait");
         double dIStart = 0.0;
         double dIStop = configureIvsVDialog.dIStop;
@@ -624,7 +624,7 @@ MainWindow::startI_V() {
         pKeithley->initISweep(dIStart, dIStop, dIStep, dDelayms, dCompliance);
     }
     else {// Reverse junction
-        qDebug() << "Reverse Direction Handling";
+//        qDebug() << "Reverse Direction Handling";
         ui->statusBar->showMessage("Reverse junction: Sweeping...Please Wait");
         double dVStart = 0.0;
         double dVStop = configureIvsVDialog.dVStop;
@@ -911,7 +911,7 @@ MainWindow::onTimeToReadT() {
 
 void
 MainWindow::onComplianceEvent() {
-    qCritical() << "MainWindow::onComplianceEvent()";
+    qCritical() << "Compliance Event";
 }
 
 
@@ -934,7 +934,7 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
     // Decode readings
     QStringList sMeasures = QStringList(sDataRead.split(",", QString::SkipEmptyParts));
     if(sMeasures.count() < 2) {
-        qDebug() << "MainWindow::onNewKeithleyReading: Measurement Format Error";
+        qDebug() << "Measurement Format Error";
         return;
     }
     double currentTemperature = pLakeShore->getTemperature();
@@ -1043,7 +1043,7 @@ MainWindow::onKeithleySweepDone(QDateTime dataTime, QString sData) {
 void
 MainWindow::onIForwardSweepDone(QDateTime dataTime, QString sData) {
     Q_UNUSED(dataTime)
-    qDebug() << "Reverse Direction Handling";
+//    qDebug() << "Reverse Direction Handling";
     ui->statusBar->showMessage("Reverse Direction: Sweeping...Please Wait");
     disconnect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)), this, 0);
     QStringList sMeasures = QStringList(sData.split(",", QString::SkipEmptyParts));
