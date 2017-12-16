@@ -235,7 +235,7 @@
      <string>min</string>
     </property>
    </widget>
-   <widget class="QLabel" name="labelReachingTStep">
+   <widget class="QLabel" name="labelSteadyT">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -245,13 +245,13 @@
      </rect>
     </property>
     <property name="text">
-     <string>Max Time waiting T Step</string>
+     <string>Thermal Stabilization Time</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
     </property>
    </widget>
-   <widget class="QLineEdit" name="MaxTimeToTStepEdit">
+   <widget class="QLineEdit" name="TimeToSteadyTEdit">
     <property name="geometry">
      <rect>
       <x>220</x>
