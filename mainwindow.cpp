@@ -234,7 +234,7 @@ MainWindow::CheckInstruments() {
     // Enable assertion of REN when System Controller
     // This is required by the Keithley 236
     SendIFC(gpibBoardID);
-    if(isGpibError("MainWindow::CheckInstruments(): SendIFC Error"))
+    if(isGpibError("MainWindow::CheckInstruments(): SendIFC Error. Is the GPIB Interface connected ?"))
         return false;
 
     ibconfig(gpibBoardID, IbcSRE, 1);
