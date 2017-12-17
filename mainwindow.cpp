@@ -43,25 +43,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , presentMeasure(NoMeasure)
     , pOutputFile(Q_NULLPTR)
     , pKeithley(Q_NULLPTR)
     , pLakeShore(Q_NULLPTR)
-    , gpibBoardID(0)
-    , currentLampStatus(LAMP_OFF)
     , pPlotMeasurements(Q_NULLPTR)
     , pPlotTemperature(Q_NULLPTR)
-    , maxPlotPoints(3000)
-    , isK236ReadyForTrigger(false)
-    , bRunning(false)
     #if defined(Q_PROCESSOR_ARM)
-    , lampPin(14) // GPIO Numbers are Broadcom (BCM) numbers
-    // BCM14 is Pin 8 in the 40 pin GPIO connector.
     , gpioHostHandle(-1)
-    #else
-    // For Arduino Serial Port
-    , baudRate(QSerialPort::Baud115200)
-    , waitTimeout(1000)
     #endif
 {
     ui->setupUi(this);
@@ -73,14 +61,29 @@ MainWindow::MainWindow(QWidget *parent)
     ui->startRvsTButton->show();
     ui->startIvsVButton->show();
 
+    gpibBoardID = 0;
+    presentMeasure = NoMeasure;
+    bRunning = false;
+    currentLampStatus = LAMP_OFF;
+    isK236ReadyForTrigger = false;
+    maxPlotPoints = 3000;
+
     QSettings settings;
     restoreGeometry(settings.value("mainWindowGeometry").toByteArray());
     restoreState(settings.value("mainWindowState").toByteArray());
-#if defined(Q_PROCESSOR_ARM)
-    PWMfrequency    = 50;     // in Hz
-    pulseWidthAt0   = 600.0;  // in us
-    pulseWidthAt180 = 2200;   // in us
-#endif
+
+    #if defined(Q_PROCESSOR_ARM)
+        // For Raspberry PWM Output to servo
+        lampPin = 14; // GPIO Numbers are Broadcom (BCM) numbers
+                      // BCM14 is Pin 8 in the 40 pin GPIO connector.
+        PWMfrequency    = 50;     // in Hz
+        pulseWidthAt0   = 600.0;  // in us
+        pulseWidthAt180 = 2200;   // in us
+    #else
+        // For Arduino Serial Port
+        baudRate = QSerialPort::Baud115200;
+        waitTimeout = 1000;
+    #endif
 }
 
 
@@ -93,13 +96,13 @@ MainWindow::~MainWindow() {
     pPlotMeasurements = Q_NULLPTR;
     if(pPlotTemperature) delete pPlotTemperature;
     pPlotTemperature = Q_NULLPTR;
-#if defined(Q_PROCESSOR_ARM)
-    if(gpioHostHandle >= 0) {
-        pigpio_stop(gpioHostHandle);
-    }
-#else
-    serialPort.close();
-#endif
+    #if defined(Q_PROCESSOR_ARM)
+        if(gpioHostHandle >= 0) {
+            pigpio_stop(gpioHostHandle);
+        }
+    #else
+        serialPort.close();
+    #endif
     delete ui;
 }
 
@@ -110,9 +113,9 @@ MainWindow::closeEvent(QCloseEvent *event) {
     QSettings settings;
     settings.setValue("mainWindowGeometry", saveGeometry());
     settings.setValue("mainWindowState", saveState());
-#if !defined(Q_PROCESSOR_ARM)
-    serialPort.close();
-#endif
+    #if !defined(Q_PROCESSOR_ARM)
+        serialPort.close();
+    #endif
     if(bRunning) {
         waitingTStartTimer.stop();
         stabilizingTimer.stop();
@@ -135,6 +138,7 @@ MainWindow::closeEvent(QCloseEvent *event) {
 
 
 #if defined(Q_PROCESSOR_ARM)
+
 bool
 MainWindow::initPWM() {
     if(gpioHostHandle >= 0)
@@ -226,12 +230,12 @@ MainWindow::checkInstruments() {
     for(short i=0; i<30; i++) padlist[i] = i+1;
     padlist[30] = NOADDR;
 
-    // Enable assertion of REN when System Controller
-    // This is required by the Keithley 236
     SendIFC(gpibBoardID);
     if(isGpibError("SendIFC Error. Is the GPIB Interface connected ?"))
         return false;
 
+    // Enable assertion of REN when System Controller
+    // Required by the Keithley 236
     ibconfig(gpibBoardID, IbcSRE, 1);
     if(isGpibError("ibconfig() Unable to set REN When SC"))
         return false;
@@ -242,10 +246,11 @@ MainWindow::checkInstruments() {
     Addr4882_t addrlist;
     addrlist = NOADDR;
     DevClearList(gpibBoardID, &addrlist);
-    if(isGpibError("DevClearList() failed. Are the Instruments Connected and Switced On ?"))
+    if(isGpibError("DevClearList() failed. Are the Instruments Connected and Switched On ?"))
         return false;
+
     FindLstn(gpibBoardID, padlist, resultlist, 30);
-    if(isGpibError("FindLstn() failed. Are the Instruments Connected and Switced On ?"))
+    if(isGpibError("FindLstn() failed. Are the Instruments Connected and Switched On ?"))
         return false;
     int nDevices = ThreadIbcnt();
     qInfo() << QString("Found %1 Instruments connected to the GPIB Bus").arg(nDevices);
@@ -280,24 +285,17 @@ MainWindow::checkInstruments() {
             }
         }
     }
+
     if(pKeithley == Q_NULLPTR) {
-        int iAnswer = QMessageBox::warning(this,
-                                           "Warning",
-                                           "Source Measure Unit not Connected",
-                                           QMessageBox::Abort|QMessageBox::Ignore,
-                                           QMessageBox::Abort);
-        if(iAnswer == QMessageBox::Abort)
-            return false;
+        QMessageBox::warning(this, "Error", "Source Measure Unit not Connected",
+                             QMessageBox::Abort, QMessageBox::Abort);
+        return false;
     }
 
     if(pLakeShore == Q_NULLPTR) {
-        int iAnswer = QMessageBox::warning(this,
-                                           "Warning",
-                                           "Lake Shore not Connected",
-                                           QMessageBox::Abort|QMessageBox::Ignore,
-                                           QMessageBox::Abort);
-        if(iAnswer == QMessageBox::Abort)
-            return false;
+        QMessageBox::warning(this, "Error", "Lake Shore 330 not Connected",
+                             QMessageBox::Abort, QMessageBox::Abort);
+        return false;
     }
     return true;
 }
@@ -306,24 +304,24 @@ MainWindow::checkInstruments() {
 bool
 MainWindow::switchLampOn() {
     ui->photoButton->setChecked(true);
-#if defined(Q_PROCESSOR_ARM)
-    return set_servo_pulsewidth(gpioHostHandle, lampPin, u_int32_t(pulseWidthAt180)) >= 0;
-#else
-    requestData = QByteArray(1, SwitchON);
-    return writeToArduino(requestData);
-#endif
+    #if defined(Q_PROCESSOR_ARM)
+        return set_servo_pulsewidth(gpioHostHandle, lampPin, u_int32_t(pulseWidthAt180)) >= 0;
+    #else
+        requestData = QByteArray(1, SwitchON);
+        return writeToArduino(requestData);
+    #endif
 }
 
 
 bool
 MainWindow::switchLampOff() {
     ui->photoButton->setChecked(false);
-#if defined(Q_PROCESSOR_ARM)
-    return set_servo_pulsewidth(gpioHostHandle, lampPin, u_int32_t(pulseWidthAt0)) >= 0;
-#else
-    requestData = QByteArray(1, SwitchOFF);
-    return writeToArduino(requestData);
-#endif
+    #if defined(Q_PROCESSOR_ARM)
+        return set_servo_pulsewidth(gpioHostHandle, lampPin, u_int32_t(pulseWidthAt0)) >= 0;
+    #else
+        requestData = QByteArray(1, SwitchOFF);
+        return writeToArduino(requestData);
+    #endif
 }
 
 
@@ -357,9 +355,9 @@ MainWindow::stopRvsT() {
         pLakeShore = Q_NULLPTR;
     }
     switchLampOff();
-#if !defined(Q_PROCESSOR_ARM)
-    serialPort.close();
-#endif
+    #if !defined(Q_PROCESSOR_ARM)
+        serialPort.close();
+    #endif
     ui->startRvsTButton->setText("Start R vs T");
     ui->startIvsVButton->setEnabled(true);
     QApplication::restoreOverrideCursor();
@@ -380,20 +378,21 @@ MainWindow::on_startRvsTButton_clicked() {
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     // Start the Tasks to switch the lamp on or off
     ui->statusBar->showMessage("Checking for the Presence of Lamp Switch");
-#if defined(Q_PROCESSOR_ARM)
-    if(!initPWM()) {
-        ui->statusBar->showMessage("Unable to use PWM !");
-        QApplication::restoreOverrideCursor();
-        return;
-    }
-#else
-    if(serialPort.isOpen()) serialPort.close();
-    if(!connectToArduino()) {
-        ui->statusBar->showMessage("No Arduino Ready to Use !");
-        QApplication::restoreOverrideCursor();
-        return;
-    }
-#endif
+    #if defined(Q_PROCESSOR_ARM)
+        if(!initPWM()) {
+            ui->statusBar->showMessage("Unable to use PWM !");
+            QApplication::restoreOverrideCursor();
+            return;
+        }
+    #else
+        if(serialPort.isOpen())
+            serialPort.close();
+        if(!connectToArduino()) {
+            ui->statusBar->showMessage("No Arduino Ready to Use !");
+            QApplication::restoreOverrideCursor();
+            return;
+        }
+    #endif
     switchLampOff();
     // Are the GPIB instruments connectd and ready to start ?
     ui->statusBar->showMessage("Checking for the GPIB Instruments");
