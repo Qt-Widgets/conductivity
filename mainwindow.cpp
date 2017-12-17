@@ -807,11 +807,11 @@ MainWindow::onTimeToCheckT() {
 }
 
 
+// Invoked when the time to the thermal stabilization is done
 void
 MainWindow::onSteadyTReached() {
     stabilizingTimer.stop();
     disconnect(&stabilizingTimer, 0, 0, 0);
-    startMeasuringTime = QDateTime::currentDateTime();
     startI_V();
 }
 
@@ -850,7 +850,6 @@ MainWindow::onTimerStabilizeT() {
     // It's time to start measurements
     stabilizingTimer.stop();
     disconnect(&stabilizingTimer, 0, 0, 0);
-    startMeasuringTime = QDateTime::currentDateTime();
     pPlotTemperature->NewDataSet(2,//Id
                                  3, //Pen Width
                                  QColor(255, 255, 0),// Color
@@ -921,6 +920,7 @@ MainWindow::onKeithleyReadyForSweepTrigger() {
 
 void
 MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
+    Q_UNUSED(dataTime)
     // Decode readings
     QStringList sMeasures = QStringList(sDataRead.split(",", QString::SkipEmptyParts));
     if(sMeasures.count() < 2) {
@@ -928,8 +928,6 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
         return;
     }
     double currentTemperature = pLakeShore->getTemperature();
-    double t = double(startMeasuringTime.msecsTo(dataTime))/1000.0;
-    Q_UNUSED(t)
     double current, voltage;
     if(configureRvsTDialog.bSourceI) {
         current = sMeasures.at(0).toDouble();
