@@ -354,6 +354,7 @@ MainWindow::stopRvsT() {
     #if !defined(Q_PROCESSOR_ARM)
         serialPort.close();
     #endif
+    ui->endTimeEdit->clear();
     ui->startRvsTButton->setText("Start R vs T");
     ui->startIvsVButton->setEnabled(true);
     QApplication::restoreOverrideCursor();
@@ -671,6 +672,7 @@ MainWindow::stopIvsV() {
         pLakeShore->deleteLater();
         pLakeShore = Q_NULLPTR;
     }
+    ui->endTimeEdit->clear();
     ui->startIvsVButton->setText("Start I vs V");
     ui->startRvsTButton->setEnabled(true);
     QApplication::restoreOverrideCursor();
@@ -793,6 +795,8 @@ MainWindow::initIvsVPlots() {
 }
 
 
+// Invoked to check the reaching of the temperature
+// Set Point during I-V measurements
 void
 MainWindow::onTimeToCheckT() {
     double T = pLakeShore->getTemperature();
@@ -821,7 +825,8 @@ MainWindow::onTimeToCheckT() {
 }
 
 
-// Invoked when the time to the thermal stabilization is done
+// Invoked when the thermal stabilization is done
+// during I-V measurements
 void
 MainWindow::onSteadyTReached() {
     stabilizingTimer.stop();
@@ -830,6 +835,8 @@ MainWindow::onSteadyTReached() {
 }
 
 
+// Invoked to check the reaching of the initial temperature
+// Set Point during R vs T measurements
 void
 MainWindow::onTimeToCheckReachedT() {
     double T = pLakeShore->getTemperature();
@@ -841,7 +848,7 @@ MainWindow::onTimeToCheckReachedT() {
         stabilizingTimer.start(configureRvsTDialog.iStabilizingTime*60*1000);
         //      qDebug() << QString("Starting T Reached: Thermal Stabilization...");
         ui->statusBar->showMessage(QString("Starting T Reached: Thermal Stabilization for %1 min.").arg(configureRvsTDialog.iStabilizingTime));
-        // Compute the time needed for the measurement:
+        // Compute the new time needed for the measurement:
         startMeasuringTime = QDateTime::currentDateTime();
         double deltaT, expectedMinutes;
         deltaT = configureRvsTDialog.dTempEnd -
