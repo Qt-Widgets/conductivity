@@ -123,9 +123,12 @@ private:
   ConfigureRvsTDialog configureRvsTDialog;
   ConfigureIvsVDialog configureIvsVDialog;
 
+  const quint8  LAMP_ON  = 1;
+  const quint8  LAMP_OFF = 0;
+  const int     iPlotDark = 1;
+  const int     iPlotPhoto = 2;
+
   double        setPointT;
-  const quint8  LAMP_ON;
-  const quint8  LAMP_OFF;
   int           iCurrentTPlot;
   int           gpibBoardID;
   quint8        currentLampStatus;
@@ -134,8 +137,6 @@ private:
   QString       sMeasurementPlotLabel;
   QString       sTemperaturePlotLabel;
   int           maxPlotPoints;
-  int           iPlotDark;
-  int           iPlotPhoto;
   volatile bool isK236ReadyForTrigger;
   bool          bRunning;
   int           junctionDirection;
