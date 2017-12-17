@@ -134,7 +134,6 @@ private:
   QString       sMeasurementPlotLabel;
   QString       sTemperaturePlotLabel;
   int           maxPlotPoints;
-  quint64       maxReachingTTime;
   int           iPlotDark;
   int           iPlotPhoto;
   volatile bool isK236ReadyForTrigger;

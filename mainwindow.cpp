@@ -54,7 +54,6 @@ MainWindow::MainWindow(QWidget *parent)
     , pPlotMeasurements(Q_NULLPTR)
     , pPlotTemperature(Q_NULLPTR)
     , maxPlotPoints(3000)
-    , maxReachingTTime(120)// In seconds
     , iPlotDark(1)
     , iPlotPhoto(2)
     , isK236ReadyForTrigger(false)
