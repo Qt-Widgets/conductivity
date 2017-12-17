@@ -117,7 +117,8 @@ private:
   QDateTime     currentTime;
   QDateTime     waitingTStartTime;
   QDateTime     startReadingTTime;
-//  QDateTime     startMeasuringTime;
+  QDateTime     startMeasuringTime;
+  QDateTime     endMeasureTime;
 
   QTimer        waitingTStartTimer;
   QTimer        stabilizingTimer;

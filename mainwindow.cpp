@@ -389,6 +389,7 @@ MainWindow::on_startRvsTButton_clicked() {
             return;
         }
     #endif
+
     switchLampOff();
     // Are the GPIB instruments connectd and ready to start ?
     ui->statusBar->showMessage("Checking for the GPIB Instruments");
@@ -471,7 +472,19 @@ MainWindow::on_startRvsTButton_clicked() {
     readingTTimer.start(5000);
     // Start the reaching of the Initial Temperature
     waitingTStartTimer.start(5000);
-    // All done...
+
+    // All done... compute the time needed for the measurement:
+    startMeasuringTime = QDateTime::currentDateTime();
+    double deltaT, expectedMinutes;
+    deltaT = configureRvsTDialog.dTempEnd -
+             configureRvsTDialog.dTempStart;
+    expectedMinutes = deltaT / configureRvsTDialog.dTRate +
+                      configureRvsTDialog.iReachingTime +
+                      configureRvsTDialog.iStabilizingTime;
+    endMeasureTime = startMeasuringTime.addSecs(expectedMinutes*60.0);
+    QString sString = endMeasureTime.toString("hh:mm dd-MM-yyyy");
+    ui->endTimeEdit->setText(sString);
+
     // now we are waiting for reaching the initial temperature
     ui->startIvsVButton->setDisabled(true);
     ui->startRvsTButton->setText("Stop R vs T");
@@ -558,6 +571,7 @@ MainWindow::on_startIvsVButton_clicked() {
     // Read and plot initial value of Temperature
     startReadingTTime = QDateTime::currentDateTime();
     onTimeToReadT();
+    startMeasuringTime = QDateTime::currentDateTime();
     if(configureIvsVDialog.bUseThermostat) {
         connect(&waitingTStartTimer, SIGNAL(timeout()),
                 this, SLOT(onTimeToCheckT()));
@@ -827,6 +841,16 @@ MainWindow::onTimeToCheckReachedT() {
         stabilizingTimer.start(configureRvsTDialog.iStabilizingTime*60*1000);
         //      qDebug() << QString("Starting T Reached: Thermal Stabilization...");
         ui->statusBar->showMessage(QString("Starting T Reached: Thermal Stabilization for %1 min.").arg(configureRvsTDialog.iStabilizingTime));
+        // Compute the time needed for the measurement:
+        startMeasuringTime = QDateTime::currentDateTime();
+        double deltaT, expectedMinutes;
+        deltaT = configureRvsTDialog.dTempEnd -
+                 configureRvsTDialog.dTempStart;
+        expectedMinutes = deltaT / configureRvsTDialog.dTRate +
+                          configureRvsTDialog.iStabilizingTime;
+        endMeasureTime = startMeasuringTime.addSecs(expectedMinutes*60.0);
+        QString sString = endMeasureTime.toString("hh:mm dd-MM-yyyy");
+        ui->endTimeEdit->setText(sString);
     }
     else {
         currentTime = QDateTime::currentDateTime();
