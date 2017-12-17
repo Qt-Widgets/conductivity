@@ -49,28 +49,24 @@ MainWindow::MainWindow(QWidget *parent)
     , pPlotMeasurements(Q_NULLPTR)
     , pPlotTemperature(Q_NULLPTR)
     #if defined(Q_PROCESSOR_ARM)
-    , gpioHostHandle(-1)
+        , gpioHostHandle(-1)
     #endif
 {
     ui->setupUi(this);
-    // To remove the resize-handle in the lower right corner
+    // Remove the resize-handle in the lower right corner
     ui->statusBar->setSizeGripEnabled(false);
-    // To make the size of the window fixed
+    // Make the size of the window fixed
     setFixedSize(size());
 
     ui->startRvsTButton->show();
     ui->startIvsVButton->show();
 
-    gpibBoardID = 0;
-    presentMeasure = NoMeasure;
-    bRunning = false;
-    currentLampStatus = LAMP_OFF;
+    gpibBoardID           = 0;
+    presentMeasure        = NoMeasure;
+    bRunning              = false;
+    currentLampStatus     = LAMP_OFF;
     isK236ReadyForTrigger = false;
-    maxPlotPoints = 3000;
-
-    QSettings settings;
-    restoreGeometry(settings.value("mainWindowGeometry").toByteArray());
-    restoreState(settings.value("mainWindowState").toByteArray());
+    maxPlotPoints         = 3000;
 
     #if defined(Q_PROCESSOR_ARM)
         // For Raspberry PWM Output to servo
@@ -84,6 +80,10 @@ MainWindow::MainWindow(QWidget *parent)
         baudRate = QSerialPort::Baud115200;
         waitTimeout = 1000;
     #endif
+
+    QSettings settings;
+    restoreGeometry(settings.value("mainWindowGeometry").toByteArray());
+    restoreState(settings.value("mainWindowState").toByteArray());
 }
 
 
