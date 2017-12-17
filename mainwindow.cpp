@@ -88,14 +88,10 @@ MainWindow::MainWindow(QWidget *parent)
 
 
 MainWindow::~MainWindow() {
-    if(pKeithley != Q_NULLPTR) delete pKeithley;
-    pKeithley = Q_NULLPTR;
-    if(pLakeShore != Q_NULLPTR) delete pLakeShore;
-    pLakeShore = Q_NULLPTR;
-    if(pPlotMeasurements) delete pPlotMeasurements;
-    pPlotMeasurements = Q_NULLPTR;
-    if(pPlotTemperature) delete pPlotTemperature;
-    pPlotTemperature = Q_NULLPTR;
+    if(pKeithley != Q_NULLPTR)         delete pKeithley;
+    if(pLakeShore != Q_NULLPTR)        delete pLakeShore;
+    if(pPlotMeasurements != Q_NULLPTR) delete pPlotMeasurements;
+    if(pPlotTemperature != Q_NULLPTR)  delete pPlotTemperature;
     #if defined(Q_PROCESSOR_ARM)
         if(gpioHostHandle >= 0) {
             pigpio_stop(gpioHostHandle);
