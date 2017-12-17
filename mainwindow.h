@@ -108,9 +108,12 @@ private:
   measure presentMeasure;
 
 private:
-  QFile*        pOutputFile;
-  Keithley236*  pKeithley;
-  LakeShore330* pLakeShore;
+  QFile        *pOutputFile;
+  Keithley236  *pKeithley;
+  LakeShore330 *pLakeShore;
+  Plot2D       *pPlotMeasurements;
+  Plot2D       *pPlotTemperature;
+
   QDateTime     currentTime;
   QDateTime     waitingTStartTime;
   QDateTime     startReadingTTime;
@@ -132,8 +135,6 @@ private:
   int           iCurrentTPlot;
   int           gpibBoardID;
   quint8        currentLampStatus;
-  Plot2D       *pPlotMeasurements;
-  Plot2D       *pPlotTemperature;
   QString       sMeasurementPlotLabel;
   QString       sTemperaturePlotLabel;
   int           maxPlotPoints;
