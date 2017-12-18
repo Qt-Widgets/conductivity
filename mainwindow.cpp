@@ -372,7 +372,7 @@ MainWindow::on_startRvsTButton_clicked() {
     if(configureRvsTDialog.exec() == QDialog::Rejected)
         return;
 
-    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
     // Start the Tasks to switch the lamp on or off
     ui->statusBar->showMessage("Checking for the Presence of Lamp Switch");
     #if defined(Q_PROCESSOR_ARM)
@@ -506,7 +506,7 @@ MainWindow::on_startIvsVButton_clicked() {
     if(configureIvsVDialog.exec() == QDialog::Rejected)
         return;
 
-    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
 
     // Are the GPIB instruments connectd and ready to start ?
     ui->statusBar->showMessage("Checking for the GPIB Instruments");
