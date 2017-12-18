@@ -572,7 +572,10 @@ MainWindow::on_startIvsVButton_clicked() {
     // Read and plot initial value of Temperature
     startReadingTTime = QDateTime::currentDateTime();
     onTimeToReadT();
+    double expectedMinutes;
     startMeasuringTime = QDateTime::currentDateTime();
+    expectedMinutes = ((0.32+configureIvsVDialog.iWaitTime/100.0) *
+                      configureIvsVDialog.iNSweepPoints) / 60.0;// In minutes
     if(configureIvsVDialog.bUseThermostat) {
         connect(&waitingTStartTimer, SIGNAL(timeout()),
                 this, SLOT(onTimeToCheckT()));
@@ -586,10 +589,21 @@ MainWindow::on_startIvsVButton_clicked() {
         ui->statusBar->showMessage(QString("%1 Waiting Initial T[%2K]")
                                    .arg(waitingTStartTime.toString())
                                    .arg(configureIvsVDialog.dTStart));
+        // All done... compute the time needed for the measurement:
+        double deltaT;
+        deltaT = configureRvsTDialog.dTempEnd -
+                 configureRvsTDialog.dTempStart;
+        expectedMinutes = int(deltaT / configureIvsVDialog.dTStep) *
+                          (configureRvsTDialog.iReachingTime +
+                           configureRvsTDialog.iStabilizingTime +
+                           expectedMinutes);
     }
     else {
         startI_V();
     }
+    endMeasureTime = startMeasuringTime.addSecs(expectedMinutes*60.0);
+    QString sString = endMeasureTime.toString("hh:mm dd-MM-yyyy");
+    ui->endTimeEdit->setText(sString);
     ui->startRvsTButton->setDisabled(true);
     ui->startIvsVButton->setText("Stop I vs V");
 }
