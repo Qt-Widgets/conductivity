@@ -86,9 +86,8 @@ contains(QMAKE_HOST.arch, "armv7l") || contains(QMAKE_HOST.arch, "armv6l"): {
     LIBS += -L"/usr/local/lib" -lpigpiod_if2
 }
 
-DISTFILES += doc/linux_Gpib_HowTo.txt \
-    doc/Tracq32 Manual.doc \
-    doc/Tracq32 Manual.doc
+DISTFILES += doc/linux_Gpib_HowTo.txt
+DISTFILES += doc/Tracq32Manual.doc
 DISTFILES += doc/Keithley236Manual.pdf
 DISTFILES += doc/LakeShore330_Manual.pdf
 DISTFILES += doc/Readme.txt
