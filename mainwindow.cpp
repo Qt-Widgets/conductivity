@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "keithley236.h"
 #include "lakeshore330.h"
 #include "plot2d.h"
-#include "math.h"
+#include <qmath.h>
 
 #if defined(Q_PROCESSOR_ARM)
 #include "pigpiod_if2.h"
@@ -572,10 +572,10 @@ MainWindow::on_startIvsVButton_clicked() {
     // Read and plot initial value of Temperature
     startReadingTTime = QDateTime::currentDateTime();
     onTimeToReadT();
-    double expectedMinutes;
+    double expectedSeconds;
     startMeasuringTime = QDateTime::currentDateTime();
-    expectedMinutes = ((0.32+configureIvsVDialog.iWaitTime/100.0) *
-                      configureIvsVDialog.iNSweepPoints) / 60.0;// In minutes
+    expectedSeconds = 0.32+configureIvsVDialog.iWaitTime/1000.0;
+    expectedSeconds *= 4.0 * configureIvsVDialog.iNSweepPoints;
     if(configureIvsVDialog.bUseThermostat) {
         connect(&waitingTStartTimer, SIGNAL(timeout()),
                 this, SLOT(onTimeToCheckT()));
@@ -591,18 +591,17 @@ MainWindow::on_startIvsVButton_clicked() {
                                    .arg(configureIvsVDialog.dTStart));
         // All done... compute the time needed for the measurement:
         double deltaT;
-        deltaT = configureRvsTDialog.dTempEnd -
-                 configureRvsTDialog.dTempStart;
-        expectedMinutes = int(deltaT / configureIvsVDialog.dTStep) *
-                          (configureRvsTDialog.iReachingTime +
-                           configureRvsTDialog.iStabilizingTime +
-                           expectedMinutes);
+        deltaT = configureIvsVDialog.dTStop -
+                 configureIvsVDialog.dTStart;
+        expectedSeconds += 60.0 *(configureIvsVDialog.iReachingTStart +
+                                  configureIvsVDialog.iTimeToSteadyT);
+        expectedSeconds *= int(deltaT / configureIvsVDialog.dTStep);
     }
     else {
         startI_V();
     }
-    endMeasureTime = startMeasuringTime.addSecs(expectedMinutes*60.0);
-    QString sString = endMeasureTime.toString("hh:mm dd-MM-yyyy");
+    endMeasureTime = startMeasuringTime.addSecs(expectedSeconds);
+    QString sString = endMeasureTime.toString("hh:mm:ss dd-MM-yyyy");
     ui->endTimeEdit->setText(sString);
     ui->startRvsTButton->setDisabled(true);
     ui->startIvsVButton->setText("Stop I vs V");
@@ -821,19 +820,19 @@ MainWindow::onTimeToCheckT() {
                 this, SLOT(onSteadyTReached()));
         stabilizingTimer.start(configureIvsVDialog.iTimeToSteadyT*60*1000);
         ui->statusBar->showMessage(QString("T Reached: Thermal Stabilization for %1 min.")
-                                   .arg(configureRvsTDialog.iStabilizingTime));
+                                   .arg(configureIvsVDialog.iTimeToSteadyT));
     }
     else {
         currentTime = QDateTime::currentDateTime();
-        quint64 elapsedMsec = waitingTStartTime.secsTo(currentTime);
-        if(elapsedMsec > quint64(configureRvsTDialog.iReachingTime)*60*1000) {
+        quint64 elapsedSec = waitingTStartTime.secsTo(currentTime);
+        if(elapsedSec > quint64(configureIvsVDialog.iReachingTStart)*60) {
             waitingTStartTimer.stop();
             disconnect(&waitingTStartTimer, 0, 0, 0);
             connect(&stabilizingTimer, SIGNAL(timeout()),
                     this, SLOT(onSteadyTReached()));
             stabilizingTimer.start(configureIvsVDialog.iTimeToSteadyT*60*1000);
             ui->statusBar->showMessage(QString("T Reached: Thermal Stabilization for %1 min.")
-                                       .arg(configureRvsTDialog.iStabilizingTime));
+                                       .arg(configureIvsVDialog.iTimeToSteadyT));
         }
     }
 }
@@ -913,7 +912,7 @@ MainWindow::onTimerStabilizeT() {
         ui->statusBar->showMessage(QString("Error Starting the Measure"));
         return;
     }
-    double timeBetweenMeasurements = configureRvsTDialog.dInterval;
+    double timeBetweenMeasurements = configureRvsTDialog.dInterval*1000.0;
     measuringTimer.start(timeBetweenMeasurements);
     bRunning = true;
 }
@@ -983,8 +982,8 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
         voltage = sMeasures.at(0).toDouble();
     }
     ui->temperatureEdit->setText(QString("%1").arg(currentTemperature));
-    ui->currentEdit->setText(QString("%1").arg(current, 12, 'g', 6, ' '));
-    ui->voltageEdit->setText(QString("%1").arg(voltage, 12, 'g', 6, ' '));
+    ui->currentEdit->setText(QString("%1").arg(current, 10, 'g', 4, ' '));
+    ui->voltageEdit->setText(QString("%1").arg(voltage, 10, 'g', 4, ' '));
 
     if(!bRunning)
         return;

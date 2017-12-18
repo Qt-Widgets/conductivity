@@ -152,7 +152,7 @@ ConfigureIvsVDialog::restoreSettings() {
     dTStop         = settings.value("ConfigureIvsVTStop", dTStart).toDouble();
     dTStep         = settings.value("ConfigureIvsVTStep", 1.0).toDouble();
     iReachingTStart= settings.value("ConfigureIvsVReachingTStart", 0).toInt();
-    iTimeToSteadyT = settings.value("ConfigureIvsVSteadtyT", 0).toInt();
+    iTimeToSteadyT = settings.value("ConfigureIvsVSteadyT", 0).toInt();
     bUseThermostat = settings.value("ConfigureIvsVUseThermostat", false).toBool();
 
     sSampleInfo    = settings.value("ConfigureIvsVSampleInfo", "").toString();
@@ -176,7 +176,7 @@ ConfigureIvsVDialog::saveSettings() {
     settings.setValue("ConfigureIvsVTStop", dTStop);
     settings.setValue("ConfigureIvsVTStep", dTStep);
     settings.setValue("ConfigureIvsVReachingTStart", iReachingTStart);
-    settings.value("ConfigureIvsVSteadtyT", iTimeToSteadyT);
+    settings.setValue("ConfigureIvsVSteadyT", iTimeToSteadyT);
     settings.setValue("ConfigureIvsVUseThermostat", bUseThermostat);
 
     sSampleInfo = ui->sampleInformationEdit->toPlainText();
