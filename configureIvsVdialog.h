@@ -84,6 +84,8 @@ private slots:
     void on_MaxTimeToTStartEdit_textChanged(const QString &arg1);
     void on_TimeToSteadyTEdit_textChanged(const QString &arg1);
 
+    void on_TStepEdit_textChanged(const QString &arg1);
+
 private:
     // QLineEdit styles
     QString     sNormalStyle;

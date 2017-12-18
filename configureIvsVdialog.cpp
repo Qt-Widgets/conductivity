@@ -102,8 +102,8 @@ ConfigureIvsVDialog::initUI() {
     if(!isTemperatureValid(dTStop))
         dTStop = dTStart;
     ui->TStopEdit->setText(QString("%1").arg(dTStop, 0, 'f', 2));
-    if(!isTemperatureValid(dTStep))
-        dTStep = dTStop-dTStart+1.0;
+    if(!isTStepValid(dTStep))
+        dTStep = 1.0;
     ui->TStepEdit->setText(QString("%1").arg(dTStep, 0, 'f', 2));
 
     ui->ThermostatCheckBox->setChecked(bUseThermostat);
@@ -402,6 +402,18 @@ ConfigureIvsVDialog::on_TStopEdit_textChanged(const QString &arg1) {
     }
     else {
         ui->TStopEdit->setStyleSheet(sErrorStyle);
+    }
+}
+
+
+void
+ConfigureIvsVDialog::on_TStepEdit_textChanged(const QString &arg1) {
+    if(isTStepValid(arg1.toDouble())){
+        dTStep = arg1.toDouble();
+        ui->TStepEdit->setStyleSheet(sNormalStyle);
+    }
+    else {
+        ui->TStepEdit->setStyleSheet(sErrorStyle);
     }
 }
 
