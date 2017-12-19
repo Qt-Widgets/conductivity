@@ -87,6 +87,7 @@ contains(QMAKE_HOST.arch, "armv7l") || contains(QMAKE_HOST.arch, "armv6l"): {
 }
 
 DISTFILES += doc/linux_Gpib_HowTo.txt
+DISTFILES += doc/oriel_cornerstone_manual.pdf
 DISTFILES += doc/Tracq32Manual.doc
 DISTFILES += doc/Keithley236Manual.pdf
 DISTFILES += doc/LakeShore330_Manual.pdf
