@@ -29,24 +29,20 @@ CornerStone130::~CornerStone130() {
 
 int
 CornerStone130::init() {
-    cs130 = ibdev(gpibNumber, cs130Address, 0, T10s, 1, 0);
+    cs130 = ibdev(gpibNumber, cs130Address, 0, T30s, 1, 0);
     if(cs130 < 0) {
         qDebug() << "ibdev() Failed";
         QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
         qDebug() << sError;
         return GPIB_DEVICE_NOT_PRESENT;
     }
-    short listen;
-    ibln(gpibNumber, cs130Address, NO_SAD, &listen);
+    ibclr(cs130);
     if(isGpibError("CornerStone 130 Not Respondig"))
         return GPIB_DEVICE_NOT_PRESENT;
-    if(listen == 0) {
-        ibonl(cs130, 0);
-        qDebug() << "Nolistener at Addr";
-        return GPIB_DEVICE_NOT_PRESENT;
-    }
-    ibclr(cs130);
     QThread::sleep(1);
+    gpibWrite(cs130, "ABORT\r\n");      // SRQ Disabled, SRQ on Compliance
+    if(isGpibError("CornerStone 130 ABORT Failed"))
+        return GPIB_DEVICE_NOT_PRESENT;
     return NO_ERROR;
 }
 

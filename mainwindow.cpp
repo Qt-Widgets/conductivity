@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utility.h"
 #include "keithley236.h"
 #include "lakeshore330.h"
+#include "cornerstone130.h"
 #include "plot2d.h"
 #include <qmath.h>
 
@@ -46,6 +47,7 @@ MainWindow::MainWindow(QWidget *parent)
     , pOutputFile(Q_NULLPTR)
     , pKeithley(Q_NULLPTR)
     , pLakeShore(Q_NULLPTR)
+    , pCornerStone130(Q_NULLPTR)
     , pPlotMeasurements(Q_NULLPTR)
     , pPlotTemperature(Q_NULLPTR)
     #if defined(Q_PROCESSOR_ARM)
@@ -255,7 +257,7 @@ MainWindow::checkInstruments() {
     // Identify the instruments connected to the GPIB Bus
     char readBuf[257];
     for(int i=0; i<nDevices; i++) {
-        sCommand = "*IDN?";
+        sCommand = "*IDN?\r\n";
         Send(gpibBoardID, resultlist[i], sCommand.toUtf8().constData(), sCommand.length(), DABend);
         if(isGpibError("*IDN? Failed"))
             return false;
@@ -293,6 +295,16 @@ MainWindow::checkInstruments() {
                              QMessageBox::Abort, QMessageBox::Abort);
         return false;
     }
+/*
+    if(pCornerStone130 == Q_NULLPTR) {
+        pCornerStone130 = new CornerStone130(gpibBoardID, 4, this);
+    }
+    if(pCornerStone130->init() != NO_ERROR){
+        QMessageBox::warning(this, "Error", "Corner Stone 130 not Connected",
+                             QMessageBox::Abort, QMessageBox::Abort);
+        return false;
+    };
+*/
     return true;
 }
 
