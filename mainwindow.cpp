@@ -51,7 +51,7 @@ MainWindow::MainWindow(QWidget *parent)
     , pPlotMeasurements(Q_NULLPTR)
     , pPlotTemperature(Q_NULLPTR)
     #if defined(Q_PROCESSOR_ARM)
-        , gpioHostHandle(-1)
+    , gpioHostHandle(-1)
     #endif
 {
     ui->setupUi(this);
@@ -86,6 +86,7 @@ MainWindow::MainWindow(QWidget *parent)
     QSettings settings;
     restoreGeometry(settings.value("mainWindowGeometry").toByteArray());
     restoreState(settings.value("mainWindowState").toByteArray());
+    checkInstruments();
 }
 
 
@@ -256,55 +257,89 @@ MainWindow::checkInstruments() {
     QString sCommand, sInstrumentID;
     // Identify the instruments connected to the GPIB Bus
     char readBuf[257];
+    int cornerstoneId = 0;
+    // Check for the monochromator...
     for(int i=0; i<nDevices; i++) {
-        sCommand = "*IDN?\r\n";
+        sCommand = "INFO?\r\n";
         Send(gpibBoardID, resultlist[i], sCommand.toUtf8().constData(), sCommand.length(), DABend);
-        if(isGpibError("*IDN? Failed"))
-            return false;
+        Receive(gpibBoardID, resultlist[i], readBuf, 256, 0x0A);
+        readBuf[ThreadIbcnt()] = '\0';
+        sInstrumentID = QString(readBuf);
+        qDebug() << QString("Address= %1 - InstrumentID= %2")
+                    .arg(resultlist[i])
+                    .arg(sInstrumentID);
+        if(sInstrumentID.contains("Cornerstone 130", Qt::CaseInsensitive)) {
+            cornerstoneId = resultlist[i];
+            if(pCornerStone130 == Q_NULLPTR) {
+                pCornerStone130 = new CornerStone130(gpibBoardID, resultlist[i], this);
+            }
+            break;
+        }
+    }
+    if(pCornerStone130 == Q_NULLPTR) {
+        QMessageBox::warning(this, "Error", "Cornerstone 130 not Connected",
+                             QMessageBox::Abort, QMessageBox::Abort);
+        return false;
+    }
+
+    // Check for the temperature controller...
+    sCommand = "*IDN?\r\n";
+    int lakeShoreID = 0;
+    for(int i=0; i<nDevices; i++) {
+        if(resultlist[i] == cornerstoneId) continue;
+        Send(gpibBoardID, resultlist[i], sCommand.toUtf8().constData(), sCommand.length(), DABend);
         Receive(gpibBoardID, resultlist[i], readBuf, 256, STOPend);
-        if(isGpibError("Receive() Failed"))
-            return false;
         readBuf[ThreadIbcnt()] = '\0';
         sInstrumentID = QString(readBuf);
         qDebug() << QString("Address= %1 - InstrumentID= %2")
                     .arg(resultlist[i])
                     .arg(sInstrumentID);
         if(sInstrumentID.contains("MODEL330", Qt::CaseInsensitive)) {
-            if(pLakeShore == NULL)
+            lakeShoreID = resultlist[i];
+            if(pLakeShore == NULL) {
                 pLakeShore = new LakeShore330(gpibBoardID, resultlist[i], this);
+            }
+            break;
         }
-        // The Keithley 236 does not answer to "*IDN" command
-        else if(sInstrumentID.contains("NS", Qt::CaseInsensitive) ||
-                sInstrumentID.contains("OS", Qt::CaseInsensitive) ||
-                sInstrumentID.contains("SS", Qt::CaseInsensitive))
-        {
+    }
+    if(pLakeShore == Q_NULLPTR) {
+        QMessageBox::warning(this, "Error", "Lake Shore 330 not Connected",
+                             QMessageBox::Abort, QMessageBox::Abort);
+        return false;
+    }
+
+    // Check for the Keithley 236
+    sCommand = "U0X";
+    for(int i=0; i<nDevices; i++) {
+        if(resultlist[i] == cornerstoneId) continue;
+        if(resultlist[i] == lakeShoreID) continue;
+        Send(gpibBoardID, resultlist[i], sCommand.toUtf8().constData(), sCommand.length(), DABend);
+        Receive(gpibBoardID, resultlist[i], readBuf, 256, STOPend);
+        readBuf[ThreadIbcnt()] = '\0';
+        sInstrumentID = QString(readBuf);
+        qDebug() << QString("Address= %1 - InstrumentID= %2")
+                    .arg(resultlist[i])
+                    .arg(sInstrumentID);
+        if(sInstrumentID.contains("236", Qt::CaseInsensitive)) {
             if(pKeithley == Q_NULLPTR) {
                 pKeithley = new Keithley236(gpibBoardID, resultlist[i], this);
             }
+            break;
         }
     }
-
     if(pKeithley == Q_NULLPTR) {
         QMessageBox::warning(this, "Error", "Source Measure Unit not Connected",
                              QMessageBox::Abort, QMessageBox::Abort);
         return false;
     }
 
-    if(pLakeShore == Q_NULLPTR) {
-        QMessageBox::warning(this, "Error", "Lake Shore 330 not Connected",
-                             QMessageBox::Abort, QMessageBox::Abort);
-        return false;
-    }
-/*
-    if(pCornerStone130 == Q_NULLPTR) {
-        pCornerStone130 = new CornerStone130(gpibBoardID, 4, this);
-    }
+//>>>>>>>>>>>>>>>> DA SPOSTARE !!!!!!!!!!!!
     if(pCornerStone130->init() != NO_ERROR){
-        QMessageBox::warning(this, "Error", "Corner Stone 130 not Connected",
+        QMessageBox::warning(this, "Error", "Unable to initioalize Corner Stone 130",
                              QMessageBox::Abort, QMessageBox::Abort);
         return false;
-    };
-*/
+    }
+//>>>>>>>>>>>>>>>> DA SPOSTARE !!!!!!!!!!!!
     return true;
 }
 

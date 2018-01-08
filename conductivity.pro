@@ -88,7 +88,8 @@ contains(QMAKE_HOST.arch, "armv7l") || contains(QMAKE_HOST.arch, "armv6l"): {
     LIBS += -L"/usr/local/lib" -lpigpiod_if2
 }
 
-DISTFILES += doc/linux_Gpib_HowTo.txt
+DISTFILES += doc/linux_Gpib_HowTo.txt \
+    doc/GPIBProgrammingReferenceManual.pdf
 DISTFILES += doc/Oriel-Cornerstone-130-User-Manual-RevA.pdf
 DISTFILES += doc/oriel_cornerstone_manual.pdf
 DISTFILES += doc/Tracq32Manual.doc

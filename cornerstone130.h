@@ -10,6 +10,10 @@ public:
     explicit CornerStone130(int gpio, int address, QObject *parent = nullptr);
     virtual ~CornerStone130();
     int      init();
+    bool     openShutter();
+    bool     closeShutter();
+    bool     setWavelength(double waveLength);
+    bool     setGrating(int grating);
 
 signals:
 
