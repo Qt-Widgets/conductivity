@@ -27,18 +27,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "plot2d.h"
 #include <qmath.h>
 
-#if defined(Q_PROCESSOR_ARM)
-#include "pigpiod_if2.h"
-#endif
-
-
 #include <QMessageBox>
 #include <QDebug>
 #include <QSettings>
 #include <QFile>
 #include <QThread>
 #include <QLayout>
-#include <QSerialPortInfo>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -50,9 +44,6 @@ MainWindow::MainWindow(QWidget *parent)
     , pCornerStone130(Q_NULLPTR)
     , pPlotMeasurements(Q_NULLPTR)
     , pPlotTemperature(Q_NULLPTR)
-    #if defined(Q_PROCESSOR_ARM)
-    , gpioHostHandle(-1)
-    #endif
 {
     ui->setupUi(this);
     // Remove the resize-handle in the lower right corner
@@ -70,38 +61,18 @@ MainWindow::MainWindow(QWidget *parent)
     isK236ReadyForTrigger = false;
     maxPlotPoints         = 3000;
 
-    #if defined(Q_PROCESSOR_ARM)
-        // For Raspberry PWM Output to servo
-        lampPin = 14; // GPIO Numbers are Broadcom (BCM) numbers
-                      // BCM14 is Pin 8 in the 40 pin GPIO connector.
-        PWMfrequency    = 50;     // in Hz
-        pulseWidthAt0   = 600.0;  // in us
-        pulseWidthAt180 = 2200;   // in us
-    #else
-        // For Arduino Serial Port
-        baudRate = QSerialPort::Baud115200;
-        waitTimeout = 1000;
-    #endif
-
     QSettings settings;
     restoreGeometry(settings.value("mainWindowGeometry").toByteArray());
     restoreState(settings.value("mainWindowState").toByteArray());
-    checkInstruments();
 }
 
 
 MainWindow::~MainWindow() {
     if(pKeithley != Q_NULLPTR)         delete pKeithley;
     if(pLakeShore != Q_NULLPTR)        delete pLakeShore;
+    if(pCornerStone130 != Q_NULLPTR)   delete pCornerStone130;
     if(pPlotMeasurements != Q_NULLPTR) delete pPlotMeasurements;
     if(pPlotTemperature != Q_NULLPTR)  delete pPlotTemperature;
-    #if defined(Q_PROCESSOR_ARM)
-        if(gpioHostHandle >= 0) {
-            pigpio_stop(gpioHostHandle);
-        }
-    #else
-        serialPort.close();
-    #endif
     delete ui;
 }
 
@@ -112,9 +83,6 @@ MainWindow::closeEvent(QCloseEvent *event) {
     QSettings settings;
     settings.setValue("mainWindowGeometry", saveGeometry());
     settings.setValue("mainWindowState", saveState());
-    #if !defined(Q_PROCESSOR_ARM)
-        serialPort.close();
-    #endif
     if(bRunning) {
         waitingTStartTimer.stop();
         stabilizingTimer.stop();
@@ -134,92 +102,6 @@ MainWindow::closeEvent(QCloseEvent *event) {
         if(pLakeShore) pLakeShore->switchPowerOff();
     }
 }
-
-
-#if defined(Q_PROCESSOR_ARM)
-
-bool
-MainWindow::initPWM() {
-    if(gpioHostHandle >= 0)
-        return true;
-    gpioHostHandle = pigpio_start((char*)"localhost", (char*)"8888");
-    if(gpioHostHandle < 0) {
-        qCritical() << QString("Non riesco ad inizializzare la GPIO.");
-        return false;
-    }
-    int iResult;
-    iResult = set_PWM_frequency(gpioHostHandle, lampPin, PWMfrequency);
-    if(iResult < 0) {
-        qCritical() << QString("Non riesco a definire la frequenza del PWM per il Pin.");
-        return false;
-    }
-    iResult = set_servo_pulsewidth(gpioHostHandle, lampPin, u_int32_t(pulseWidthAt0));
-    if(iResult < 0) {
-        qCritical() << QString("Non riesco a far partire il PWM.");
-        return false;
-    }
-    return true;
-}
-
-#else
-
-bool
-MainWindow::connectToArduino() {
-    bool found = false;
-    QList<QSerialPortInfo> serialPorts = QSerialPortInfo::availablePorts();
-    if(serialPorts.isEmpty()) {
-        qCritical() << QString("Empty COM port list: No Arduino connected !");
-    }
-    else {
-        QSerialPortInfo info;
-        for(int i=0; i<serialPorts.size()&& !found; i++) {
-            info = serialPorts.at(i);
-            //      qInfo() << "Conntecting to: " << info.portName();
-            serialPort.setPortName(info.portName());
-            serialPort.setBaudRate(QSerialPort::Baud115200);
-            serialPort.setDataBits(QSerialPort::Data8);
-            serialPort.setParity(QSerialPort::NoParity);
-            serialPort.setStopBits(QSerialPort::OneStop);
-            if(serialPort.open(QIODevice::ReadWrite)) {
-                // Arduino will reset upon opening the serial port
-                // so we need to give it time to boot
-                QThread::sleep(3);
-                requestData = QByteArray(2, AreYouThere);
-                found = writeToArduino(requestData);
-                if(found) break;
-                serialPort.close();
-            }
-        }
-    }
-    return found;
-}
-
-
-bool
-MainWindow::writeToArduino(QByteArray requestData) {
-    serialPort.write(requestData.append(uchar(EOS)));
-    if (serialPort.waitForBytesWritten(waitTimeout)) {
-        if (serialPort.waitForReadyRead(waitTimeout)) {
-            QByteArray responseData = serialPort.readAll();
-            while(serialPort.waitForReadyRead(10))
-                responseData += serialPort.readAll();
-            if(responseData.at(0) != uchar(ACK)) {
-                qCritical() << "Not an ACK";
-                return false;
-            }
-        }
-        else {
-            qCritical() << "Wait read response timeout";
-            return false;
-        }
-    }
-    else {
-        qCritical() <<"Wait write request timeout %1";
-        return false;
-    }
-    return true;
-}
-#endif
 
 
 bool
@@ -333,13 +215,6 @@ MainWindow::checkInstruments() {
         return false;
     }
 
-//>>>>>>>>>>>>>>>> DA SPOSTARE !!!!!!!!!!!!
-    if(pCornerStone130->init() != NO_ERROR){
-        QMessageBox::warning(this, "Error", "Unable to initioalize Corner Stone 130",
-                             QMessageBox::Abort, QMessageBox::Abort);
-        return false;
-    }
-//>>>>>>>>>>>>>>>> DA SPOSTARE !!!!!!!!!!!!
     return true;
 }
 
@@ -347,24 +222,14 @@ MainWindow::checkInstruments() {
 bool
 MainWindow::switchLampOn() {
     ui->photoButton->setChecked(true);
-    #if defined(Q_PROCESSOR_ARM)
-        return set_servo_pulsewidth(gpioHostHandle, lampPin, u_int32_t(pulseWidthAt180)) >= 0;
-    #else
-        requestData = QByteArray(1, SwitchON);
-        return writeToArduino(requestData);
-    #endif
+    return pCornerStone130->openShutter();
 }
 
 
 bool
 MainWindow::switchLampOff() {
     ui->photoButton->setChecked(false);
-    #if defined(Q_PROCESSOR_ARM)
-        return set_servo_pulsewidth(gpioHostHandle, lampPin, u_int32_t(pulseWidthAt0)) >= 0;
-    #else
-        requestData = QByteArray(1, SwitchOFF);
-        return writeToArduino(requestData);
-    #endif
+    return pCornerStone130->closeShutter();
 }
 
 
@@ -398,9 +263,7 @@ MainWindow::stopRvsT() {
         pLakeShore = Q_NULLPTR;
     }
     switchLampOff();
-    #if !defined(Q_PROCESSOR_ARM)
-        serialPort.close();
-    #endif
+
     ui->endTimeEdit->clear();
     ui->startRvsTButton->setText("Start R vs T");
     ui->startIvsVButton->setEnabled(true);
@@ -420,25 +283,7 @@ MainWindow::on_startRvsTButton_clicked() {
         return;
 
     QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
-    // Start the Tasks to switch the lamp on or off
-    ui->statusBar->showMessage("Checking for the Presence of Lamp Switch");
-    #if defined(Q_PROCESSOR_ARM)
-        if(!initPWM()) {
-            ui->statusBar->showMessage("Unable to use PWM !");
-            QApplication::restoreOverrideCursor();
-            return;
-        }
-    #else
-        if(serialPort.isOpen())
-            serialPort.close();
-        if(!connectToArduino()) {
-            ui->statusBar->showMessage("No Arduino Ready to Use !");
-            QApplication::restoreOverrideCursor();
-            return;
-        }
-    #endif
 
-    switchLampOff();
     // Are the GPIB instruments connectd and ready to start ?
     ui->statusBar->showMessage("Checking for the GPIB Instruments");
     if(!checkInstruments()) {
@@ -446,30 +291,35 @@ MainWindow::on_startRvsTButton_clicked() {
         QApplication::restoreOverrideCursor();
         return;
     }
-    if(pKeithley  != Q_NULLPTR)  {
-        ui->statusBar->showMessage("Initializing Keithley 236...");
-        if(pKeithley->init()) {
-            ui->statusBar->showMessage("Unable to Initialize Keithley 236...");
-            QApplication::restoreOverrideCursor();
-            return;
-        }
-        isK236ReadyForTrigger = false;
-        connect(pKeithley, SIGNAL(complianceEvent()),
-                this, SLOT(onComplianceEvent()));
-        connect(pKeithley, SIGNAL(readyForTrigger()),
-                this, SLOT(onKeithleyReadyForTrigger()));
-        connect(pKeithley, SIGNAL(newReading(QDateTime, QString)),
-                this, SLOT(onNewKeithleyReading(QDateTime, QString)));
+    //Initializing Corner Stone 130
+    ui->statusBar->showMessage("Initializing Corner Stone 130...");
+    if(pCornerStone130->init() != NO_ERROR){
+        ui->statusBar->showMessage("Unable to Initialize Corner Stone 130...");
+        QApplication::restoreOverrideCursor();
+        return;
     }
-    if(pLakeShore != Q_NULLPTR) {
-        ui->statusBar->showMessage("Initializing LakeShore 330...");
-        if(pLakeShore->init()) {
-            ui->statusBar->showMessage("Unable to Initialize LakeShore 330...");
-            QApplication::restoreOverrideCursor();
-            return;
-        }
+    switchLampOff();
+    // Initializing Keithley 236
+    ui->statusBar->showMessage("Initializing Keithley 236...");
+    if(pKeithley->init()) {
+        ui->statusBar->showMessage("Unable to Initialize Keithley 236...");
+        QApplication::restoreOverrideCursor();
+        return;
     }
-
+    isK236ReadyForTrigger = false;
+    connect(pKeithley, SIGNAL(complianceEvent()),
+            this, SLOT(onComplianceEvent()));
+    connect(pKeithley, SIGNAL(readyForTrigger()),
+            this, SLOT(onKeithleyReadyForTrigger()));
+    connect(pKeithley, SIGNAL(newReading(QDateTime, QString)),
+            this, SLOT(onNewKeithleyReading(QDateTime, QString)));
+    // Initializing LakeShore 330
+    ui->statusBar->showMessage("Initializing LakeShore 330...");
+    if(pLakeShore->init()) {
+        ui->statusBar->showMessage("Unable to Initialize LakeShore 330...");
+        QApplication::restoreOverrideCursor();
+        return;
+    }
     // Open the Output file
     ui->statusBar->showMessage("Opening Output file...");
     if(!prepareOutputFile(configureRvsTDialog.sBaseDir,
@@ -562,28 +412,25 @@ MainWindow::on_startIvsVButton_clicked() {
         stopIvsV();
         return;
     }
-    if(pKeithley != Q_NULLPTR)  {
-        ui->statusBar->showMessage("Initializing Keithley 236...");
-        if(pKeithley->init()) {
-            ui->statusBar->showMessage("Unable to Initialize Keithley 236...");
-            stopIvsV();
-            return;
-        }
-        isK236ReadyForTrigger = false;
-        connect(pKeithley, SIGNAL(complianceEvent()),
-                this, SLOT(onComplianceEvent()));
-        connect(pKeithley, SIGNAL(readyForTrigger()),
-                this, SLOT(onKeithleyReadyForSweepTrigger()));
+    // Initializing Keithley 236
+    ui->statusBar->showMessage("Initializing Keithley 236...");
+    if(pKeithley->init()) {
+        ui->statusBar->showMessage("Unable to Initialize Keithley 236...");
+        stopIvsV();
+        return;
     }
-    if(pLakeShore != Q_NULLPTR) {
-        ui->statusBar->showMessage("Initializing LakeShore 330...");
-        if(pLakeShore->init()) {
-            ui->statusBar->showMessage("Unable to Initialize LakeShore 330...");
-            stopIvsV();
-            return;
-        }
+    isK236ReadyForTrigger = false;
+    connect(pKeithley, SIGNAL(complianceEvent()),
+            this, SLOT(onComplianceEvent()));
+    connect(pKeithley, SIGNAL(readyForTrigger()),
+            this, SLOT(onKeithleyReadyForSweepTrigger()));
+    // Initializing LakeShore 330
+    ui->statusBar->showMessage("Initializing LakeShore 330...");
+    if(pLakeShore->init()) {
+        ui->statusBar->showMessage("Unable to Initialize LakeShore 330...");
+        stopIvsV();
+        return;
     }
-
     // Open the Output file
     ui->statusBar->showMessage("Opening Output file...");
     if(!prepareOutputFile(configureIvsVDialog.sBaseDir,

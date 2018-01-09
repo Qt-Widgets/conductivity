@@ -23,50 +23,40 @@
 QT += core
 QT += gui
 QT += widgets
-QT += serialport
 
 
 TARGET = conductivity
 TEMPLATE = app
 
-windows {
-  # For National Instruments DAQ & GPIB Boards
-  INCLUDEPATH += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/include"
-}
-
-contains(QMAKE_HOST.arch, "armv7l") || contains(QMAKE_HOST.arch, "armv6l"): {
-    message("Running on Raspberry")
-    INCLUDEPATH += /usr/local/include
-}
 
 SOURCES += main.cpp
+SOURCES += mainwindow.cpp
 SOURCES += cornerstone130.cpp
+SOURCES += keithley236.cpp
+SOURCES += lakeshore330.cpp
 SOURCES += cdatastream2d.cpp
 SOURCES += plot2d.cpp
-SOURCES += mainwindow.cpp
-SOURCES += utility.cpp
-SOURCES += keithley236.cpp
 SOURCES += axesdialog.cpp
 SOURCES += AxisLimits.cpp
 SOURCES += AxisFrame.cpp
 SOURCES += DataSetProperties.cpp
-SOURCES += lakeshore330.cpp
 SOURCES += configureIvsVdialog.cpp
 SOURCES += configureRvsTdialog.cpp
+SOURCES += utility.cpp
 
 HEADERS += mainwindow.h
 HEADERS += cornerstone130.h
+HEADERS += keithley236.h
+HEADERS += lakeshore330.h
 HEADERS += cdatastream2d.h
 HEADERS += plot2d.h
-HEADERS += utility.h
-HEADERS += keithley236.h
 HEADERS += axesdialog.h
 HEADERS += AxisLimits.h
 HEADERS += AxisFrame.h
 HEADERS += DataSetProperties.h
-HEADERS += lakeshore330.h
 HEADERS += configureIvsVdialog.h
 HEADERS += configureRvsTdialog.h
+HEADERS += utility.h
 
 FORMS   += mainwindow.ui
 FORMS   += configureIvsVdialog.ui
@@ -76,6 +66,7 @@ FORMS   += axesdialog.ui
 # For National Instruments GPIB Boards
 windows {
   message("Running on Windows")
+  INCLUDEPATH += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/include"
   LIBS += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/lib32/msvc/gpib-32.obj"
 }
 linux {
@@ -83,13 +74,9 @@ linux {
   LIBS += -L"/usr/local/lib" -lgpib # To include libgpib.so from /usr/local/lib
 }
 
-# To include libpigpiod_if2.so from /usr/local/lib
-contains(QMAKE_HOST.arch, "armv7l") || contains(QMAKE_HOST.arch, "armv6l"): {
-    LIBS += -L"/usr/local/lib" -lpigpiod_if2
-}
 
-DISTFILES += doc/linux_Gpib_HowTo.txt \
-    doc/GPIBProgrammingReferenceManual.pdf
+DISTFILES += doc/linux_Gpib_HowTo.txt
+DISTFILES += doc/GPIBProgrammingReferenceManual.pdf
 DISTFILES += doc/Oriel-Cornerstone-130-User-Manual-RevA.pdf
 DISTFILES += doc/oriel_cornerstone_manual.pdf
 DISTFILES += doc/Tracq32Manual.doc
