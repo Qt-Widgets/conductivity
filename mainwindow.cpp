@@ -299,6 +299,8 @@ MainWindow::on_startRvsTButton_clicked() {
         return;
     }
     switchLampOff();
+    pCornerStone130->setGrating(configureRvsTDialog.iGratingNumber);
+    pCornerStone130->setWavelength(configureRvsTDialog.dWavelength);
     // Initializing Keithley 236
     ui->statusBar->showMessage("Initializing Keithley 236...");
     if(pKeithley->init()) {
