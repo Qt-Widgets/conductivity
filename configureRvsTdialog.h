@@ -41,6 +41,7 @@ public:
   double dCompliance;
   double dInterval;
   double dWavelength;
+  int    iGratingNumber;
   double dTempStart;
   double dTempEnd;
   double dTRate;
