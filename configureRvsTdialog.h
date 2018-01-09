@@ -40,6 +40,7 @@ public:
   double dSourceValue;
   double dCompliance;
   double dInterval;
+  double dWavelength;
   double dTempStart;
   double dTempEnd;
   double dTRate;
@@ -58,6 +59,7 @@ protected:
   bool isSourceValueValid();
   bool isComplianceValueValid();
   bool isIntervalValid(double interval);
+  bool isWavelengthValid(double wavelength);
   bool isTemperatureValueValid(double dTemperature);
   bool isTRateValid(double dTRate);
   bool isReachingTimeValid(int iReachingTime);
@@ -66,7 +68,12 @@ protected:
 private slots:
   void on_radioButtonSourceI_clicked();
   void on_radioButtonSourceV_clicked();
+  void on_radioButtonGrating1_clicked();
+  void on_radioButtonGrating2_clicked();
   void on_testValueEdit_textChanged(const QString &arg1);
+  void on_complianceValueEdit_textChanged(const QString &arg1);
+  void on_measureIntervalEdit_textChanged(const QString &arg1);
+  void on_WavelengthEdit_textChanged(const QString &arg1);
   void on_TStartEdit_textChanged(const QString &arg1);
   void on_TEndEdit_textChanged(const QString &arg1);
   void on_TRateEdit_textChanged(const QString &arg1);
@@ -75,8 +82,6 @@ private slots:
   void on_outFilePathButton_clicked();
   void on_doneButton_clicked();
   void on_cancelButton_clicked();
-  void on_complianceValueEdit_textChanged(const QString &arg1);
-  void on_measureIntervalEdit_textChanged(const QString &arg1);
 
 private:
   // QLineEdit styles
@@ -89,6 +94,8 @@ private:
   const double voltageMax;
   const double intervalMin;
   const double intervalMax;
+  const double wavelengthMin;
+  const double wavelengthMax;
   const double temperatureMin;
   const double temperatureMax;
   const double TRateMin;

@@ -621,7 +621,7 @@ MainWindow::initRvsTPlots() {
 
     pPlotMeasurements->NewDataSet(iPlotDark,//Id
                                   3, //Pen Width
-                                  QColor(192, 192, 192),// Color
+                                  QColor(255, 0, 0),// Color
                                   Plot2D::ipoint,// Symbol
                                   "Dark"// Title
                                   );

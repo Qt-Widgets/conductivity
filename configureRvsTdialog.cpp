@@ -37,6 +37,8 @@ ConfigureRvsTDialog::ConfigureRvsTDialog(QWidget *parent)
   , voltageMax(110.0)
   , intervalMin(0.1)
   , intervalMax(10.0)
+  , wavelengthMin(100.0)
+  , wavelengthMax(1600.0)
   , temperatureMin(0.0)
   , temperatureMax(450.0)
   , TRateMin(0.01)
@@ -77,6 +79,14 @@ ConfigureRvsTDialog::ConfigureRvsTDialog(QWidget *parent)
     dInterval = intervalMin;
   }
   ui->measureIntervalEdit->setText(QString("%1").arg(dInterval, 0, 'f', 2));
+
+  // Monochromator parameters
+  ui->WavelengthEdit->setText(QString("%1").arg(dWavelength, 0, 'f', 2));
+  if(!isWavelengthValid()) {
+      qDebug() << QString("Invalid Wavelength value %1").arg(dWavelength);
+      dWavelength = wavelengthMax;
+      ui->WavelengthEdit->setText(QString("%1").arg(dWavelength, 0, 'f', 2));
+  }
 
   // Temperature parameters
   if(!isTemperatureValueValid(dTempStart)) {
@@ -472,3 +482,28 @@ ConfigureRvsTDialog::on_measureIntervalEdit_textChanged(const QString &arg1) {
     ui->measureIntervalEdit->setStyleSheet(sErrorStyle);
   }
 }
+
+
+void
+ConfigureRvsTDialog::on_radioButtonGrating1_clicked() {
+
+}
+
+
+void
+ConfigureRvsTDialog::on_radioButtonGrating2_clicked() {
+
+}
+
+
+void
+ConfigureRvsTDialog::on_WavelengthEdit_textChanged(const QString &arg1) {
+
+}
+
+
+bool
+ConfigureRvsTDialog::isWavelengthValid(double wavelength) {
+  return (wavelength >= wavelengthMin) && (wavelength <= wavelengthMax);
+}
+
