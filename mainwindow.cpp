@@ -341,6 +341,9 @@ MainWindow::on_startRvsTButton_clicked() {
                        .arg("I-Photo[A]\n", 12)
                        .toLocal8Bit());
     pOutputFile->write(configureRvsTDialog.sSampleInfo.toLocal8Bit());
+    pOutputFile->write(QString("Grating #= %1 Wavelength = %2 nm")
+                               .arg(configureRvsTDialog.iGratingNumber)
+                               .arg(configureRvsTDialog.dWavelength).toLocal8Bit());
     pOutputFile->write("\n");
     pOutputFile->flush();
     // Init the Plots
