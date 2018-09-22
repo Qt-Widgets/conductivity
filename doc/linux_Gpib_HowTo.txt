@@ -14,10 +14,10 @@ sudo apt install linux-headers-4.4.0-101-generic
 
 Per tutti:
 
-apt-get install build-essential texinfo texi2html libcwidget-dev
-apt-get install libncurses5-dev libx11-dev binutils-dev bison 
-apt-get install flex libusb-1.0-0 libusb-dev libmpfr-dev libexpat1-dev
-apt-get install tofrodos subversion autoconf automake libtool
+sudo apt-get install build-essential texinfo texi2html libcwidget-dev
+sudo apt-get install libncurses5-dev libx11-dev binutils-dev bison 
+sudo apt-get install flex libusb-1.0-0 libusb-dev libmpfr-dev libexpat1-dev
+sudo apt-get install tofrodos subversion autoconf automake libtool
 sudo ldconfig
 mkdir linux-gpib
 cd linux-gpib
