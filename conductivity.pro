@@ -83,3 +83,6 @@ DISTFILES += doc/Tracq32Manual.doc
 DISTFILES += doc/Keithley236Manual.pdf
 DISTFILES += doc/LakeShore330_Manual.pdf
 DISTFILES += doc/Readme.txt
+
+RESOURCES += \
+    resources.qrc

@@ -302,6 +302,7 @@ ConfigureIvsVDialog::on_ThermostatCheckBox_stateChanged(int arg1) {
 
 void
 ConfigureIvsVDialog::on_doneButton_clicked() {
+    sOutFileName = ui->outFileEdit->text();
     if(sOutFileName == QString()) {
         QMessageBox::information(
                     this,

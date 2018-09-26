@@ -464,6 +464,14 @@ ConfigureRvsTDialog::on_TRateEdit_textChanged(const QString &arg1) {
 void
 ConfigureRvsTDialog::on_doneButton_clicked() {
     sOutFileName = ui->outFileEdit->text();
+    if(sOutFileName == QString()) {
+        QMessageBox::information(
+                    this,
+                    QString("Empty Output Filename"),
+                    QString("Please enter a Valid Output File Name"));
+        ui->outFileEdit->setFocus();
+        return;
+    }
     if(QDir(sBaseDir).exists(sOutFileName)) {
         int iAnswer = QMessageBox::question(
                     this,

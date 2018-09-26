@@ -50,6 +50,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->statusBar->setSizeGripEnabled(false);
     // Make the size of the window fixed
     setFixedSize(size());
+    setWindowIcon(QIcon("qrc:/myLogoT.png"));
 
     ui->startRvsTButton->show();
     ui->startIvsVButton->show();

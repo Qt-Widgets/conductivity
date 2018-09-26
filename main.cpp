@@ -56,6 +56,7 @@ main(int argc, char *argv[]) {
   QCoreApplication::setApplicationVersion("1.0.0");
 
   MainWindow w;
+  w.setWindowIcon(QIcon("qrc:/myLogoT.png"));
   w.show();
 
   return a.exec();
