@@ -725,7 +725,7 @@ MainWindow::initRvsTCharts() {
     yDataMin = 1.0e-1;
     yDataMax = 1.0e+1;
 
-    xTempMin = 0.0;
+    xTempMin =  0.0;
     xTempMax = 30.0;
     yTempMin = configureRvsTDialog.dTempStart;
     yTempMax = configureRvsTDialog.dTempEnd;;
@@ -983,7 +983,7 @@ MainWindow::onTimerStabilizeT() {
 
 void
 MainWindow::onTimeToGetNewMeasure() {
-    getNewMeasure();
+    triggerAMeasure();
     if(!pLakeShore->isRamping()) {// Ramp is Done
         stopRvsT();
         //    qDebug() << "End Temperature Reached: Measure is Done";
@@ -998,19 +998,12 @@ MainWindow::onTimeToReadT() {
     double currentTemperature = pLakeShore->getTemperature();
     currentTime = QDateTime::currentDateTime();
     ui->temperatureEdit->setText(QString("%1").arg(currentTemperature));
-//    pPlotTemperature->NewPoint(iCurrentTPlot,
-//                               double(startReadingTTime.secsTo(currentTime)),
-//                               currentTemperature);
-//    pPlotTemperature->UpdatePlot();
+
     double now = double(startReadingTTime.secsTo(currentTime));
-    if(now < xTempMin)
-        xTempMin = now;
-    if(now > xTempMax)
-        xTempMax = now;
-    if(currentTemperature < yTempMin)
-        yTempMin = currentTemperature;
-    if(currentTemperature > yTempMax)
-        yTempMax = currentTemperature;
+    if(now < xTempMin) xTempMin = now;
+    if(now > xTempMax) xTempMax = now;
+    if(currentTemperature < yTempMin) yTempMin = currentTemperature;
+    if(currentTemperature > yTempMax) yTempMax = currentTemperature;
 
     pChartTemperature->axisX()->setRange(xTempMin, xTempMax);
     pChartTemperature->axisY()->setRange(yTempMin, yTempMax);
@@ -1047,7 +1040,7 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
     // Decode readings
     QStringList sMeasures = QStringList(sDataRead.split(",", QString::SkipEmptyParts));
     if(sMeasures.count() < 2) {
-        qDebug() << "Measurement Format Error";
+        qCritical() << "Measurement Format Error";
         return;
     }
     double currentTemperature = pLakeShore->getTemperature();
@@ -1073,30 +1066,23 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
                        .arg(current, 12, 'g', 6, ' ')
                        .toLocal8Bit());
     pOutputFile->flush();
+
     double x = 1000.0/currentTemperature;
     double y = current/voltage;
-    if(x < xDataMin)
-        xDataMin = x;
-    if(x > xDataMax)
-        xDataMax = x;
-    if(y < yDataMin)
-        yDataMin = y;
-    if(y > yDataMax)
-        yDataMax = y;
+    if(x < xDataMin) xDataMin = x;
+    if(x > xDataMax) xDataMax = x;
+    if(y < yDataMin) yDataMin = y;
+    if(y > yDataMax) yDataMax = y;
 
     pChartMeasurements->axisX()->setRange(xDataMin, xDataMax);
     pChartMeasurements->axisX()->setRange(yDataMin, yDataMax);
 
     if(currentLampStatus == LAMP_OFF) {
-//        pPlotMeasurements->NewPoint(iPlotDark, 1000.0/currentTemperature, current/voltage);
-//        pPlotMeasurements->UpdatePlot();
         pDarkMeasurements->append(x, y);
         currentLampStatus = LAMP_ON;
         switchLampOn();
     }
     else {
-//        pPlotMeasurements->NewPoint(iPlotPhoto, 1000.0/currentTemperature, current/voltage);
-//        pPlotMeasurements->UpdatePlot();
         pPhotoMeasurements->append(x, y);
         currentLampStatus = LAMP_OFF;
         pOutputFile->write("\n");
@@ -1105,6 +1091,7 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
 }
 
 
+// To be changed
 void
 MainWindow::onKeithleySweepDone(QDateTime dataTime, QString sData) {
     Q_UNUSED(dataTime)
@@ -1167,6 +1154,7 @@ MainWindow::onKeithleySweepDone(QDateTime dataTime, QString sData) {
 }
 
 
+// To be changed
 void
 MainWindow::onIForwardSweepDone(QDateTime dataTime, QString sData) {
     Q_UNUSED(dataTime)
@@ -1221,6 +1209,7 @@ MainWindow::onIForwardSweepDone(QDateTime dataTime, QString sData) {
 }
 
 
+// To be changed
 void
 MainWindow::onVReverseSweepDone(QDateTime dataTime, QString sData) {
     Q_UNUSED(dataTime)
@@ -1268,7 +1257,7 @@ MainWindow::onVReverseSweepDone(QDateTime dataTime, QString sData) {
 
 
 bool
-MainWindow::getNewMeasure() {
+MainWindow::triggerAMeasure() {
     if(!isK236ReadyForTrigger)
         return false;
     isK236ReadyForTrigger = false;

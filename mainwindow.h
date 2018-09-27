@@ -55,7 +55,7 @@ signals:
 protected:
   void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
   bool checkInstruments();
-  bool getNewMeasure();
+  bool triggerAMeasure();
   void initRvsTPlots();
   void initIvsVPlots();
   void stopRvsT();
