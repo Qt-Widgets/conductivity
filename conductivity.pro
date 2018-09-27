@@ -23,6 +23,7 @@
 QT += core
 QT += gui
 QT += widgets
+QT += charts
 
 
 TARGET = conductivity

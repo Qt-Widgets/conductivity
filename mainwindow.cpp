@@ -44,6 +44,13 @@ MainWindow::MainWindow(QWidget *parent)
     , pCornerStone130(Q_NULLPTR)
     , pPlotMeasurements(Q_NULLPTR)
     , pPlotTemperature(Q_NULLPTR)
+    , pChartMeasurements(Q_NULLPTR)
+    , pChartTemperature(Q_NULLPTR)
+    , pDarkMeasurements(Q_NULLPTR)
+    , pPhotoMeasurements(Q_NULLPTR)
+    , pTemperatures(Q_NULLPTR)
+    , pMeasurementsView(Q_NULLPTR)
+    , pTemperatureView(Q_NULLPTR)
 {
     ui->setupUi(this);
     // Remove the resize-handle in the lower right corner
@@ -65,15 +72,14 @@ MainWindow::MainWindow(QWidget *parent)
     QSettings settings;
     restoreGeometry(settings.value("mainWindowGeometry").toByteArray());
     restoreState(settings.value("mainWindowState").toByteArray());
+
+initRvsTCharts();// <<<<<<<<<<<<<<<<<<<<<
+
 }
 
 
 MainWindow::~MainWindow() {
-    if(pKeithley != Q_NULLPTR)         delete pKeithley;
-    if(pLakeShore != Q_NULLPTR)        delete pLakeShore;
-    if(pCornerStone130 != Q_NULLPTR)   delete pCornerStone130;
-    if(pPlotMeasurements != Q_NULLPTR) delete pPlotMeasurements;
-    if(pPlotTemperature != Q_NULLPTR)  delete pPlotTemperature;
+    freeMemory();
     delete ui;
 }
 
@@ -102,6 +108,31 @@ MainWindow::closeEvent(QCloseEvent *event) {
         if(pKeithley) pKeithley->endVvsT();
         if(pLakeShore) pLakeShore->switchPowerOff();
     }
+    freeMemory();
+}
+
+
+void
+MainWindow::freeMemory() {
+    if(pKeithley          != Q_NULLPTR) delete pKeithley;
+    if(pLakeShore         != Q_NULLPTR) delete pLakeShore;
+    if(pCornerStone130    != Q_NULLPTR) delete pCornerStone130;
+    if(pPlotMeasurements  != Q_NULLPTR) delete pPlotMeasurements;
+    if(pPlotTemperature   != Q_NULLPTR) delete pPlotTemperature;
+    if(pChartMeasurements != Q_NULLPTR) delete pChartMeasurements;
+    if(pChartTemperature  != Q_NULLPTR) delete pChartTemperature;
+    if(pMeasurementsView  != Q_NULLPTR) delete pMeasurementsView;
+    if(pTemperatureView   != Q_NULLPTR) delete pTemperatureView;
+
+    pKeithley          = Q_NULLPTR;
+    pLakeShore         = Q_NULLPTR;
+    pCornerStone130    = Q_NULLPTR;
+    pPlotMeasurements  = Q_NULLPTR;
+    pPlotTemperature   = Q_NULLPTR;
+    pChartMeasurements = Q_NULLPTR;
+    pChartTemperature  = Q_NULLPTR;
+    pMeasurementsView  = Q_NULLPTR;
+    pTemperatureView   = Q_NULLPTR;
 }
 
 
@@ -350,6 +381,7 @@ MainWindow::on_startRvsTButton_clicked() {
     pOutputFile->flush();
     // Init the Plots
     initRvsTPlots();
+    initRvsTCharts();
     // Configure Thermostat
     pLakeShore->setTemperature(configureRvsTDialog.dTempStart);
     pLakeShore->switchPowerOn(3);
@@ -465,6 +497,7 @@ MainWindow::on_startIvsVButton_clicked() {
     }
     // Now we know how to proceed... (maybe...)
     initIvsVPlots();
+    initIvsVCharts();
     isK236ReadyForTrigger = false;
     presentMeasure = IvsV;
     connect(&readingTTimer, SIGNAL(timeout()),
@@ -617,10 +650,10 @@ MainWindow::prepareOutputFile(QString sBaseDir, QString sFileName) {
 void
 MainWindow::initRvsTPlots() {
     if(pPlotMeasurements) delete pPlotMeasurements;
-    pPlotMeasurements = Q_NULLPTR;
     if(pPlotTemperature) delete pPlotTemperature;
+    pPlotMeasurements = Q_NULLPTR;
     pPlotTemperature = Q_NULLPTR;
-    // Plot of Condicibility vs Temperature
+    // Plot of Conductivity vs Temperature
     sMeasurementPlotLabel = QString("log(S) [Ohm^-1] -vs- 1000/T [K^-1]");
     pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
     pPlotMeasurements->setMaxPoints(maxPlotPoints);
@@ -668,6 +701,130 @@ MainWindow::initRvsTPlots() {
 }
 
 
+
+void
+MainWindow::initRvsTCharts() {
+    if(pChartMeasurements) delete pChartMeasurements;
+    if(pChartTemperature)  delete pChartTemperature;
+    if(pDarkMeasurements)  delete pDarkMeasurements;
+    if(pPhotoMeasurements) delete pPhotoMeasurements;
+    if(pMeasurementsView)  delete pMeasurementsView;
+    if(pTemperatures)      delete pTemperatures;
+    if(pTemperatureView)   delete pTemperatureView;
+
+    pChartMeasurements = Q_NULLPTR;
+    pPlotTemperature   = Q_NULLPTR;
+    pDarkMeasurements  = Q_NULLPTR;
+    pPhotoMeasurements = Q_NULLPTR;
+    pMeasurementsView  = Q_NULLPTR;
+    pTemperatures      = Q_NULLPTR;
+    pTemperatureView   = Q_NULLPTR;
+
+    xDataMin = configureRvsTDialog.dTempStart;
+    xDataMax = configureRvsTDialog.dTempEnd;
+    yDataMin = 1.0e-1;
+    yDataMax = 1.0e+1;
+
+    xTempMin = 0.0;
+    xTempMax = 30.0;
+    yTempMin = configureRvsTDialog.dTempStart;
+    yTempMax = configureRvsTDialog.dTempEnd;;
+
+    // Plot of Conductivity vs Temperature
+    sMeasurementPlotLabel = QString("log(S) [Ohm^-1] -vs- 1000/T [K^-1]");
+    pChartMeasurements = new QChart();
+    pChartMeasurements->setTheme(QChart::ChartThemeBlueCerulean);
+    pChartMeasurements->setAnimationOptions(QChart::SeriesAnimations);
+    pChartMeasurements->setTitle(sMeasurementPlotLabel);
+    // Data in Dark
+    pDarkMeasurements = new QScatterSeries();
+    pDarkMeasurements->setColor(QColor(255, 0, 0, 255));
+    pChartMeasurements->addSeries(pDarkMeasurements);
+    // Data in Photo
+    pPhotoMeasurements = new QScatterSeries();
+    pPhotoMeasurements->setColor(QColor(255, 255, 0, 255));
+    pChartMeasurements->addSeries(pPhotoMeasurements);
+    // X Axis
+    QValueAxis *xAxis = new QValueAxis();
+    xAxis->setTickCount(11);
+    xAxis->setLabelFormat("%.1f");
+    xAxis->setShadesVisible(false);
+    xAxis->setShadesBrush(QBrush(QColor(249, 249, 255)));
+    xAxis->setRange(xDataMin, xDataMax);
+    // Y Axis
+    QLogValueAxis *yAxis = new QLogValueAxis();
+    yAxis->setBase(10.0);
+    yAxis->setLabelFormat("%.1g");
+    yAxis->setShadesVisible(false);
+    yAxis->setShadesBrush(QBrush(QColor(249, 249, 255)));
+    yAxis->setGridLineVisible(true);
+    yAxis->setMinorGridLineVisible(true);
+    yAxis->setRange(yDataMin, yDataMax);
+    // Add Axes to Plot
+    pChartMeasurements->addAxis(xAxis, Qt::AlignBottom);
+    pChartMeasurements->addAxis(yAxis, Qt::AlignLeft);
+    pDarkMeasurements->attachAxis(xAxis);
+    pDarkMeasurements->attachAxis(yAxis);
+    pPhotoMeasurements->attachAxis(xAxis);
+    pPhotoMeasurements->attachAxis(yAxis);
+    // The Plot View
+    pMeasurementsView = new QChartView();
+//    Qt::WindowFlags flags = pMeasurementsView->windowFlags();
+//    flags = Qt::CustomizeWindowHint;
+//    flags |= Qt::WindowMinMaxButtonsHint;
+//    flags &= ~Qt::WindowContextHelpButtonHint;
+//    flags &= ~Qt::WindowCloseButtonHint;
+//    pMeasurementsView->setWindowFlags(flags);
+
+    pMeasurementsView->setChart(pChartMeasurements);
+    pMeasurementsView->setRenderHint(QPainter::Antialiasing);
+    pMeasurementsView->setWindowTitle(sMeasurementPlotLabel);
+    pMeasurementsView->setRubberBand(QChartView::RectangleRubberBand);
+
+    // Plot of Temperature vs Time
+    sTemperaturePlotLabel = QString("T [K] vs t [s]");
+    pChartTemperature = new QChart();
+    pChartTemperature->setTheme(QChart::ChartThemeBlueCerulean);
+    pChartTemperature->setAnimationOptions(QChart::SeriesAnimations);
+    pChartTemperature->setTitle(sTemperaturePlotLabel);
+    // Data
+    pTemperatures = new QLineSeries();
+    pTemperatures->setColor(QColor(255, 0, 0, 255));
+    pChartTemperature->addSeries(pTemperatures);
+    // X Axis
+    QValueAxis *xAxisT = new QValueAxis();
+    xAxisT->setTickCount(11);
+    xAxisT->setLabelFormat("%.1f");
+    xAxisT->setShadesVisible(false);
+    xAxisT->setShadesBrush(QBrush(QColor(249, 249, 255)));
+    xAxisT->setRange(xTempMin, xTempMax);
+    // Y Axis
+    QValueAxis *yAxisT = new QValueAxis();
+    yAxisT->setTickCount(11);
+    yAxisT->setLabelFormat("%.1f");
+    yAxisT->setShadesVisible(false);
+    yAxisT->setShadesBrush(QBrush(QColor(249, 249, 255)));
+    yAxisT->setMinorTickCount(-1);
+    yAxisT->setRange(yTempMin, yTempMax);
+    // Add Axes to Plot
+    pChartTemperature->addAxis(xAxisT, Qt::AlignBottom);
+    pChartTemperature->addAxis(yAxisT, Qt::AlignLeft);
+    // Data
+    pTemperatures->attachAxis(xAxisT);
+    pTemperatures->attachAxis(yAxisT);
+    // The Plot View
+    pTemperatureView = new QChartView();
+    pTemperatureView->setChart(pChartTemperature);
+    pTemperatureView->setRenderHint(QPainter::Antialiasing);
+    pTemperatureView->setWindowTitle(sTemperaturePlotLabel);
+    pTemperatureView->setRubberBand(QChartView::RectangleRubberBand);
+    // Show the Charts
+    pMeasurementsView->show();
+    pTemperatureView->show();
+}
+
+
+
 void
 MainWindow::initIvsVPlots() {
     if(pPlotMeasurements) delete pPlotMeasurements;
@@ -706,6 +863,11 @@ MainWindow::initIvsVPlots() {
     pPlotTemperature->UpdatePlot();
     pPlotTemperature->show();
     iCurrentTPlot = 1;
+}
+
+
+void
+MainWindow::initIvsVCharts() {
 }
 
 
@@ -836,10 +998,26 @@ MainWindow::onTimeToReadT() {
     double currentTemperature = pLakeShore->getTemperature();
     currentTime = QDateTime::currentDateTime();
     ui->temperatureEdit->setText(QString("%1").arg(currentTemperature));
-    pPlotTemperature->NewPoint(iCurrentTPlot,
-                               double(startReadingTTime.secsTo(currentTime)),
-                               currentTemperature);
-    pPlotTemperature->UpdatePlot();
+//    pPlotTemperature->NewPoint(iCurrentTPlot,
+//                               double(startReadingTTime.secsTo(currentTime)),
+//                               currentTemperature);
+//    pPlotTemperature->UpdatePlot();
+    double now = double(startReadingTTime.secsTo(currentTime));
+    if(now < xTempMin)
+        xTempMin = now;
+    if(now > xTempMax)
+        xTempMax = now;
+    if(currentTemperature < yTempMin)
+        yTempMin = currentTemperature;
+    if(currentTemperature > yTempMax)
+        yTempMax = currentTemperature;
+
+    pChartTemperature->axisX()->setRange(xTempMin, xTempMax);
+    pChartTemperature->axisY()->setRange(yTempMin, yTempMax);
+
+    pTemperatures->append(now, currentTemperature);
+    qDebug() << double(startReadingTTime.secsTo(currentTime))
+             << currentTemperature;
 }
 
 
@@ -895,15 +1073,31 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
                        .arg(current, 12, 'g', 6, ' ')
                        .toLocal8Bit());
     pOutputFile->flush();
+    double x = 1000.0/currentTemperature;
+    double y = current/voltage;
+    if(x < xDataMin)
+        xDataMin = x;
+    if(x > xDataMax)
+        xDataMax = x;
+    if(y < yDataMin)
+        yDataMin = y;
+    if(y > yDataMax)
+        yDataMax = y;
+
+    pChartMeasurements->axisX()->setRange(xDataMin, xDataMax);
+    pChartMeasurements->axisX()->setRange(yDataMin, yDataMax);
+
     if(currentLampStatus == LAMP_OFF) {
-        pPlotMeasurements->NewPoint(iPlotDark, 1000.0/currentTemperature, current/voltage);
-        pPlotMeasurements->UpdatePlot();
+//        pPlotMeasurements->NewPoint(iPlotDark, 1000.0/currentTemperature, current/voltage);
+//        pPlotMeasurements->UpdatePlot();
+        pDarkMeasurements->append(x, y);
         currentLampStatus = LAMP_ON;
         switchLampOn();
     }
     else {
-        pPlotMeasurements->NewPoint(iPlotPhoto, 1000.0/currentTemperature, current/voltage);
-        pPlotMeasurements->UpdatePlot();
+//        pPlotMeasurements->NewPoint(iPlotPhoto, 1000.0/currentTemperature, current/voltage);
+//        pPlotMeasurements->UpdatePlot();
+        pPhotoMeasurements->append(x, y);
         currentLampStatus = LAMP_OFF;
         pOutputFile->write("\n");
         switchLampOff();

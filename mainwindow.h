@@ -22,6 +22,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMainWindow>
 #include <QDateTime>
 #include <QTimer>
+#include <QScatterSeries>
+#include <QtCharts>
+#include <QChartView>
+
+using namespace QtCharts;
 
 #include "configureRvsTdialog.h"
 #include "configureIvsVdialog.h"
@@ -52,13 +57,16 @@ protected:
   bool checkInstruments();
   bool getNewMeasure();
   void initRvsTPlots();
+  void initIvsVPlots();
   void stopRvsT();
   void startI_V();
   void stopIvsV();
-  void initIvsVPlots();
   bool prepareOutputFile(QString sBaseDir, QString sFileName);
   bool switchLampOn();
   bool switchLampOff();
+  void initRvsTCharts();
+  void initIvsVCharts();
+  void freeMemory();
 
 private slots:
   void on_startRvsTButton_clicked();
@@ -91,14 +99,21 @@ private:
   measure presentMeasure;
 
 private:
-  QFile        *pOutputFile;
+  QFile          *pOutputFile;
 
   Keithley236    *pKeithley;
   LakeShore330   *pLakeShore;
   CornerStone130 *pCornerStone130;
 
-  Plot2D       *pPlotMeasurements;
-  Plot2D       *pPlotTemperature;
+  Plot2D         *pPlotMeasurements;
+  Plot2D         *pPlotTemperature;
+  QChart         *pChartMeasurements;
+  QChart         *pChartTemperature;
+  QScatterSeries *pDarkMeasurements;
+  QScatterSeries *pPhotoMeasurements;
+  QLineSeries    *pTemperatures;
+  QChartView     *pMeasurementsView;
+  QChartView     *pTemperatureView;
 
   QDateTime     currentTime;
   QDateTime     waitingTStartTime;
@@ -130,6 +145,14 @@ private:
   bool          bRunning;
   int           junctionDirection;
 
+  double        xDataMin;
+  double        xDataMax;
+  double        yDataMin;
+  double        yDataMax;
+  double        xTempMin;
+  double        xTempMax;
+  double        yTempMin;
+  double        yTempMax;
 };
 
 #endif // MAINWINDOW_H
