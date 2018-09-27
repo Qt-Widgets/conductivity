@@ -205,6 +205,9 @@
      <property name="text">
       <string>Photo/Dark</string>
      </property>
+     <property name="checkable">
+      <bool>false</bool>
+     </property>
     </widget>
     <widget class="QLabel" name="label">
      <property name="geometry">

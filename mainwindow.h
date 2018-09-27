@@ -36,11 +36,12 @@ namespace Ui {
 class MainWindow;
 }
 
+
 QT_FORWARD_DECLARE_CLASS(QFile)
 QT_FORWARD_DECLARE_CLASS(Keithley236)
 QT_FORWARD_DECLARE_CLASS(LakeShore330)
 QT_FORWARD_DECLARE_CLASS(CornerStone130)
-QT_FORWARD_DECLARE_CLASS(Plot2D)
+
 
 class MainWindow : public QMainWindow
 {
@@ -56,8 +57,6 @@ protected:
   void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
   bool checkInstruments();
   bool triggerAMeasure();
-  void initRvsTPlots();
-  void initIvsVPlots();
   void stopRvsT();
   void startI_V();
   void stopIvsV();
@@ -66,6 +65,8 @@ protected:
   bool switchLampOff();
   void initRvsTCharts();
   void initIvsVCharts();
+  void createTemperaturePlot();
+  void deleteGraphics();
   void freeMemory();
 
 private slots:
@@ -105,42 +106,37 @@ private:
   LakeShore330   *pLakeShore;
   CornerStone130 *pCornerStone130;
 
-  Plot2D         *pPlotMeasurements;
-  Plot2D         *pPlotTemperature;
   QChart         *pChartMeasurements;
   QChart         *pChartTemperature;
   QScatterSeries *pDarkMeasurements;
   QScatterSeries *pPhotoMeasurements;
+  QScatterSeries *pMeasurements;
   QLineSeries    *pTemperatures;
   QChartView     *pMeasurementsView;
   QChartView     *pTemperatureView;
 
-  QDateTime     currentTime;
-  QDateTime     waitingTStartTime;
-  QDateTime     startReadingTTime;
-  QDateTime     startMeasuringTime;
-  QDateTime     endMeasureTime;
+  QDateTime       currentTime;
+  QDateTime       waitingTStartTime;
+  QDateTime       startReadingTTime;
+  QDateTime       startMeasuringTime;
+  QDateTime       endMeasureTime;
 
-  QTimer        waitingTStartTimer;
-  QTimer        stabilizingTimer;
-  QTimer        readingTTimer;
-  QTimer        measuringTimer;
+  QTimer          waitingTStartTimer;
+  QTimer          stabilizingTimer;
+  QTimer          readingTTimer;
+  QTimer          measuringTimer;
 
   ConfigureRvsTDialog configureRvsTDialog;
   ConfigureIvsVDialog configureIvsVDialog;
 
   const quint8  LAMP_ON  = 1;
   const quint8  LAMP_OFF = 0;
-  const int     iPlotDark = 1;
-  const int     iPlotPhoto = 2;
 
   double        setPointT;
-  int           iCurrentTPlot;
   int           gpibBoardID;
   quint8        currentLampStatus;
   QString       sMeasurementPlotLabel;
   QString       sTemperaturePlotLabel;
-  int           maxPlotPoints;
   volatile bool isK236ReadyForTrigger;
   bool          bRunning;
   int           junctionDirection;
