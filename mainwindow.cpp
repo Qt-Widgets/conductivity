@@ -112,9 +112,9 @@ MainWindow::closeEvent(QCloseEvent *event) {
 
 void
 MainWindow::freeMemory() {
-    if(pKeithley          != Q_NULLPTR) delete pKeithley;
-    if(pLakeShore         != Q_NULLPTR) delete pLakeShore;
-    if(pCornerStone130    != Q_NULLPTR) delete pCornerStone130;
+    if(pKeithley       != Q_NULLPTR) delete pKeithley;
+    if(pLakeShore      != Q_NULLPTR) delete pLakeShore;
+    if(pCornerStone130 != Q_NULLPTR) delete pCornerStone130;
 
     pKeithley          = Q_NULLPTR;
     pLakeShore         = Q_NULLPTR;
@@ -167,9 +167,9 @@ MainWindow::checkInstruments() {
         Receive(gpibBoardID, resultlist[i], readBuf, 256, 0x0A);
         readBuf[ThreadIbcnt()] = '\0';
         sInstrumentID = QString(readBuf);
-        qDebug() << QString("Address= %1 - InstrumentID= %2")
-                    .arg(resultlist[i])
-                    .arg(sInstrumentID);
+//      qDebug() << QString("Address= %1 - InstrumentID= %2")
+//                  .arg(resultlist[i])
+//                  .arg(sInstrumentID);
         if(sInstrumentID.contains("Cornerstone 130", Qt::CaseInsensitive)) {
             cornerstoneId = resultlist[i];
             if(pCornerStone130 == Q_NULLPTR) {
@@ -193,9 +193,9 @@ MainWindow::checkInstruments() {
         Receive(gpibBoardID, resultlist[i], readBuf, 256, STOPend);
         readBuf[ThreadIbcnt()] = '\0';
         sInstrumentID = QString(readBuf);
-        qDebug() << QString("Address= %1 - InstrumentID= %2")
-                    .arg(resultlist[i])
-                    .arg(sInstrumentID);
+//      qDebug() << QString("Address= %1 - InstrumentID= %2")
+//                  .arg(resultlist[i])
+//                  .arg(sInstrumentID);
         if(sInstrumentID.contains("MODEL330", Qt::CaseInsensitive)) {
             lakeShoreID = resultlist[i];
             if(pLakeShore == NULL) {
@@ -219,9 +219,9 @@ MainWindow::checkInstruments() {
         Receive(gpibBoardID, resultlist[i], readBuf, 256, STOPend);
         readBuf[ThreadIbcnt()] = '\0';
         sInstrumentID = QString(readBuf);
-        qDebug() << QString("Address= %1 - InstrumentID= %2")
-                    .arg(resultlist[i])
-                    .arg(sInstrumentID);
+//      qDebug() << QString("Address= %1 - InstrumentID= %2")
+//                  .arg(resultlist[i])
+//                  .arg(sInstrumentID);
         if(sInstrumentID.contains("236", Qt::CaseInsensitive)) {
             if(pKeithley == Q_NULLPTR) {
                 pKeithley = new Keithley236(gpibBoardID, resultlist[i], this);
@@ -532,7 +532,7 @@ void
 MainWindow::startI_V() {
     if(junctionDirection == 0) {
         // No diode junction
-        qDebug() << "No junctions in device";
+//      qDebug() << "No junctions in device";
         ui->statusBar->showMessage("No junctions: Sweeping...Please Wait");
         double dIStart = configureIvsVDialog.dIStart;
         double dIStop = configureIvsVDialog.dIStop;
@@ -547,7 +547,7 @@ MainWindow::startI_V() {
         pKeithley->initISweep(dIStart, dIStop, dIStep, dDelayms, dCompliance);
     }
     else if(junctionDirection > 0) {// Forward junction
-//        qDebug() << "Forward Direction Handling";
+//      qDebug() << "Forward Direction Handling";
         ui->statusBar->showMessage("Forward junction: Sweeping...Please Wait");
         double dIStart = 0.0;
         double dIStop = configureIvsVDialog.dIStop;
@@ -562,7 +562,7 @@ MainWindow::startI_V() {
         pKeithley->initISweep(dIStart, dIStop, dIStep, dDelayms, dCompliance);
     }
     else {// Reverse junction
-//        qDebug() << "Reverse Direction Handling";
+//      qDebug() << "Reverse Direction Handling";
         ui->statusBar->showMessage("Reverse junction: Sweeping...Please Wait");
         double dVStart = 0.0;
         double dVStop = configureIvsVDialog.dVStop;
@@ -637,8 +637,13 @@ void
 MainWindow::initRvsTCharts() {
     deleteGraphics();
 
-    xDataMin = configureRvsTDialog.dTempStart;
-    xDataMax = configureRvsTDialog.dTempEnd;
+    xDataMin = 1000.0/configureRvsTDialog.dTempStart;
+    xDataMax = 1000.0/configureRvsTDialog.dTempEnd;
+    if(xDataMin>xDataMax) {
+       auto tmp = xDataMin;
+       xDataMin = xDataMax;
+       xDataMax = tmp;
+    }
     yDataMin = 1.0e-1;
     yDataMax = 1.0e+1;
 
@@ -716,7 +721,7 @@ MainWindow::createTemperaturePlot() {
     pChartTemperature->setTitle(sTemperaturePlotLabel);
     // Data
     pTemperatures = new QLineSeries();
-    pTemperatures->setColor(QColor(255, 0, 0, 255));
+    pTemperatures->setColor(QColor(255, 255, 0, 255));
     pChartTemperature->addSeries(pTemperatures);
     // X Axis
     QValueAxis *xAxisT = new QValueAxis();
@@ -881,7 +886,7 @@ MainWindow::onTimeToCheckReachedT() {
         connect(&stabilizingTimer, SIGNAL(timeout()),
                 this, SLOT(onTimerStabilizeT()));
         stabilizingTimer.start(configureRvsTDialog.iStabilizingTime*60*1000);
-        //      qDebug() << QString("Starting T Reached: Thermal Stabilization...");
+//      qDebug() << QString("Starting T Reached: Thermal Stabilization...");
         ui->statusBar->showMessage(QString("Starting T Reached: Thermal Stabilization for %1 min.").arg(configureRvsTDialog.iStabilizingTime));
         // Compute the new time needed for the measurement:
         startMeasuringTime = QDateTime::currentDateTime();
@@ -897,14 +902,14 @@ MainWindow::onTimeToCheckReachedT() {
     else {
         currentTime = QDateTime::currentDateTime();
         quint64 elapsedMsec = waitingTStartTime.secsTo(currentTime);
-        //        qDebug() << "Elapsed:" << elapsedMsec << "Maximum:" << quint64(configureRvsTDialog.iReachingTime)*60*1000;
+//      qDebug() << "Elapsed:" << elapsedMsec << "Maximum:" << quint64(configureRvsTDialog.iReachingTime)*60*1000;
         if(elapsedMsec > quint64(configureRvsTDialog.iReachingTime)*60*1000) {
             disconnect(&waitingTStartTimer, 0, 0, 0);
             waitingTStartTimer.stop();
             connect(&stabilizingTimer, SIGNAL(timeout()),
                     this, SLOT(onTimerStabilizeT()));
             stabilizingTimer.start(configureRvsTDialog.iStabilizingTime*60*1000);
-            //            qDebug() << QString("Max Reaching Time Exceed...Thermal Stabilization...");
+//          qDebug() << QString("Max Reaching Time Exceed...Thermal Stabilization...");
             ui->statusBar->showMessage(QString("Max Reaching Time Exceed...Thermal Stabilization for %1 min.").arg(configureRvsTDialog.iStabilizingTime));
         }
     }
@@ -916,7 +921,7 @@ MainWindow::onTimerStabilizeT() {
     // It's time to start measurements
     stabilizingTimer.stop();
     disconnect(&stabilizingTimer, 0, 0, 0);
-    //  qDebug() << "Thermal Stabilization Reached: Measure Started";
+//  qDebug() << "Thermal Stabilization Reached: Measure Started";
     ui->statusBar->showMessage(QString("Thermal Stabilization Reached: Measure Started"));
     connect(&measuringTimer, SIGNAL(timeout()),
             this, SLOT(onTimeToGetNewMeasure()));
@@ -935,7 +940,7 @@ MainWindow::onTimeToGetNewMeasure() {
     triggerAMeasure();
     if(!pLakeShore->isRamping()) {// Ramp is Done
         stopRvsT();
-        //    qDebug() << "End Temperature Reached: Measure is Done";
+//      qDebug() << "End Temperature Reached: Measure is Done";
         ui->statusBar->showMessage(QString("Measurements Completed !"));
         return;
     }
@@ -958,8 +963,8 @@ MainWindow::onTimeToReadT() {
     pChartTemperature->axisY()->setRange(yTempMin, yTempMax);
 
     pTemperatures->append(now, currentTemperature);
-    qDebug() << double(startReadingTTime.secsTo(currentTime))
-             << currentTemperature;
+//    qDebug() << double(startReadingTTime.secsTo(currentTime))
+//             << currentTemperature;
 }
 
 
@@ -1020,11 +1025,16 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
     double y = current/voltage;
     if(x < xDataMin) xDataMin = x;
     if(x > xDataMax) xDataMax = x;
-    if(y < yDataMin) yDataMin = y;
-    if(y > yDataMax) yDataMax = y;
-
+    if(pPhotoMeasurements->count() == 0) {
+        yDataMin = 0.99*y;
+        yDataMax = 1.01*y;
+    }
+    else {
+        if(y < yDataMin) yDataMin = y;
+        if(y > yDataMax) yDataMax = y;
+    }
     pChartMeasurements->axisX()->setRange(xDataMin, xDataMax);
-    pChartMeasurements->axisX()->setRange(yDataMin, yDataMax);
+    pChartMeasurements->axisY()->setRange(yDataMin, yDataMax);
 
     if(currentLampStatus == LAMP_OFF) {
         pDarkMeasurements->append(x, y);
@@ -1067,12 +1077,26 @@ MainWindow::onKeithleySweepDone(QDateTime dataTime, QString sData) {
                            .arg(current, 12, 'g', 6, ' ')
                            .arg(setPointT, 12, 'g', 6, ' ')
                            .toLocal8Bit());
-        pMeasurements->append(voltage,current);
+        if(pMeasurements->count() == 0) {
+            xDataMin = voltage*0.99;
+            xDataMax = voltage*1.01;
+            yDataMin = current*0.99;
+            yDataMax = current*1.01;
+        }
+        else {
+            if(voltage < xDataMin) xDataMin = voltage;
+            if(voltage > xDataMax) xDataMax = voltage;
+            if(current < yDataMin) yDataMin = current;
+            if(current > yDataMax) yDataMax = current;
+        }
+        pChartMeasurements->axisX()->setRange(xDataMin, xDataMax);
+        pChartMeasurements->axisY()->setRange(yDataMin, yDataMax);
+        pMeasurements->append(voltage, current);
     }
     pOutputFile->flush();
     if(configureIvsVDialog.bUseThermostat) {
         setPointT += configureIvsVDialog.dTStep;
-        qDebug() << QString("New Set Point: %1").arg(setPointT);
+//      qDebug() << QString("New Set Point: %1").arg(setPointT);
         if(setPointT > configureIvsVDialog.dTStop) {
             stopIvsV();
             ui->statusBar->showMessage("Measure Done");
@@ -1106,7 +1130,7 @@ MainWindow::onKeithleySweepDone(QDateTime dataTime, QString sData) {
 void
 MainWindow::onIForwardSweepDone(QDateTime dataTime, QString sData) {
     Q_UNUSED(dataTime)
-//    qDebug() << "Reverse Direction Handling";
+//  qDebug() << "Reverse Direction Handling";
     ui->statusBar->showMessage("Reverse Direction: Sweeping...Please Wait");
     disconnect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)), this, 0);
     QStringList sMeasures = QStringList(sData.split(",", QString::SkipEmptyParts));
@@ -1129,6 +1153,21 @@ MainWindow::onIForwardSweepDone(QDateTime dataTime, QString sData) {
                            .arg(current, 12, 'g', 6, ' ')
                            .arg(setPointT, 12, 'g', 6, ' ')
                            .toLocal8Bit());
+        if(pMeasurements->count() == 0) {
+            xDataMin = voltage*0.99;
+            xDataMax = voltage*1.01;
+            yDataMin = current*0.99;
+            yDataMax = current*1.01;
+        }
+        else {
+            if(voltage < xDataMin) xDataMin = voltage;
+            if(voltage > xDataMax) xDataMax = voltage;
+            if(current < yDataMin) yDataMin = current;
+            if(current > yDataMax) yDataMax = current;
+        }
+        pChartMeasurements->axisX()->setRange(xDataMin, xDataMax);
+        pChartMeasurements->axisY()->setRange(yDataMin, yDataMax);
+        pMeasurements->append(voltage, current);
         pMeasurements->append(voltage, current);
     }
     pOutputFile->flush();
@@ -1160,7 +1199,7 @@ MainWindow::onIForwardSweepDone(QDateTime dataTime, QString sData) {
 void
 MainWindow::onVReverseSweepDone(QDateTime dataTime, QString sData) {
     Q_UNUSED(dataTime)
-    qDebug() << "Forward Direction Handling";
+//  qDebug() << "Forward Direction Handling";
     ui->statusBar->showMessage("Forward Direction: Sweeping...Please Wait");
     disconnect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)), this, 0);
     QStringList sMeasures = QStringList(sData.split(",", QString::SkipEmptyParts));
@@ -1183,6 +1222,21 @@ MainWindow::onVReverseSweepDone(QDateTime dataTime, QString sData) {
                            .arg(current, 12, 'g', 6, ' ')
                            .arg(setPointT, 12, 'g', 6, ' ')
                            .toLocal8Bit());
+        if(pMeasurements->count() == 0) {
+            xDataMin = voltage*0.99;
+            xDataMax = voltage*1.01;
+            yDataMin = current*0.99;
+            yDataMax = current*1.01;
+        }
+        else {
+            if(voltage < xDataMin) xDataMin = voltage;
+            if(voltage > xDataMax) xDataMax = voltage;
+            if(current < yDataMin) yDataMin = current;
+            if(current > yDataMax) yDataMax = current;
+        }
+        pChartMeasurements->axisX()->setRange(xDataMin, xDataMax);
+        pChartMeasurements->axisY()->setRange(yDataMin, yDataMax);
+        pMeasurements->append(voltage, current);
         pMeasurements->append(voltage, current);
     }
     pOutputFile->flush();
