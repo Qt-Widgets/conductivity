@@ -85,27 +85,32 @@ MainWindow::~MainWindow() {
 void
 MainWindow::closeEvent(QCloseEvent *event) {
     Q_UNUSED(event)
+    // Save the window position (and dimensions)
     QSettings settings;
     settings.setValue("mainWindowGeometry", saveGeometry());
     settings.setValue("mainWindowState", saveState());
     if(bRunning) {
+        // Disable and stop all the timers
+        disconnect(&waitingTStartTimer, 0, 0, 0);
+        disconnect(&stabilizingTimer,   0, 0, 0);
+        disconnect(&readingTTimer,      0, 0, 0);
+        disconnect(&measuringTimer,     0, 0, 0);
         waitingTStartTimer.stop();
         stabilizingTimer.stop();
         readingTTimer.stop();
         measuringTimer.stop();
-        disconnect(&waitingTStartTimer, 0, 0, 0);
-        disconnect(&stabilizingTimer, 0, 0, 0);
-        disconnect(&readingTTimer, 0, 0, 0);
-        disconnect(&measuringTimer, 0, 0, 0);
+        // Close the utput file
         if(pOutputFile) {
             if(pOutputFile->isOpen())
                 pOutputFile->close();
             pOutputFile->deleteLater();
             pOutputFile = Q_NULLPTR;
         }
+        // Place the devices offline
         if(pKeithley) pKeithley->endVvsT();
         if(pLakeShore) pLakeShore->switchPowerOff();
     }
+    // Free allocated objects
     freeMemory();
 }
 
@@ -257,14 +262,14 @@ void
 MainWindow::stopRvsT() {
     bRunning = false;
     presentMeasure = NoMeasure;
+    disconnect(&waitingTStartTimer, 0, 0, 0);
+    disconnect(&stabilizingTimer,   0, 0, 0);
+    disconnect(&readingTTimer,      0, 0, 0);
+    disconnect(&measuringTimer,     0, 0, 0);
     waitingTStartTimer.stop();
     stabilizingTimer.stop();
     readingTTimer.stop();
     measuringTimer.stop();
-    disconnect(&waitingTStartTimer, 0, 0, 0);
-    disconnect(&stabilizingTimer, 0, 0, 0);
-    disconnect(&readingTTimer, 0, 0, 0);
-    disconnect(&measuringTimer, 0, 0, 0);
     if(pOutputFile) {
         pOutputFile->close();
         pOutputFile->deleteLater();
