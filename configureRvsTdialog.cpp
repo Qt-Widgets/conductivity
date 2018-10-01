@@ -40,7 +40,7 @@ ConfigureRvsTDialog::ConfigureRvsTDialog(QWidget *parent)
     , wavelengthMin(200.0)
     , wavelengthMax(1000.0)
     , temperatureMin(0.0)
-    , temperatureMax(450.0)
+    , temperatureMax(500.0)
     , TRateMin(0.01)
     , TRateMax(10.0)
     , reachingTTimeMin(0)// In minutes

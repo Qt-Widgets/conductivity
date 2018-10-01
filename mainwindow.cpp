@@ -70,7 +70,7 @@ MainWindow::MainWindow(QWidget *parent)
     restoreGeometry(settings.value("mainWindowGeometry").toByteArray());
     restoreState(settings.value("mainWindowState").toByteArray());
 
-//    initRvsTCharts();// <<<<<<<<<<<<<<<<<<<<<
+    initRvsTCharts();// <<<<<<<<<<<<<<<<<<<<<
 //    initIvsVCharts();// <<<<<<<<<<<<<<<<<<<<<
 
 }
@@ -657,7 +657,8 @@ MainWindow::initRvsTCharts() {
     pChartMeasurements = new QChart();
     pChartMeasurements->setTheme(QChart::ChartThemeBlueCerulean);
     pChartMeasurements->setAnimationOptions(QChart::SeriesAnimations);
-    pChartMeasurements->setTitle(sMeasurementPlotLabel);
+//    pChartMeasurements->setTitle(sMeasurementPlotLabel);
+    pChartMeasurements->legend()->hide();
     // Data in Dark
     pDarkMeasurements = new QScatterSeries();
     pDarkMeasurements->setColor(QColor(255, 0, 0, 255));
@@ -691,17 +692,15 @@ MainWindow::initRvsTCharts() {
     pPhotoMeasurements->attachAxis(yAxis);
     // The Plot View
     pMeasurementsView = new QChartView();
-//    Qt::WindowFlags flags = pMeasurementsView->windowFlags();
-//    flags = Qt::CustomizeWindowHint;
-//    flags |= Qt::WindowMinMaxButtonsHint;
-//    flags &= ~Qt::WindowContextHelpButtonHint;
-//    flags &= ~Qt::WindowCloseButtonHint;
-//    pMeasurementsView->setWindowFlags(flags);
-
     pMeasurementsView->setChart(pChartMeasurements);
     pMeasurementsView->setRenderHint(QPainter::Antialiasing);
     pMeasurementsView->setWindowTitle(sMeasurementPlotLabel);
     pMeasurementsView->setRubberBand(QChartView::RectangleRubberBand);
+    // Attempt to remove the close button
+    Qt::WindowFlags flags;
+    flags  = Qt::CustomizeWindowHint;
+    flags |= Qt::WindowMinMaxButtonsHint;
+    pMeasurementsView->setWindowFlags(flags);
 
     createTemperaturePlot();
 
@@ -723,7 +722,8 @@ MainWindow::createTemperaturePlot() {
     pChartTemperature = new QChart();
     pChartTemperature->setTheme(QChart::ChartThemeBlueCerulean);
     pChartTemperature->setAnimationOptions(QChart::SeriesAnimations);
-    pChartTemperature->setTitle(sTemperaturePlotLabel);
+//    pChartTemperature->setTitle(sTemperaturePlotLabel);
+    pChartTemperature->legend()->hide();
     // Data
     pTemperatures = new QLineSeries();
     pTemperatures->setColor(QColor(255, 255, 0, 255));
@@ -755,6 +755,11 @@ MainWindow::createTemperaturePlot() {
     pTemperatureView->setRenderHint(QPainter::Antialiasing);
     pTemperatureView->setWindowTitle(sTemperaturePlotLabel);
     pTemperatureView->setRubberBand(QChartView::RectangleRubberBand);
+    // Attempt to remove the close button
+    Qt::WindowFlags flags;
+    flags  = Qt::CustomizeWindowHint;
+    flags |= Qt::WindowMinMaxButtonsHint;
+    pTemperatureView->setWindowFlags(flags);
 }
 
 
@@ -795,7 +800,8 @@ MainWindow::initIvsVCharts() {
     pChartMeasurements = new QChart();
     pChartMeasurements->setTheme(QChart::ChartThemeBlueCerulean);
     pChartMeasurements->setAnimationOptions(QChart::SeriesAnimations);
-    pChartMeasurements->setTitle(sMeasurementPlotLabel);
+//    pChartMeasurements->setTitle(sMeasurementPlotLabel);
+    pChartMeasurements->legend()->hide();
     // Data
     pMeasurements = new QScatterSeries();
     pMeasurements->setColor(QColor(255, 0, 0, 255));
