@@ -23,7 +23,6 @@
 QT += core
 QT += gui
 QT += widgets
-QT += charts
 
 
 TARGET = conductivity
@@ -35,11 +34,11 @@ SOURCES += mainwindow.cpp
 SOURCES += cornerstone130.cpp
 SOURCES += keithley236.cpp
 SOURCES += lakeshore330.cpp
-SOURCES +=
-SOURCES +=
-SOURCES +=
-SOURCES +=
-SOURCES +=
+SOURCES += cdatastream2d.cpp
+SOURCES += plot2d.cpp
+SOURCES += axesdialog.cpp
+SOURCES += AxisLimits.cpp
+SOURCES += AxisFrame.cpp
 SOURCES += DataSetProperties.cpp
 SOURCES += configureIvsVdialog.cpp
 SOURCES += configureRvsTdialog.cpp
@@ -49,11 +48,11 @@ HEADERS += mainwindow.h
 HEADERS += cornerstone130.h
 HEADERS += keithley236.h
 HEADERS += lakeshore330.h
-HEADERS +=
-HEADERS +=
-HEADERS +=
-HEADERS +=
-HEADERS +=
+HEADERS += cdatastream2d.h
+HEADERS += plot2d.h
+HEADERS += axesdialog.h
+HEADERS += AxisLimits.h
+HEADERS += AxisFrame.h
 HEADERS += DataSetProperties.h
 HEADERS += configureIvsVdialog.h
 HEADERS += configureRvsTdialog.h
@@ -62,7 +61,7 @@ HEADERS += utility.h
 FORMS   += mainwindow.ui
 FORMS   += configureIvsVdialog.ui
 FORMS   += configureRvsTdialog.ui
-FORMS   +=
+FORMS   += axesdialog.ui
 
 # For National Instruments GPIB Boards
 windows {
@@ -73,6 +72,8 @@ windows {
 linux {
   message("Running on Linux")
   LIBS += -L"/usr/local/lib" -lgpib # To include libgpib.so from /usr/local/lib
+  INCLUDEPATH += /usr/local/include
+  LIBS += -lpigpiod_if2 # To include libpigpiod_if2.so from /usr/local/lib
 }
 
 
@@ -85,5 +86,4 @@ DISTFILES += doc/Keithley236Manual.pdf
 DISTFILES += doc/LakeShore330_Manual.pdf
 DISTFILES += doc/Readme.txt
 
-RESOURCES += \
-    resources.qrc
+RESOURCES += resources.qrc

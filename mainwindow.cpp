@@ -24,8 +24,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "keithley236.h"
 #include "lakeshore330.h"
 #include "cornerstone130.h"
-#include <qmath.h>
+#include "plot2d.h"
+#if defined(Q_PROCESSOR_ARM)
+    #include "pigpiod_if2.h"// The header for using GPIO pins on Raspberry
+#endif
 
+#include <qmath.h>
 #include <QMessageBox>
 #include <QDebug>
 #include <QSettings>
@@ -41,14 +45,18 @@ MainWindow::MainWindow(QWidget *parent)
     , pKeithley(Q_NULLPTR)
     , pLakeShore(Q_NULLPTR)
     , pCornerStone130(Q_NULLPTR)
-    , pChartMeasurements(Q_NULLPTR)
-    , pChartTemperature(Q_NULLPTR)
-    , pDarkMeasurements(Q_NULLPTR)
-    , pPhotoMeasurements(Q_NULLPTR)
-    , pMeasurements(Q_NULLPTR)
-    , pTemperatures(Q_NULLPTR)
-    , pMeasurementsView(Q_NULLPTR)
-    , pTemperatureView(Q_NULLPTR)
+    , pPlotMeasurements(Q_NULLPTR)
+    , pPlotTemperature(Q_NULLPTR)
+    , bUseMonochromator(false)
+    , gpioHostHandle(-1)
+    , gpioLEDpin(4)
+    // GPIO Numbers are Broadcom (BCM) numbers
+    // For Raspberry Pi GPIO pin numbering see
+    // https://pinout.xyz/
+    //
+    // +5V on pins 2 or 4 in the 40 pin GPIO connector.
+    // GND on pins 6, 9, 14, 20, 25, 30, 34 or 39
+    // in the 40 pin GPIO connector.
 {
     ui->setupUi(this);
     // Remove the resize-handle in the lower right corner
@@ -56,6 +64,9 @@ MainWindow::MainWindow(QWidget *parent)
     // Make the size of the window fixed
     setFixedSize(size());
     setWindowIcon(QIcon("qrc:/myLogoT.png"));
+
+    sNormalStyle = ui->complianceButton->styleSheet();
+    sErrorStyle  = "QRadioButton { color: rgb(255, 255, 255); background: rgb(255, 0, 0); selection-background-color: rgb(128, 128, 255); }";
 
     ui->startRvsTButton->show();
     ui->startIvsVButton->show();
@@ -65,19 +76,21 @@ MainWindow::MainWindow(QWidget *parent)
     bRunning              = false;
     currentLampStatus     = LAMP_OFF;
     isK236ReadyForTrigger = false;
+    maxPlotPoints         = 3000;
 
     QSettings settings;
     restoreGeometry(settings.value("mainWindowGeometry").toByteArray());
     restoreState(settings.value("mainWindowState").toByteArray());
 
-    initRvsTCharts();// <<<<<<<<<<<<<<<<<<<<<
-//    initIvsVCharts();// <<<<<<<<<<<<<<<<<<<<<
-
 }
 
 
 MainWindow::~MainWindow() {
-    freeMemory();
+    if(pKeithley != Q_NULLPTR)         delete pKeithley;
+    if(pLakeShore != Q_NULLPTR)        delete pLakeShore;
+    if(pCornerStone130 != Q_NULLPTR)   delete pCornerStone130;
+    if(pPlotMeasurements != Q_NULLPTR) delete pPlotMeasurements;
+    if(pPlotTemperature != Q_NULLPTR)  delete pPlotTemperature;
     delete ui;
 }
 
@@ -85,47 +98,31 @@ MainWindow::~MainWindow() {
 void
 MainWindow::closeEvent(QCloseEvent *event) {
     Q_UNUSED(event)
-    // Save the window position (and dimensions)
     QSettings settings;
     settings.setValue("mainWindowGeometry", saveGeometry());
     settings.setValue("mainWindowState", saveState());
     if(bRunning) {
-        // Disable and stop all the timers
-        disconnect(&waitingTStartTimer, 0, 0, 0);
-        disconnect(&stabilizingTimer,   0, 0, 0);
-        disconnect(&readingTTimer,      0, 0, 0);
-        disconnect(&measuringTimer,     0, 0, 0);
         waitingTStartTimer.stop();
         stabilizingTimer.stop();
         readingTTimer.stop();
         measuringTimer.stop();
-        // Close the utput file
+        waitingTStartTimer.disconnect();
+        stabilizingTimer.disconnect();
+        readingTTimer.disconnect();
+        measuringTimer.disconnect();
         if(pOutputFile) {
             if(pOutputFile->isOpen())
                 pOutputFile->close();
             pOutputFile->deleteLater();
             pOutputFile = Q_NULLPTR;
         }
-        // Place the devices offline
         if(pKeithley) pKeithley->endVvsT();
         if(pLakeShore) pLakeShore->switchPowerOff();
     }
-    // Free allocated objects
-    freeMemory();
-}
-
-
-void
-MainWindow::freeMemory() {
-    if(pKeithley       != Q_NULLPTR) delete pKeithley;
-    if(pLakeShore      != Q_NULLPTR) delete pLakeShore;
-    if(pCornerStone130 != Q_NULLPTR) delete pCornerStone130;
-
-    pKeithley          = Q_NULLPTR;
-    pLakeShore         = Q_NULLPTR;
-    pCornerStone130    = Q_NULLPTR;
-
-    deleteGraphics();
+#if defined(Q_PROCESSOR_ARM)
+    if(gpioHostHandle >= 0)
+        pigpio_stop(gpioHostHandle);
+#endif
 }
 
 
@@ -159,36 +156,37 @@ MainWindow::checkInstruments() {
     if(isGpibError("FindLstn() failed. Are the Instruments Connected and Switched On ?"))
         return false;
     int nDevices = ThreadIbcnt();
-    qInfo() << QString("Found %1 Instruments connected to the GPIB Bus").arg(nDevices);
+    //qInfo() << QString("Found %1 Instruments connected to the GPIB Bus").arg(nDevices);
     // Identify the instruments connected to the GPIB Bus
     QString sCommand, sInstrumentID;
     // Identify the instruments connected to the GPIB Bus
     char readBuf[257];
     int cornerstoneId = 0;
-    // Check for the monochromator...
-    for(int i=0; i<nDevices; i++) {
-        sCommand = "INFO?\r\n";
-        Send(gpibBoardID, resultlist[i], sCommand.toUtf8().constData(), sCommand.length(), DABend);
-        Receive(gpibBoardID, resultlist[i], readBuf, 256, 0x0A);
-        readBuf[ThreadIbcnt()] = '\0';
-        sInstrumentID = QString(readBuf);
-//      qDebug() << QString("Address= %1 - InstrumentID= %2")
-//                  .arg(resultlist[i])
-//                  .arg(sInstrumentID);
-        if(sInstrumentID.contains("Cornerstone 130", Qt::CaseInsensitive)) {
-            cornerstoneId = resultlist[i];
-            if(pCornerStone130 == Q_NULLPTR) {
-                pCornerStone130 = new CornerStone130(gpibBoardID, resultlist[i], this);
+    if(bUseMonochromator) {
+        // Check for the monochromator...
+        for(int i=0; i<nDevices; i++) {
+            sCommand = "INFO?\r\n";
+            Send(gpibBoardID, resultlist[i], sCommand.toUtf8().constData(), sCommand.length(), DABend);
+            Receive(gpibBoardID, resultlist[i], readBuf, 256, 0x0A);
+            readBuf[ThreadIbcnt()] = '\0';
+            sInstrumentID = QString(readBuf);
+//            qDebug() << QString("Address= %1 - InstrumentID= %2")
+//                        .arg(resultlist[i])
+//                        .arg(sInstrumentID);
+            if(sInstrumentID.contains("Cornerstone 130", Qt::CaseInsensitive)) {
+                cornerstoneId = resultlist[i];
+                if(pCornerStone130 == Q_NULLPTR) {
+                    pCornerStone130 = new CornerStone130(gpibBoardID, resultlist[i], this);
+                }
+                break;
             }
-            break;
+        }
+        if(pCornerStone130 == Q_NULLPTR) {
+            QMessageBox::warning(this, "Error", "Cornerstone 130 not Connected",
+                                 QMessageBox::Abort, QMessageBox::Abort);
+            return false;
         }
     }
-    if(pCornerStone130 == Q_NULLPTR) {
-        QMessageBox::warning(this, "Error", "Cornerstone 130 not Connected",
-                             QMessageBox::Abort, QMessageBox::Abort);
-        return false;
-    }
-
     // Check for the temperature controller...
     sCommand = "*IDN?\r\n";
     int lakeShoreID = 0;
@@ -198,9 +196,9 @@ MainWindow::checkInstruments() {
         Receive(gpibBoardID, resultlist[i], readBuf, 256, STOPend);
         readBuf[ThreadIbcnt()] = '\0';
         sInstrumentID = QString(readBuf);
-//      qDebug() << QString("Address= %1 - InstrumentID= %2")
-//                  .arg(resultlist[i])
-//                  .arg(sInstrumentID);
+//        qDebug() << QString("Address= %1 - InstrumentID= %2")
+//                    .arg(resultlist[i])
+//                    .arg(sInstrumentID);
         if(sInstrumentID.contains("MODEL330", Qt::CaseInsensitive)) {
             lakeShoreID = resultlist[i];
             if(pLakeShore == NULL) {
@@ -224,9 +222,9 @@ MainWindow::checkInstruments() {
         Receive(gpibBoardID, resultlist[i], readBuf, 256, STOPend);
         readBuf[ThreadIbcnt()] = '\0';
         sInstrumentID = QString(readBuf);
-//      qDebug() << QString("Address= %1 - InstrumentID= %2")
-//                  .arg(resultlist[i])
-//                  .arg(sInstrumentID);
+//        qDebug() << QString("Address= %1 - InstrumentID= %2")
+//                    .arg(resultlist[i])
+//                    .arg(sInstrumentID);
         if(sInstrumentID.contains("236", Qt::CaseInsensitive)) {
             if(pKeithley == Q_NULLPTR) {
                 pKeithley = new Keithley236(gpibBoardID, resultlist[i], this);
@@ -235,26 +233,54 @@ MainWindow::checkInstruments() {
         }
     }
     if(pKeithley == Q_NULLPTR) {
-        QMessageBox::warning(this, "Error", "Source Measure Unit not Connected",
-                             QMessageBox::Abort, QMessageBox::Abort);
+        ui->statusBar->showMessage(QString("Error: Source Measure Unit not Connected"));
         return false;
     }
 
+#if defined(Q_PROCESSOR_ARM)
+    gpioHostHandle = pigpio_start((char*)"localhost", (char*)"8888");
+    if(gpioHostHandle < 0) {
+        ui->statusBar->showMessage(QString("Unable to initialize the Pi GPIO."));
+        return false;
+    }
+    if(gpioHostHandle >= 0) {
+        if(set_mode(gpioHostHandle, gpioLEDpin, PI_OUTPUT) < 0) {
+            ui->statusBar->showMessage(QString("Unable to initialize %1 as Output")
+                                       .arg(gpioLEDpin));
+            return false;
+        }
+        if(set_pull_up_down(gpioHostHandle, gpioLEDpin, PI_PUD_UP) < 0) {
+            ui->statusBar->showMessage(QString("Unable to set %1 Pull-Up")
+                                       .arg(gpioLEDpin));
+            return false;
+        }
+    }
+#endif
     return true;
 }
 
 
-bool
+void
 MainWindow::switchLampOn() {
     ui->photoButton->setChecked(true);
-    return pCornerStone130->openShutter();
+    if(bUseMonochromator)
+        pCornerStone130->openShutter();
+#if defined(Q_PROCESSOR_ARM)
+    if(gpioHostHandle >= 0)
+        gpio_write(gpioHostHandle, gpioLEDpin, 1);
+#endif
 }
 
 
-bool
+void
 MainWindow::switchLampOff() {
     ui->photoButton->setChecked(false);
-    return pCornerStone130->closeShutter();
+    if(bUseMonochromator)
+        pCornerStone130->closeShutter();
+#if defined(Q_PROCESSOR_ARM)
+    if(gpioHostHandle >= 0)
+        gpio_write(gpioHostHandle, gpioLEDpin, 0);
+#endif
 }
 
 
@@ -262,27 +288,27 @@ void
 MainWindow::stopRvsT() {
     bRunning = false;
     presentMeasure = NoMeasure;
-    disconnect(&waitingTStartTimer, 0, 0, 0);
-    disconnect(&stabilizingTimer,   0, 0, 0);
-    disconnect(&readingTTimer,      0, 0, 0);
-    disconnect(&measuringTimer,     0, 0, 0);
     waitingTStartTimer.stop();
     stabilizingTimer.stop();
     readingTTimer.stop();
     measuringTimer.stop();
+    waitingTStartTimer.disconnect();
+    stabilizingTimer.disconnect();
+    readingTTimer.disconnect();
+    measuringTimer.disconnect();
     if(pOutputFile) {
         pOutputFile->close();
         pOutputFile->deleteLater();
         pOutputFile = Q_NULLPTR;
     }
     if(pKeithley != Q_NULLPTR) {
-        disconnect(pKeithley, 0, 0, 0);
+        pKeithley->disconnect();
         pKeithley->endVvsT();
         pKeithley->deleteLater();
         pKeithley = Q_NULLPTR;
     }
     if(pLakeShore != Q_NULLPTR) {
-        disconnect(pLakeShore, 0, 0, 0);
+        pLakeShore->disconnect();
         pLakeShore->switchPowerOff();
         pLakeShore->deleteLater();
         pLakeShore = Q_NULLPTR;
@@ -316,16 +342,18 @@ MainWindow::on_startRvsTButton_clicked() {
         QApplication::restoreOverrideCursor();
         return;
     }
-    //Initializing Corner Stone 130
-    ui->statusBar->showMessage("Initializing Corner Stone 130...");
-    if(pCornerStone130->init() != NO_ERROR){
-        ui->statusBar->showMessage("Unable to Initialize Corner Stone 130...");
-        QApplication::restoreOverrideCursor();
-        return;
+    if(bUseMonochromator) {
+        //Initializing Corner Stone 130
+        ui->statusBar->showMessage("Initializing Corner Stone 130...");
+        if(pCornerStone130->init() != NO_ERROR){
+            ui->statusBar->showMessage("Unable to Initialize Corner Stone 130...");
+            QApplication::restoreOverrideCursor();
+            return;
+        }
+        switchLampOff();
+        pCornerStone130->setGrating(configureRvsTDialog.iGratingNumber);
+        pCornerStone130->setWavelength(configureRvsTDialog.dWavelength);
     }
-    switchLampOff();
-    pCornerStone130->setGrating(configureRvsTDialog.iGratingNumber);
-    pCornerStone130->setWavelength(configureRvsTDialog.dWavelength);
     // Initializing Keithley 236
     ui->statusBar->showMessage("Initializing Keithley 236...");
     if(pKeithley->init()) {
@@ -336,6 +364,8 @@ MainWindow::on_startRvsTButton_clicked() {
     isK236ReadyForTrigger = false;
     connect(pKeithley, SIGNAL(complianceEvent()),
             this, SLOT(onComplianceEvent()));
+    connect(pKeithley, SIGNAL(clearCompliance()),
+            this, SLOT(onClearComplianceEvent()));
     connect(pKeithley, SIGNAL(readyForTrigger()),
             this, SLOT(onKeithleyReadyForTrigger()));
     connect(pKeithley, SIGNAL(newReading(QDateTime, QString)),
@@ -357,23 +387,30 @@ MainWindow::on_startRvsTButton_clicked() {
         return;
     }
     // Write the header
+    // To cope with GnuPlot way to handle the comment lines
     pOutputFile->write(QString("%1 %2 %3 %4 %5 %6")
-                       .arg("T-Dark[K]", 12)
+                       .arg("#T-Dark[K]", 12)
                        .arg("V-Dark[V]", 12)
                        .arg("I-Dark[A]", 12)
                        .arg("T-Photo[K]", 12)
                        .arg("V-Photo[V]", 12)
                        .arg("I-Photo[A]\n", 12)
                        .toLocal8Bit());
-    pOutputFile->write(configureRvsTDialog.sSampleInfo.toLocal8Bit());
-    pOutputFile->write("\n");
-    pOutputFile->write(QString("Grating #= %1 Wavelength = %2 nm")
-                               .arg(configureRvsTDialog.iGratingNumber)
-                               .arg(configureRvsTDialog.dWavelength).toLocal8Bit());
-    pOutputFile->write("\n");
+    QStringList HeaderLines = configureRvsTDialog.sSampleInfo.split("\n");
+    for(int i=0; i<HeaderLines.count(); i++) {
+        pOutputFile->write("#");
+        pOutputFile->write(HeaderLines.at(i).toLocal8Bit());
+        pOutputFile->write("\n");
+    }
+    if(bUseMonochromator) {
+        pOutputFile->write(QString("Grating #= %1 Wavelength = %2 nm")
+                                   .arg(configureRvsTDialog.iGratingNumber)
+                                   .arg(configureRvsTDialog.dWavelength).toLocal8Bit());
+        pOutputFile->write("\n");
+    }
     pOutputFile->flush();
     // Init the Plots
-    initRvsTCharts();
+    initRvsTPlots();
     // Configure Thermostat
     pLakeShore->setTemperature(configureRvsTDialog.dTempStart);
     pLakeShore->switchPowerOn(3);
@@ -398,9 +435,7 @@ MainWindow::on_startRvsTButton_clicked() {
     // Read and plot initial value of Temperature
     startReadingTTime = waitingTStartTime;
     onTimeToReadT();
-    readingTTimer.start(5000);
-    // Start the reaching of the Initial Temperature
-    waitingTStartTimer.start(5000);
+    readingTTimer.start(30000);
 
     // All done... compute the time needed for the measurement:
     startMeasuringTime = QDateTime::currentDateTime();
@@ -417,9 +452,11 @@ MainWindow::on_startRvsTButton_clicked() {
     // now we are waiting for reaching the initial temperature
     ui->startIvsVButton->setDisabled(true);
     ui->startRvsTButton->setText("Stop R vs T");
-    ui->statusBar->showMessage(QString("%1 Waiting Initial T[%2K]")
+    ui->statusBar->showMessage(QString("%1 Waiting Initial T [%2K]")
                                .arg(waitingTStartTime.toString())
                                .arg(configureRvsTDialog.dTempStart));
+    // Start the reaching of the Initial Temperature
+    waitingTStartTimer.start(5000);
 }
 
 
@@ -453,6 +490,8 @@ MainWindow::on_startIvsVButton_clicked() {
     isK236ReadyForTrigger = false;
     connect(pKeithley, SIGNAL(complianceEvent()),
             this, SLOT(onComplianceEvent()));
+    connect(pKeithley, SIGNAL(clearCompliance()),
+            this, SLOT(onClearComplianceEvent()));
     connect(pKeithley, SIGNAL(readyForTrigger()),
             this, SLOT(onKeithleyReadyForSweepTrigger()));
     // Initializing LakeShore 330
@@ -470,37 +509,44 @@ MainWindow::on_startIvsVButton_clicked() {
         stopIvsV();
         return;
     }
+    // To cope with GnuPlot way to handle the comment lines
     pOutputFile->write(QString("%1 %2 %3\n")
-                       .arg("Voltage[V]", 12)
+                       .arg("#Voltage[V]", 12)
                        .arg("Current[A]", 12)
                        .arg("Temp.[K]", 12).toLocal8Bit());
-    pOutputFile->write(configureIvsVDialog.sSampleInfo.toLocal8Bit());
-    pOutputFile->write("\n");
+    QStringList HeaderLines = configureIvsVDialog.sSampleInfo.split("\n");
+    for(int i=0; i<HeaderLines.count(); i++) {
+        pOutputFile->write("#");
+        pOutputFile->write(HeaderLines.at(i).toLocal8Bit());
+        pOutputFile->write("\n");
+    }
     pOutputFile->flush();
 
     ui->statusBar->showMessage("Checking the presence of a Junction...");
-    double vStart = configureIvsVDialog.dVStart;
-    double vStop =  configureIvsVDialog.dVStop;
-    junctionDirection = pKeithley->junctionCheck(vStart, vStop);
+    //    double vStart = configureIvsVDialog.dVStart;
+    //    double vStop =  configureIvsVDialog.dVStop;
+    //    junctionDirection = pKeithley->junctionCheck(vStart, vStop);
+    junctionDirection = 0;
     if(junctionDirection == pKeithley->ERROR_JUNCTION) {
         ui->statusBar->showMessage("Error Checking the presence of a Junction...");
         stopIvsV();
         return;
     }
     // Now we know how to proceed... (maybe...)
-    initIvsVCharts();
+    initIvsVPlots();
     isK236ReadyForTrigger = false;
     presentMeasure = IvsV;
     connect(&readingTTimer, SIGNAL(timeout()),
             this, SLOT(onTimeToReadT()));
-    readingTTimer.start(5000);
+    readingTTimer.start(30000);
     // Read and plot initial value of Temperature
     startReadingTTime = QDateTime::currentDateTime();
     onTimeToReadT();
     double expectedSeconds;
     startMeasuringTime = QDateTime::currentDateTime();
     expectedSeconds = 0.32+configureIvsVDialog.iWaitTime/1000.0;
-    expectedSeconds *= 4.0 * configureIvsVDialog.iNSweepPoints;
+    expectedSeconds *= configureIvsVDialog.iNSweepPoints;
+//    qDebug() << "The measure will last" << expectedSeconds << "sec.";
     if(configureIvsVDialog.bUseThermostat) {
         connect(&waitingTStartTimer, SIGNAL(timeout()),
                 this, SLOT(onTimeToCheckT()));
@@ -525,6 +571,7 @@ MainWindow::on_startIvsVButton_clicked() {
     else {
         startI_V();
     }
+//    qDebug() << "The measure will last" << expectedSeconds << "sec.";
     endMeasureTime = startMeasuringTime.addSecs(expectedSeconds);
     QString sString = endMeasureTime.toString("hh:mm:ss dd-MM-yyyy");
     ui->endTimeEdit->setText(sString);
@@ -537,7 +584,7 @@ void
 MainWindow::startI_V() {
     if(junctionDirection == 0) {
         // No diode junction
-//      qDebug() << "No junctions in device";
+//        qDebug() << "No junctions in device";
         ui->statusBar->showMessage("No junctions: Sweeping...Please Wait");
         double dIStart = configureIvsVDialog.dIStart;
         double dIStop = configureIvsVDialog.dIStop;
@@ -552,7 +599,7 @@ MainWindow::startI_V() {
         pKeithley->initISweep(dIStart, dIStop, dIStep, dDelayms, dCompliance);
     }
     else if(junctionDirection > 0) {// Forward junction
-//      qDebug() << "Forward Direction Handling";
+//        qDebug() << "Forward Direction Handling";
         ui->statusBar->showMessage("Forward junction: Sweeping...Please Wait");
         double dIStart = 0.0;
         double dIStop = configureIvsVDialog.dIStop;
@@ -567,7 +614,7 @@ MainWindow::startI_V() {
         pKeithley->initISweep(dIStart, dIStop, dIStep, dDelayms, dCompliance);
     }
     else {// Reverse junction
-//      qDebug() << "Reverse Direction Handling";
+//        qDebug() << "Reverse Direction Handling";
         ui->statusBar->showMessage("Reverse junction: Sweeping...Please Wait");
         double dVStart = 0.0;
         double dVStop = configureIvsVDialog.dVStop;
@@ -595,17 +642,17 @@ MainWindow::stopIvsV() {
     readingTTimer.stop();
     waitingTStartTimer.stop();
     stabilizingTimer.stop();
-    disconnect(&readingTTimer, 0, 0, 0);
-    disconnect(&waitingTStartTimer, 0, 0, 0);
-    disconnect(&stabilizingTimer, 0, 0, 0);
+    readingTTimer.disconnect();
+    waitingTStartTimer.disconnect();
+    stabilizingTimer.disconnect();
     if(pKeithley != Q_NULLPTR) {
-        disconnect(pKeithley, 0, 0, 0);
+        pKeithley->disconnect();
         pKeithley->stopSweep();
         pKeithley->deleteLater();
         pKeithley = Q_NULLPTR;
     }
     if(pLakeShore != Q_NULLPTR) {
-        disconnect(pLakeShore, 0, 0, 0);
+        pLakeShore->disconnect();
         pLakeShore->switchPowerOff();
         pLakeShore->deleteLater();
         pLakeShore = Q_NULLPTR;
@@ -639,210 +686,97 @@ MainWindow::prepareOutputFile(QString sBaseDir, QString sFileName) {
 
 
 void
-MainWindow::initRvsTCharts() {
-    deleteGraphics();
-
-    xDataMin = 1000.0/configureRvsTDialog.dTempStart;
-    xDataMax = 1000.0/configureRvsTDialog.dTempEnd;
-    if(xDataMin>xDataMax) {
-       auto tmp = xDataMin;
-       xDataMin = xDataMax;
-       xDataMax = tmp;
-    }
-    yDataMin = 1.0e-1;
-    yDataMax = 1.0e+1;
-
-    // Plot of Conductivity vs Temperature
+MainWindow::initRvsTPlots() {
+    if(pPlotMeasurements) delete pPlotMeasurements;
+    pPlotMeasurements = Q_NULLPTR;
+    if(pPlotTemperature) delete pPlotTemperature;
+    pPlotTemperature = Q_NULLPTR;
+    // Plot of Condicibility vs Temperature
     sMeasurementPlotLabel = QString("log(S) [Ohm^-1] -vs- 1000/T [K^-1]");
-    pChartMeasurements = new QChart();
-    pChartMeasurements->setTheme(QChart::ChartThemeBlueCerulean);
-    pChartMeasurements->setAnimationOptions(QChart::SeriesAnimations);
-//    pChartMeasurements->setTitle(sMeasurementPlotLabel);
-    pChartMeasurements->legend()->hide();
-    // Data in Dark
-    pDarkMeasurements = new QScatterSeries();
-    pDarkMeasurements->setColor(QColor(255, 0, 0, 255));
-    pChartMeasurements->addSeries(pDarkMeasurements);
-    // Data in Photo
-    pPhotoMeasurements = new QScatterSeries();
-    pPhotoMeasurements->setColor(QColor(255, 255, 0, 255));
-    pChartMeasurements->addSeries(pPhotoMeasurements);
-    // X Axis
-    QValueAxis *xAxis = new QValueAxis();
-    xAxis->setTickCount(11);
-    xAxis->setLabelFormat("%.1f");
-    xAxis->setShadesVisible(false);
-    xAxis->setShadesBrush(QBrush(QColor(249, 249, 255)));
-    xAxis->setRange(xDataMin, xDataMax);
-    // Y Axis
-    QLogValueAxis *yAxis = new QLogValueAxis();
-    yAxis->setBase(10.0);
-    yAxis->setLabelFormat("%.1g");
-    yAxis->setShadesVisible(false);
-    yAxis->setShadesBrush(QBrush(QColor(249, 249, 255)));
-    yAxis->setGridLineVisible(true);
-    yAxis->setMinorGridLineVisible(true);
-    yAxis->setRange(yDataMin, yDataMax);
-    // Add Axes to Plot
-    pChartMeasurements->addAxis(xAxis, Qt::AlignBottom);
-    pChartMeasurements->addAxis(yAxis, Qt::AlignLeft);
-    pDarkMeasurements->attachAxis(xAxis);
-    pDarkMeasurements->attachAxis(yAxis);
-    pPhotoMeasurements->attachAxis(xAxis);
-    pPhotoMeasurements->attachAxis(yAxis);
-    // The Plot View
-    pMeasurementsView = new QChartView();
-    pMeasurementsView->setChart(pChartMeasurements);
-    pMeasurementsView->setRenderHint(QPainter::Antialiasing);
-    pMeasurementsView->setWindowTitle(sMeasurementPlotLabel);
-    pMeasurementsView->setRubberBand(QChartView::RectangleRubberBand);
-    // Attempt to remove the close button
-    Qt::WindowFlags flags;
-    flags  = Qt::CustomizeWindowHint;
-    flags |= Qt::WindowMinMaxButtonsHint;
-    pMeasurementsView->setWindowFlags(flags);
+    pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
+    pPlotMeasurements->setMaxPoints(maxPlotPoints);
+    pPlotMeasurements->SetLimits(0.0, 1.0, 0.1, 1.0, true, true, false, true);
 
-    createTemperaturePlot();
+    pPlotMeasurements->NewDataSet(iPlotDark,//Id
+                                  3, //Pen Width
+                                  QColor(255, 0, 0),// Color
+                                  Plot2D::ipoint,// Symbol
+                                  "Dark"// Title
+                                  );
+    pPlotMeasurements->SetShowDataSet(iPlotDark, true);
+    pPlotMeasurements->SetShowTitle(iPlotDark, true);
 
-    // Show the Charts
-    pMeasurementsView->show();
-    pTemperatureView->show();
-}
+    pPlotMeasurements->NewDataSet(iPlotPhoto,//Id
+                                  3, //Pen Width
+                                  QColor(255, 255, 0),// Color
+                                  Plot2D::ipoint,// Symbol
+                                  "Photo"// Title
+                                  );
+    pPlotMeasurements->SetShowDataSet(iPlotPhoto, true);
+    pPlotMeasurements->SetShowTitle(iPlotPhoto, true);
 
-
-void
-MainWindow::createTemperaturePlot() {
-    xTempMin =  0.0;
-    xTempMax = 30.0;
-    yTempMin = configureRvsTDialog.dTempStart;
-    yTempMax = configureRvsTDialog.dTempEnd;
+    pPlotMeasurements->UpdatePlot();
+    pPlotMeasurements->show();
 
     // Plot of Temperature vs Time
     sTemperaturePlotLabel = QString("T [K] vs t [s]");
-    pChartTemperature = new QChart();
-    pChartTemperature->setTheme(QChart::ChartThemeBlueCerulean);
-    pChartTemperature->setAnimationOptions(QChart::SeriesAnimations);
-//    pChartTemperature->setTitle(sTemperaturePlotLabel);
-    pChartTemperature->legend()->hide();
-    // Data
-    pTemperatures = new QLineSeries();
-    pTemperatures->setColor(QColor(255, 255, 0, 255));
-    pChartTemperature->addSeries(pTemperatures);
-    // X Axis
-    QValueAxis *xAxisT = new QValueAxis();
-    xAxisT->setTickCount(11);
-    xAxisT->setLabelFormat("%.1f");
-    xAxisT->setShadesVisible(false);
-    xAxisT->setShadesBrush(QBrush(QColor(249, 249, 255)));
-    xAxisT->setRange(xTempMin, xTempMax);
-    // Y Axis
-    QValueAxis *yAxisT = new QValueAxis();
-    yAxisT->setTickCount(11);
-    yAxisT->setLabelFormat("%.1f");
-    yAxisT->setShadesVisible(false);
-    yAxisT->setShadesBrush(QBrush(QColor(249, 249, 255)));
-    yAxisT->setMinorTickCount(-1);
-    yAxisT->setRange(yTempMin, yTempMax);
-    // Add Axes to Plot
-    pChartTemperature->addAxis(xAxisT, Qt::AlignBottom);
-    pChartTemperature->addAxis(yAxisT, Qt::AlignLeft);
-    // Data
-    pTemperatures->attachAxis(xAxisT);
-    pTemperatures->attachAxis(yAxisT);
-    // The Plot View
-    pTemperatureView = new QChartView();
-    pTemperatureView->setChart(pChartTemperature);
-    pTemperatureView->setRenderHint(QPainter::Antialiasing);
-    pTemperatureView->setWindowTitle(sTemperaturePlotLabel);
-    pTemperatureView->setRubberBand(QChartView::RectangleRubberBand);
-    // Attempt to remove the close button
-    Qt::WindowFlags flags;
-    flags  = Qt::CustomizeWindowHint;
-    flags |= Qt::WindowMinMaxButtonsHint;
-    pTemperatureView->setWindowFlags(flags);
-}
+    pPlotTemperature = new Plot2D(this, sTemperaturePlotLabel);
+    pPlotTemperature->setMaxPoints(maxPlotPoints);
+    pPlotTemperature->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
 
+    pPlotTemperature->NewDataSet(1,//Id
+                                 3, //Pen Width
+                                 QColor(255, 0, 0),// Color
+                                 Plot2D::ipoint,// Symbol
+                                 "T"// Title
+                                 );
+    pPlotTemperature->SetShowDataSet(1, true);
+    pPlotTemperature->SetShowTitle(1, true);
 
-
-void
-MainWindow::deleteGraphics() {
-    if(pChartMeasurements) delete pChartMeasurements;
-    if(pChartTemperature)  delete pChartTemperature;
-    if(pDarkMeasurements)  delete pDarkMeasurements;
-    if(pPhotoMeasurements) delete pPhotoMeasurements;
-    if(pMeasurements)      delete pMeasurements;
-    if(pMeasurementsView)  delete pMeasurementsView;
-    if(pTemperatures)      delete pTemperatures;
-    if(pTemperatureView)   delete pTemperatureView;
-
-    pChartMeasurements = Q_NULLPTR;
-    pChartTemperature  = Q_NULLPTR;
-    pDarkMeasurements  = Q_NULLPTR;
-    pPhotoMeasurements = Q_NULLPTR;
-    pMeasurements      = Q_NULLPTR;
-    pMeasurementsView  = Q_NULLPTR;
-    pTemperatures      = Q_NULLPTR;
-    pTemperatureView   = Q_NULLPTR;
+    pPlotTemperature->UpdatePlot();
+    pPlotTemperature->show();
+    iCurrentTPlot = 1;
 }
 
 
 void
-MainWindow::initIvsVCharts() {
-    deleteGraphics();
-
-    xDataMin = 0.0;
-    xDataMax = 0.01;
-    yDataMin = 0.0;
-    yDataMax = 0.01;
-
+MainWindow::initIvsVPlots() {
+    if(pPlotMeasurements) delete pPlotMeasurements;
+    pPlotMeasurements = Q_NULLPTR;
+    if(pPlotTemperature) delete pPlotTemperature;
+    pPlotTemperature = Q_NULLPTR;
     // Plot of Current vs Voltage
     sMeasurementPlotLabel = QString("I [A] vs V [V]");
-    pChartMeasurements = new QChart();
-    pChartMeasurements->setTheme(QChart::ChartThemeBlueCerulean);
-    pChartMeasurements->setAnimationOptions(QChart::SeriesAnimations);
-//    pChartMeasurements->setTitle(sMeasurementPlotLabel);
-    pChartMeasurements->legend()->hide();
-    // Data
-    pMeasurements = new QScatterSeries();
-    pMeasurements->setColor(QColor(255, 0, 0, 255));
-    pChartMeasurements->addSeries(pMeasurements);
-    // X Axis
-    QValueAxis *xAxis = new QValueAxis();
-    xAxis->setTickCount(11);
-    xAxis->setLabelFormat("%.1g");
-    xAxis->setShadesVisible(false);
-    xAxis->setShadesBrush(QBrush(QColor(249, 249, 255)));
-    xAxis->setRange(xDataMin, xDataMax);
-    // Y Axis
-    QValueAxis *yAxis = new QValueAxis();
-    yAxis->setTickCount(11);
-    yAxis->setLabelFormat("%.1g");
-    yAxis->setShadesVisible(false);
-    yAxis->setShadesBrush(QBrush(QColor(249, 249, 255)));
-    yAxis->setRange(yDataMin, yDataMax);
-    // Add Axes to Plot
-    pChartMeasurements->addAxis(xAxis, Qt::AlignBottom);
-    pChartMeasurements->addAxis(yAxis, Qt::AlignLeft);
-    pMeasurements->attachAxis(xAxis);
-    pMeasurements->attachAxis(yAxis);
-    // The Plot View
-    pMeasurementsView = new QChartView();
-//    Qt::WindowFlags flags = pMeasurementsView->windowFlags();
-//    flags = Qt::CustomizeWindowHint;
-//    flags |= Qt::WindowMinMaxButtonsHint;
-//    flags &= ~Qt::WindowContextHelpButtonHint;
-//    flags &= ~Qt::WindowCloseButtonHint;
-//    pMeasurementsView->setWindowFlags(flags);
-    pMeasurementsView->setChart(pChartMeasurements);
-    pMeasurementsView->setRenderHint(QPainter::Antialiasing);
-    pMeasurementsView->setWindowTitle(sMeasurementPlotLabel);
-    pMeasurementsView->setRubberBand(QChartView::RectangleRubberBand);
 
-    createTemperaturePlot();
-
-    // Show the Charts
-    pMeasurementsView->show();
-    pTemperatureView->show();
+    pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
+    pPlotMeasurements->setMaxPoints(maxPlotPoints);
+    pPlotMeasurements->NewDataSet(1,//Id
+                                  3, //Pen Width
+                                  QColor(255, 255, 0),// Color
+                                  Plot2D::ipoint,// Symbol
+                                  "IvsV"// Title
+                                  );
+    pPlotMeasurements->SetShowDataSet(1, true);
+    pPlotMeasurements->SetShowTitle(1, true);
+    pPlotMeasurements->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
+    pPlotMeasurements->UpdatePlot();
+    pPlotMeasurements->show();
+    // Plot of Temperature vs Time
+    sTemperaturePlotLabel = QString("T [K] vs t [s]");
+    pPlotTemperature = new Plot2D(this, sTemperaturePlotLabel);
+    pPlotTemperature->setMaxPoints(maxPlotPoints);
+    pPlotTemperature->NewDataSet(1,//Id
+                                 3, //Pen Width
+                                 QColor(255, 255, 0),// Color
+                                 Plot2D::ipoint,// Symbol
+                                 "T"// Title
+                                 );
+    pPlotTemperature->SetShowDataSet(1, true);
+    pPlotTemperature->SetShowTitle(1, true);
+    pPlotTemperature->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
+    pPlotTemperature->UpdatePlot();
+    pPlotTemperature->show();
+    iCurrentTPlot = 1;
 }
 
 
@@ -853,7 +787,7 @@ MainWindow::onTimeToCheckT() {
     double T = pLakeShore->getTemperature();
     if(fabs(T-setPointT) < 0.15) {
         waitingTStartTimer.stop();
-        disconnect(&waitingTStartTimer, 0, 0, 0);
+        waitingTStartTimer.disconnect();
         connect(&stabilizingTimer, SIGNAL(timeout()),
                 this, SLOT(onSteadyTReached()));
         stabilizingTimer.start(configureIvsVDialog.iTimeToSteadyT*60*1000);
@@ -865,7 +799,7 @@ MainWindow::onTimeToCheckT() {
         quint64 elapsedSec = waitingTStartTime.secsTo(currentTime);
         if(elapsedSec > quint64(configureIvsVDialog.iReachingTStart)*60) {
             waitingTStartTimer.stop();
-            disconnect(&waitingTStartTimer, 0, 0, 0);
+            waitingTStartTimer.disconnect();
             connect(&stabilizingTimer, SIGNAL(timeout()),
                     this, SLOT(onSteadyTReached()));
             stabilizingTimer.start(configureIvsVDialog.iTimeToSteadyT*60*1000);
@@ -881,7 +815,15 @@ MainWindow::onTimeToCheckT() {
 void
 MainWindow::onSteadyTReached() {
     stabilizingTimer.stop();
-    disconnect(&stabilizingTimer, 0, 0, 0);
+    stabilizingTimer.disconnect();
+    // Update the time needed for the measurement:
+    double deltaT, expectedMinutes;
+    deltaT = configureRvsTDialog.dTempEnd -
+             configureRvsTDialog.dTempStart;
+    expectedMinutes = deltaT / configureRvsTDialog.dTRate;
+    endMeasureTime = QDateTime::currentDateTime().addSecs(expectedMinutes*60.0);
+    QString sString = endMeasureTime.toString("hh:mm dd-MM-yyyy");
+    ui->endTimeEdit->setText(sString);
     startI_V();
 }
 
@@ -892,13 +834,14 @@ void
 MainWindow::onTimeToCheckReachedT() {
     double T = pLakeShore->getTemperature();
     if(fabs(T-configureRvsTDialog.dTempStart) < 0.15) {
-        disconnect(&waitingTStartTimer, 0, 0, 0);
+        waitingTStartTimer.disconnect();
         waitingTStartTimer.stop();
         connect(&stabilizingTimer, SIGNAL(timeout()),
                 this, SLOT(onTimerStabilizeT()));
         stabilizingTimer.start(configureRvsTDialog.iStabilizingTime*60*1000);
-//      qDebug() << QString("Starting T Reached: Thermal Stabilization...");
-        ui->statusBar->showMessage(QString("Starting T Reached: Thermal Stabilization for %1 min.").arg(configureRvsTDialog.iStabilizingTime));
+        //qDebug() << QString("Starting T Reached: Thermal Stabilization...");
+        ui->statusBar->showMessage(QString("Starting T Reached: Thermal Stabilization for %1 min.")
+                                   .arg(configureRvsTDialog.iStabilizingTime));
         // Compute the new time needed for the measurement:
         startMeasuringTime = QDateTime::currentDateTime();
         double deltaT, expectedMinutes;
@@ -912,16 +855,18 @@ MainWindow::onTimeToCheckReachedT() {
     }
     else {
         currentTime = QDateTime::currentDateTime();
-        quint64 elapsedMsec = waitingTStartTime.secsTo(currentTime);
-//      qDebug() << "Elapsed:" << elapsedMsec << "Maximum:" << quint64(configureRvsTDialog.iReachingTime)*60*1000;
-        if(elapsedMsec > quint64(configureRvsTDialog.iReachingTime)*60*1000) {
-            disconnect(&waitingTStartTimer, 0, 0, 0);
+        quint64 elapsedSec = waitingTStartTime.secsTo(currentTime);
+        //qDebug() << "Elapsed:" << elapsedSec
+        //         << "Maximum:" << quint64(configureRvsTDialog.iReachingTime)*60;
+        if(elapsedSec >= quint64(configureRvsTDialog.iReachingTime)*60) {
+            waitingTStartTimer.disconnect();
             waitingTStartTimer.stop();
             connect(&stabilizingTimer, SIGNAL(timeout()),
                     this, SLOT(onTimerStabilizeT()));
             stabilizingTimer.start(configureRvsTDialog.iStabilizingTime*60*1000);
-//          qDebug() << QString("Max Reaching Time Exceed...Thermal Stabilization...");
-            ui->statusBar->showMessage(QString("Max Reaching Time Exceed...Thermal Stabilization for %1 min.").arg(configureRvsTDialog.iStabilizingTime));
+            //qDebug() << QString("Max Reaching Time Exceed...Thermal Stabilization...");
+            ui->statusBar->showMessage(QString("Max Time Exceeded: Stabilization for %1 min.")
+                                       .arg(configureRvsTDialog.iStabilizingTime));
         }
     }
 }
@@ -931,8 +876,18 @@ void
 MainWindow::onTimerStabilizeT() {
     // It's time to start measurements
     stabilizingTimer.stop();
-    disconnect(&stabilizingTimer, 0, 0, 0);
-//  qDebug() << "Thermal Stabilization Reached: Measure Started";
+    stabilizingTimer.disconnect();
+    pPlotTemperature->NewDataSet(2,//Id
+                                 3, //Pen Width
+                                 QColor(255, 255, 0),// Color
+                                 Plot2D::ipoint,// Symbol
+                                 "Tm"// Title
+                                 );
+    pPlotTemperature->SetShowDataSet(2, true);
+    pPlotTemperature->SetShowTitle(2, true);
+    pPlotTemperature->UpdatePlot();
+    iCurrentTPlot = 2;
+    //qDebug() << "Thermal Stabilization Reached: Measure Started";
     ui->statusBar->showMessage(QString("Thermal Stabilization Reached: Measure Started"));
     connect(&measuringTimer, SIGNAL(timeout()),
             this, SLOT(onTimeToGetNewMeasure()));
@@ -942,17 +897,26 @@ MainWindow::onTimerStabilizeT() {
     }
     double timeBetweenMeasurements = configureRvsTDialog.dInterval*1000.0;
     measuringTimer.start(timeBetweenMeasurements);
+    // Update the time needed for the measurement:
+    double deltaT, expectedMinutes;
+    deltaT = configureRvsTDialog.dTempEnd -
+             configureRvsTDialog.dTempStart;
+    expectedMinutes = deltaT / configureRvsTDialog.dTRate;
+    endMeasureTime = QDateTime::currentDateTime().addSecs(expectedMinutes*60.0);
+    QString sString = endMeasureTime.toString("hh:mm dd-MM-yyyy");
+    ui->endTimeEdit->setText(sString);
     bRunning = true;
 }
 
 
 void
 MainWindow::onTimeToGetNewMeasure() {
-    triggerAMeasure();
+    getNewMeasure();
     if(!pLakeShore->isRamping()) {// Ramp is Done
         stopRvsT();
-//      qDebug() << "End Temperature Reached: Measure is Done";
+        //    qDebug() << "End Temperature Reached: Measure is Done";
         ui->statusBar->showMessage(QString("Measurements Completed !"));
+        onClearComplianceEvent();
         return;
     }
 }
@@ -960,28 +924,28 @@ MainWindow::onTimeToGetNewMeasure() {
 
 void
 MainWindow::onTimeToReadT() {
-    double currentTemperature = pLakeShore->getTemperature();
+    currentTemperature = pLakeShore->getTemperature();
     currentTime = QDateTime::currentDateTime();
     ui->temperatureEdit->setText(QString("%1").arg(currentTemperature));
-
-    double now = double(startReadingTTime.secsTo(currentTime));
-    if(now < xTempMin) xTempMin = now;
-    if(now > xTempMax) xTempMax = now;
-    if(currentTemperature < yTempMin) yTempMin = currentTemperature;
-    if(currentTemperature > yTempMax) yTempMax = currentTemperature;
-
-    pChartTemperature->axisX()->setRange(xTempMin, xTempMax);
-    pChartTemperature->axisY()->setRange(yTempMin, yTempMax);
-
-    pTemperatures->append(now, currentTemperature);
-//    qDebug() << double(startReadingTTime.secsTo(currentTime))
-//             << currentTemperature;
+    pPlotTemperature->NewPoint(iCurrentTPlot,
+                               double(startReadingTTime.secsTo(currentTime)),
+                               currentTemperature);
+    pPlotTemperature->UpdatePlot();
 }
 
 
 void
 MainWindow::onComplianceEvent() {
-    qCritical() << "Compliance Event";
+    ui->complianceButton->setChecked(true);
+    ui->complianceButton->setStyleSheet(sErrorStyle);
+//    qCritical() << "Compliance Event";
+}
+
+
+void
+MainWindow::onClearComplianceEvent() {
+    ui->complianceButton->setChecked(false);
+    ui->complianceButton->setStyleSheet(sNormalStyle);
 }
 
 
@@ -1005,10 +969,10 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
     // Decode readings
     QStringList sMeasures = QStringList(sDataRead.split(",", QString::SkipEmptyParts));
     if(sMeasures.count() < 2) {
-        qCritical() << "Measurement Format Error";
+        qDebug() << "Measurement Format Error";
         return;
     }
-    double currentTemperature = pLakeShore->getTemperature();
+    currentTemperature = pLakeShore->getTemperature();
     double current, voltage;
     if(configureRvsTDialog.bSourceI) {
         current = sMeasures.at(0).toDouble();
@@ -1024,36 +988,26 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
 
     if(!bRunning)
         return;
-
-    pOutputFile->write(QString("%1 %2 %3")
-                       .arg(currentTemperature, 12, 'g', 6, ' ')
-                       .arg(voltage, 12, 'g', 6, ' ')
-                       .arg(current, 12, 'g', 6, ' ')
-                       .toLocal8Bit());
+    QString sData = QString("%1 %2 %3")
+                            .arg(currentTemperature, 12, 'g', 6, ' ')
+                            .arg(voltage, 12, 'g', 6, ' ')
+                            .arg(current, 12, 'g', 6, ' ');
+    pOutputFile->write(sData.toLocal8Bit());
     pOutputFile->flush();
-
-    double x = 1000.0/currentTemperature;
-    double y = current/voltage;
-    if(x < xDataMin) xDataMin = x;
-    if(x > xDataMax) xDataMax = x;
-    if(pPhotoMeasurements->count() == 0) {
-        yDataMin = 0.99*y;
-        yDataMax = 1.01*y;
-    }
-    else {
-        if(y < yDataMin) yDataMin = y;
-        if(y > yDataMax) yDataMax = y;
-    }
-    pChartMeasurements->axisX()->setRange(xDataMin, xDataMax);
-    pChartMeasurements->axisY()->setRange(yDataMin, yDataMax);
-
+//    qDebug() << currentLampStatus << sData;
     if(currentLampStatus == LAMP_OFF) {
-        pDarkMeasurements->append(x, y);
+        if(voltage != 0.0) {
+            pPlotMeasurements->NewPoint(iPlotDark, 1000.0/currentTemperature, current/voltage);
+            pPlotMeasurements->UpdatePlot();
+        }
         currentLampStatus = LAMP_ON;
         switchLampOn();
     }
     else {
-        pPhotoMeasurements->append(x, y);
+        if(voltage != 0.0) {
+            pPlotMeasurements->NewPoint(iPlotPhoto, 1000.0/currentTemperature, current/voltage);
+            pPlotMeasurements->UpdatePlot();
+        }
         currentLampStatus = LAMP_OFF;
         pOutputFile->write("\n");
         switchLampOff();
@@ -1061,7 +1015,6 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
 }
 
 
-// To be changed
 void
 MainWindow::onKeithleySweepDone(QDateTime dataTime, QString sData) {
     Q_UNUSED(dataTime)
@@ -1083,39 +1036,30 @@ MainWindow::onKeithleySweepDone(QDateTime dataTime, QString sData) {
             voltage = sMeasures.at(i).toDouble();
             current = sMeasures.at(i+1).toDouble();
         }
-        pOutputFile->write(QString("%1 %2 %3\n")
-                           .arg(voltage, 12, 'g', 6, ' ')
-                           .arg(current, 12, 'g', 6, ' ')
-                           .arg(setPointT, 12, 'g', 6, ' ')
-                           .toLocal8Bit());
-        if(pMeasurements->count() == 0) {
-            xDataMin = voltage*0.99;
-            xDataMax = voltage*1.01;
-            yDataMin = current*0.99;
-            yDataMax = current*1.01;
-        }
-        else {
-            if(voltage < xDataMin) xDataMin = voltage;
-            if(voltage > xDataMax) xDataMax = voltage;
-            if(current < yDataMin) yDataMin = current;
-            if(current > yDataMax) yDataMax = current;
-        }
-        pChartMeasurements->axisX()->setRange(xDataMin, xDataMax);
-        pChartMeasurements->axisY()->setRange(yDataMin, yDataMax);
-        pMeasurements->append(voltage, current);
+        QString sData = QString("%1 %2 %3\n")
+                .arg(voltage, 12, 'g', 6, ' ')
+                .arg(current, 12, 'g', 6, ' ')
+                .arg(currentTemperature, 12, 'g', 6, ' ');
+        pOutputFile->write(sData.toLocal8Bit());
+//        qDebug() << sData;
+        pPlotMeasurements->NewPoint(1, voltage, current);
     }
+    pPlotMeasurements->UpdatePlot();
     pOutputFile->flush();
     if(configureIvsVDialog.bUseThermostat) {
         setPointT += configureIvsVDialog.dTStep;
-//      qDebug() << QString("New Set Point: %1").arg(setPointT);
+//        qDebug() << QString("New Set Point: %1").arg(setPointT);
         if(setPointT > configureIvsVDialog.dTStop) {
             stopIvsV();
             ui->statusBar->showMessage("Measure Done");
+            onClearComplianceEvent();
             return;
         }
         isK236ReadyForTrigger = false;
         connect(pKeithley, SIGNAL(complianceEvent()),
                 this, SLOT(onComplianceEvent()));
+        connect(pKeithley, SIGNAL(clearCompliance()),
+                this, SLOT(onClearComplianceEvent()));
         connect(pKeithley, SIGNAL(readyForTrigger()),
                 this, SLOT(onKeithleyReadyForSweepTrigger()));
         connect(&waitingTStartTimer, SIGNAL(timeout()),
@@ -1126,22 +1070,22 @@ MainWindow::onKeithleySweepDone(QDateTime dataTime, QString sData) {
         // Configure Thermostat
         pLakeShore->setTemperature(setPointT);
         pLakeShore->switchPowerOn(3);
-        ui->statusBar->showMessage(QString("%1 Waiting Next T[%2K]")
+        ui->statusBar->showMessage(QString("%1 Waiting Next T [%2K]")
                                    .arg(waitingTStartTime.toString())
                                    .arg(setPointT));
     }
     else {
         stopIvsV();
         ui->statusBar->showMessage("Measure Done");
+        onClearComplianceEvent();
     }
 }
 
 
-// To be changed
 void
 MainWindow::onIForwardSweepDone(QDateTime dataTime, QString sData) {
     Q_UNUSED(dataTime)
-//  qDebug() << "Reverse Direction Handling";
+//    qDebug() << "Reverse Direction Handling";
     ui->statusBar->showMessage("Reverse Direction: Sweeping...Please Wait");
     disconnect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)), this, 0);
     QStringList sMeasures = QStringList(sData.split(",", QString::SkipEmptyParts));
@@ -1164,23 +1108,9 @@ MainWindow::onIForwardSweepDone(QDateTime dataTime, QString sData) {
                            .arg(current, 12, 'g', 6, ' ')
                            .arg(setPointT, 12, 'g', 6, ' ')
                            .toLocal8Bit());
-        if(pMeasurements->count() == 0) {
-            xDataMin = voltage*0.99;
-            xDataMax = voltage*1.01;
-            yDataMin = current*0.99;
-            yDataMax = current*1.01;
-        }
-        else {
-            if(voltage < xDataMin) xDataMin = voltage;
-            if(voltage > xDataMax) xDataMax = voltage;
-            if(current < yDataMin) yDataMin = current;
-            if(current > yDataMax) yDataMax = current;
-        }
-        pChartMeasurements->axisX()->setRange(xDataMin, xDataMax);
-        pChartMeasurements->axisY()->setRange(yDataMin, yDataMax);
-        pMeasurements->append(voltage, current);
-        pMeasurements->append(voltage, current);
+        pPlotMeasurements->NewPoint(1, voltage, current);
     }
+    pPlotMeasurements->UpdatePlot();
     pOutputFile->flush();
     double dVStart;
     double dVStop;
@@ -1206,11 +1136,10 @@ MainWindow::onIForwardSweepDone(QDateTime dataTime, QString sData) {
 }
 
 
-// To be changed
 void
 MainWindow::onVReverseSweepDone(QDateTime dataTime, QString sData) {
     Q_UNUSED(dataTime)
-//  qDebug() << "Forward Direction Handling";
+//    qDebug() << "Forward Direction Handling";
     ui->statusBar->showMessage("Forward Direction: Sweeping...Please Wait");
     disconnect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)), this, 0);
     QStringList sMeasures = QStringList(sData.split(",", QString::SkipEmptyParts));
@@ -1233,23 +1162,9 @@ MainWindow::onVReverseSweepDone(QDateTime dataTime, QString sData) {
                            .arg(current, 12, 'g', 6, ' ')
                            .arg(setPointT, 12, 'g', 6, ' ')
                            .toLocal8Bit());
-        if(pMeasurements->count() == 0) {
-            xDataMin = voltage*0.99;
-            xDataMax = voltage*1.01;
-            yDataMin = current*0.99;
-            yDataMax = current*1.01;
-        }
-        else {
-            if(voltage < xDataMin) xDataMin = voltage;
-            if(voltage > xDataMax) xDataMax = voltage;
-            if(current < yDataMin) yDataMin = current;
-            if(current > yDataMax) yDataMax = current;
-        }
-        pChartMeasurements->axisX()->setRange(xDataMin, xDataMax);
-        pChartMeasurements->axisY()->setRange(yDataMin, yDataMax);
-        pMeasurements->append(voltage, current);
-        pMeasurements->append(voltage, current);
+        pPlotMeasurements->NewPoint(1, voltage, current);
     }
+    pPlotMeasurements->UpdatePlot();
     pOutputFile->flush();
     double dIStart = configureIvsVDialog.dIStart;
     double dIStop = 0.0;
@@ -1268,7 +1183,7 @@ MainWindow::onVReverseSweepDone(QDateTime dataTime, QString sData) {
 
 
 bool
-MainWindow::triggerAMeasure() {
+MainWindow::getNewMeasure() {
     if(!isK236ReadyForTrigger)
         return false;
     isK236ReadyForTrigger = false;

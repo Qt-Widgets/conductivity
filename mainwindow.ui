@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>300</height>
+    <height>341</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -49,7 +49,7 @@
       <x>150</x>
       <y>10</y>
       <width>231</width>
-      <height>261</height>
+      <height>301</height>
      </rect>
     </property>
     <property name="title">
@@ -76,7 +76,7 @@
       <rect>
        <x>110</x>
        <y>40</y>
-       <width>75</width>
+       <width>100</width>
        <height>25</height>
       </rect>
      </property>
@@ -93,7 +93,7 @@
     <widget class="QLabel" name="labelK">
      <property name="geometry">
       <rect>
-       <x>200</x>
+       <x>220</x>
        <y>40</y>
        <width>21</width>
        <height>25</height>
@@ -108,7 +108,7 @@
       <rect>
        <x>110</x>
        <y>80</y>
-       <width>75</width>
+       <width>100</width>
        <height>25</height>
       </rect>
      </property>
@@ -125,7 +125,7 @@
     <widget class="QLabel" name="labelA">
      <property name="geometry">
       <rect>
-       <x>200</x>
+       <x>220</x>
        <y>80</y>
        <width>21</width>
        <height>25</height>
@@ -153,7 +153,7 @@
       <rect>
        <x>110</x>
        <y>120</y>
-       <width>75</width>
+       <width>100</width>
        <height>25</height>
       </rect>
      </property>
@@ -170,7 +170,7 @@
     <widget class="QLabel" name="labelV">
      <property name="geometry">
       <rect>
-       <x>200</x>
+       <x>220</x>
        <y>120</y>
        <width>21</width>
        <height>25</height>
@@ -194,26 +194,29 @@
      </property>
     </widget>
     <widget class="QRadioButton" name="photoButton">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>160</y>
+       <y>180</y>
        <width>112</width>
        <height>25</height>
       </rect>
      </property>
+     <property name="layoutDirection">
+      <enum>Qt::RightToLeft</enum>
+     </property>
      <property name="text">
       <string>Photo/Dark</string>
-     </property>
-     <property name="checkable">
-      <bool>false</bool>
      </property>
     </widget>
     <widget class="QLabel" name="label">
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>200</y>
+       <y>250</y>
        <width>211</width>
        <height>17</height>
       </rect>
@@ -229,7 +232,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>220</y>
+       <y>270</y>
        <width>211</width>
        <height>25</height>
       </rect>
@@ -241,6 +244,25 @@
       <bool>true</bool>
      </property>
     </widget>
+   </widget>
+   <widget class="QRadioButton" name="complianceButton">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>190</y>
+      <width>118</width>
+      <height>26</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Compliance</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
+    </property>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>

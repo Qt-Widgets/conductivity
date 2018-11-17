@@ -48,9 +48,11 @@ public:
 
 signals:
   void     complianceEvent();
+  void     clearCompliance();
   void     readyForTrigger();
   void     newReading(QDateTime currentTime, QString sReading);
   void     sweepDone(QDateTime currentTime, QString sSweepData);
+  void     sendMessage(QString sMessage);
 
 public slots:
   void checkNotify();

@@ -62,6 +62,7 @@ Keithley236::Keithley236(int gpio, int address, QObject *parent)
     , k236Address(address)
     , k236(-1)
 {
+    iComplianceEvents = 0;
 }
 
 
@@ -69,7 +70,7 @@ Keithley236::~Keithley236() {
     if(k236 != -1) {
 #if defined(Q_OS_LINUX)
         pollTimer.stop();
-        disconnect(&pollTimer, 0, 0, 0);
+        pollTimer.disconnect();
 #else
         ibnotify (k236, 0, NULL, NULL);// disable notification
 #endif
@@ -117,6 +118,7 @@ Keithley236::init() {
 
 int
 Keithley236::initVvsTSourceI(double dAppliedCurrent, double dCompliance) {
+    iComplianceEvents = 0;
     uint iErr = 0;
     iErr |= gpibWrite(k236, "M0,0");      // SRQ Disabled, SRQ on Compliance
     iErr |= gpibWrite(k236, "R0");        // Disarm Trigger
@@ -140,6 +142,7 @@ Keithley236::initVvsTSourceI(double dAppliedCurrent, double dCompliance) {
         QString sError;
         sError = QString("Keithley236::initVvsTSourceI(): GPIB Error in gpibWrite(): - Status= %1")
                 .arg(ThreadIbsta(), 4, 16, QChar('0'));
+        emit sendMessage(sError);
         qCritical() <<  sError;
         sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
         qCritical() << sError;
@@ -163,6 +166,7 @@ Keithley236::initVvsTSourceI(double dAppliedCurrent, double dCompliance) {
 
 int
 Keithley236::initVvsTSourceV(double dAppliedVoltage, double dCompliance) {
+    iComplianceEvents = 0;
     uint iErr = 0;
     iErr |= gpibWrite(k236, "M0,0");      // SRQ Disabled, SRQ on Compliance
     iErr |= gpibWrite(k236, "R0");        // Disarm Trigger
@@ -186,6 +190,7 @@ Keithley236::initVvsTSourceV(double dAppliedVoltage, double dCompliance) {
         QString sError;
         sError = QString("Keithley236::initVvsTSourceV(): GPIB Error in gpibWrite(): - Status= %1")
                 .arg(ThreadIbsta(), 4, 16, QChar('0'));
+        emit sendMessage(sError);
         qCritical() <<  sError;
         sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
         qCritical() << sError;
@@ -211,7 +216,7 @@ int
 Keithley236::endVvsT() {
 #if defined(Q_OS_LINUX)
     pollTimer.stop();
-    disconnect(&pollTimer, 0, 0, 0);
+    pollTimer.disconnect();
 #else
     ibnotify (k236, 0, NULL, NULL);// disable notification
 #endif
@@ -248,6 +253,7 @@ Keithley236::junctionCheck(double v1, double v2) {
         QString sError;
         sError = QString("Keithley236::junctionCheck(): GPIB Error in gpibWrite(): - Status= %1")
                 .arg(ThreadIbsta(), 4, 16, QChar('0'));
+        emit sendMessage(sError);
         qCritical() <<  sError;
         sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
         qCritical() << sError;
@@ -338,6 +344,7 @@ Keithley236::initISweep(double startCurrent,
         QString sError;
         sError = QString("Keithley236::initISweep(): GPIB Error in gpibWrite(): - Status= %1")
                 .arg(ThreadIbsta(), 4, 16, QChar('0'));
+        emit sendMessage(sError);
         qCritical() <<  sError;
         sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
         qCritical() << sError;
@@ -349,6 +356,7 @@ Keithley236::initISweep(double startCurrent,
         QString sError;
         sError = QString("Keithley236::initISweep(): GPIB Error in gpibWrite(): - Status= %1")
                 .arg(ThreadIbsta(), 4, 16, QChar('0'));
+        emit sendMessage(sError);
         qCritical() <<  sError;
         sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
         qCritical() << sError;
@@ -387,6 +395,7 @@ Keithley236::initVSweep(double startVoltage,
         QString sError;
         sError = QString("Keithley236::initVSweep(): GPIB Error in gpibWrite(): - Status= %1")
                 .arg(ThreadIbsta(), 4, 16, QChar('0'));
+        emit sendMessage(sError);
         qCritical() <<  sError;
         sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
         qCritical() << sError;
@@ -398,6 +407,7 @@ Keithley236::initVSweep(double startVoltage,
         QString sError;
         sError = QString("Keithley236::initVSweep(): GPIB Error in gpibWrite(): - Status= %1")
                 .arg(ThreadIbsta(), 4, 16, QChar('0'));
+        emit sendMessage(sError);
         qCritical() <<  sError;
         sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
         qCritical() << sError;
@@ -416,7 +426,7 @@ Keithley236::stopSweep() {
 #if defined(Q_OS_LINUX)
     if(pollTimer.isActive())
         pollTimer.stop();
-    disconnect(&pollTimer, 0, 0, 0);
+    pollTimer.disconnect();
 #else
     ibnotify (k236, 0, NULL, NULL);// disable notification
 #endif
@@ -440,26 +450,32 @@ Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long
 
     if(spollByte & COMPLIANCE) {// Compliance
         iComplianceEvents++;
-        qCritical() << QString("Keithley236::onGpibCallback: ComplianceEvents[%21]: Last Value= %2")
-                       .arg(iComplianceEvents)
-                       .arg(lastReading);
+//        qCritical() << QString("Keithley236::onGpibCallback: ComplianceEvents[%1]")
+//                       .arg(iComplianceEvents);
+        emit complianceEvent();
         QThread::msleep(300);
-        if(iComplianceEvents > MAX_COMPLIANCE_EVENTS) {
-            qCritical() << QString("Keithley236::onGpibCallback:  Compliance Event");
-            emit complianceEvent();
-        }
+//        if(iComplianceEvents > MAX_COMPLIANCE_EVENTS) {
+//            qCritical() << QString("Keithley236::onGpibCallback:  Compliance Event");
+//            emit complianceEvent();
+//        }
     }
+    else
+        emit clearCompliance();
 
     if(spollByte & K236_ERROR) {// Error
         gpibWrite(LocalUd, "U1X");
         sCommand = gpibRead(LocalUd);
-        qCritical() << "Keithley236::onGpibCallback: Error" << sCommand;
+        QString sError = QString("Keithley236::onGpibCallback: Error ")+ sCommand;
+        qCritical() << sError;
+        emit sendMessage(sError);
     }
 
     if(spollByte & WARNING) {// Warning
         gpibWrite(LocalUd, "U9X");
         sCommand = gpibRead(LocalUd);
-        qCritical() << "Keithley236::onGpibCallback: Warning" << sCommand;
+        QString sError = QString("Keithley236::onGpibCallback: Warning ")+ sCommand;
+        qCritical() << sError;
+        emit sendMessage(sError);
     }
 
     if(spollByte & SWEEP_DONE) {// Sweep Done
@@ -471,7 +487,9 @@ Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long
     }
 
     if(spollByte & TRIGGER_OUT) {// Trigger Out
-        qCritical() << "Keithley236::onGpibCallback: Trigger Out ?";
+        QString sError = QString("Keithley236::onGpibCallback: Trigger Out ?");
+        qCritical() << sError;
+        emit sendMessage(sError);
     }
 
     if(spollByte & READY_FOR_TRIGGER) {// Ready for trigger

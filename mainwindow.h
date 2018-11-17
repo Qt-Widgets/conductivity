@@ -22,11 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMainWindow>
 #include <QDateTime>
 #include <QTimer>
-#include <QScatterSeries>
-#include <QtCharts>
-#include <QChartView>
-
-using namespace QtCharts;
 
 #include "configureRvsTdialog.h"
 #include "configureIvsVdialog.h"
@@ -36,12 +31,11 @@ namespace Ui {
 class MainWindow;
 }
 
-
 QT_FORWARD_DECLARE_CLASS(QFile)
 QT_FORWARD_DECLARE_CLASS(Keithley236)
 QT_FORWARD_DECLARE_CLASS(LakeShore330)
 QT_FORWARD_DECLARE_CLASS(CornerStone130)
-
+QT_FORWARD_DECLARE_CLASS(Plot2D)
 
 class MainWindow : public QMainWindow
 {
@@ -56,18 +50,15 @@ signals:
 protected:
   void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
   bool checkInstruments();
-  bool triggerAMeasure();
+  bool getNewMeasure();
+  void initRvsTPlots();
   void stopRvsT();
   void startI_V();
   void stopIvsV();
+  void initIvsVPlots();
   bool prepareOutputFile(QString sBaseDir, QString sFileName);
-  bool switchLampOn();
-  bool switchLampOff();
-  void initRvsTCharts();
-  void initIvsVCharts();
-  void createTemperaturePlot();
-  void deleteGraphics();
-  void freeMemory();
+  void switchLampOn();
+  void switchLampOff();
 
 private slots:
   void on_startRvsTButton_clicked();
@@ -79,6 +70,7 @@ private slots:
   void onTimeToReadT();
   void onTimeToGetNewMeasure();
   void onComplianceEvent();
+  void onClearComplianceEvent();
   void onKeithleyReadyForTrigger();
   void onNewKeithleyReading(QDateTime dataTime, QString sDataRead);
   bool onKeithleyReadyForSweepTrigger();
@@ -100,55 +92,51 @@ private:
   measure presentMeasure;
 
 private:
-  QFile          *pOutputFile;
+  QString sNormalStyle;
+  QString sErrorStyle;
+
+  QFile        *pOutputFile;
 
   Keithley236    *pKeithley;
   LakeShore330   *pLakeShore;
   CornerStone130 *pCornerStone130;
 
-  QChart         *pChartMeasurements;
-  QChart         *pChartTemperature;
-  QScatterSeries *pDarkMeasurements;
-  QScatterSeries *pPhotoMeasurements;
-  QScatterSeries *pMeasurements;
-  QLineSeries    *pTemperatures;
-  QChartView     *pMeasurementsView;
-  QChartView     *pTemperatureView;
+  Plot2D       *pPlotMeasurements;
+  Plot2D       *pPlotTemperature;
 
-  QDateTime       currentTime;
-  QDateTime       waitingTStartTime;
-  QDateTime       startReadingTTime;
-  QDateTime       startMeasuringTime;
-  QDateTime       endMeasureTime;
+  QDateTime     currentTime;
+  QDateTime     waitingTStartTime;
+  QDateTime     startReadingTTime;
+  QDateTime     startMeasuringTime;
+  QDateTime     endMeasureTime;
 
-  QTimer          waitingTStartTimer;
-  QTimer          stabilizingTimer;
-  QTimer          readingTTimer;
-  QTimer          measuringTimer;
+  QTimer        waitingTStartTimer;
+  QTimer        stabilizingTimer;
+  QTimer        readingTTimer;
+  QTimer        measuringTimer;
 
   ConfigureRvsTDialog configureRvsTDialog;
   ConfigureIvsVDialog configureIvsVDialog;
 
   const quint8  LAMP_ON  = 1;
   const quint8  LAMP_OFF = 0;
+  const int     iPlotDark = 1;
+  const int     iPlotPhoto = 2;
 
+  double        currentTemperature;
   double        setPointT;
+  int           iCurrentTPlot;
   int           gpibBoardID;
   quint8        currentLampStatus;
   QString       sMeasurementPlotLabel;
   QString       sTemperaturePlotLabel;
+  int           maxPlotPoints;
   volatile bool isK236ReadyForTrigger;
   bool          bRunning;
   int           junctionDirection;
-
-  double        xDataMin;
-  double        xDataMax;
-  double        yDataMin;
-  double        yDataMax;
-  double        xTempMin;
-  double        xTempMax;
-  double        yTempMin;
-  double        yTempMax;
+  bool          bUseMonochromator;
+  int           gpioHostHandle;
+  int           gpioLEDpin;
 };
 
-#endif // MAINWINDOW_H
+   #endif // MAINWINDOW_H

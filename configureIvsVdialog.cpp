@@ -33,18 +33,18 @@ ConfigureIvsVDialog::ConfigureIvsVDialog(QWidget *parent)
     , sOutFileName("junction.dat")
     , currentMin(-1.0e-3)
     , currentMax(1.0e-3)
-    , voltageMin(-10.0)
-    , voltageMax(10.0)
+    , voltageMin(-100.0)
+    , voltageMax(100.0)
     , temperatureMin(0.0)
     , temperatureMax(450.0)
     , waitTimeMin(100)
-    , waitTimeMax(10000)
-    , nSweepPointsMin(10)
+    , waitTimeMax(65000)
+    , nSweepPointsMin(3)
     , nSweepPointsMax(500)
     , reachingTMin(0)// In minutes
     , reachingTMax(30)// In minutes
     , timeToSteadyTMin(0)
-    , timeToSteadyTMax(5)
+    , timeToSteadyTMax(30)
 
     , ui(new Ui::ConfigureIvsVDialog)
 {
@@ -89,7 +89,7 @@ ConfigureIvsVDialog::initUI() {
         dVStop = 0.0;
     ui->VStopEdit->setText(QString("%1").arg(dVStop, 0, 'g', 2));
     if(!isWaitTimeValid(iWaitTime))
-        iWaitTime = 100.0;
+        iWaitTime = 100;
     ui->waitTimeEdit->setText(QString("%1").arg(iWaitTime));
     if(!isSweepPointNumberValid(iNSweepPoints))
         iNSweepPoints = 100;
