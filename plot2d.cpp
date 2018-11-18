@@ -69,7 +69,7 @@ void
 Plot2D::paintEvent(QPaintEvent *event) {
   QPainter painter;
   painter.begin(this);
-  painter.setFont(QFont("Helvetica", 14, QFont::Normal));
+  painter.setFont(QFont("Helvetica", 16, QFont::Bold));
   DrawPlot(&painter, event);
   painter.end();
 }
