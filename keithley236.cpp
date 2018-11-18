@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "keithley236.h"
 #include "utility.h"
-#include "math.h"
+#include <QtMath>
 
 #if defined(Q_OS_LINUX)
 #include <gpib/ib.h>
@@ -337,7 +337,7 @@ Keithley236::initISweep(double startCurrent,
     sCommand = QString("Q1,%1,%2,%3,0,%4X")
             .arg(startCurrent)
             .arg(stopCurrent)
-            .arg(currentStep)
+            .arg(qMax(currentStep, 1.0e-13))
             .arg(delay);
     iErr |= gpibWrite(k236, sCommand);   // Program Sweep
     if(iErr & ERR) {
