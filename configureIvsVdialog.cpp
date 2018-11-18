@@ -31,20 +31,20 @@ ConfigureIvsVDialog::ConfigureIvsVDialog(QWidget *parent)
     : QDialog(parent)
     , sBaseDir(QDir::homePath())
     , sOutFileName("junction.dat")
-    , currentMin(-1.0e-3)
-    , currentMax(1.0e-3)
-    , voltageMin(-100.0)
-    , voltageMax(100.0)
+    , currentMin(-1.0e-2)
+    , currentMax(1.0e-2)
+    , voltageMin(-110.0)
+    , voltageMax(110.0)
     , temperatureMin(0.0)
-    , temperatureMax(450.0)
+    , temperatureMax(475.0)
     , waitTimeMin(100)
     , waitTimeMax(65000)
     , nSweepPointsMin(3)
     , nSweepPointsMax(500)
     , reachingTMin(0)// In minutes
-    , reachingTMax(30)// In minutes
-    , timeToSteadyTMin(0)
-    , timeToSteadyTMax(30)
+    , reachingTMax(60)// In minutes
+    , timeToSteadyTMin(0)// In minutes
+    , timeToSteadyTMax(INT_MAX/(60*1000))// In minutes
 
     , ui(new Ui::ConfigureIvsVDialog)
 {
