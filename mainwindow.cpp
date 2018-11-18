@@ -49,7 +49,8 @@ MainWindow::MainWindow(QWidget *parent)
     , pPlotTemperature(Q_NULLPTR)
     , bUseMonochromator(false)
     , gpioHostHandle(-1)
-    , gpioLEDpin(4)
+    // BCM 23: pin 16 in the 40 pins GPIO connector
+    , gpioLEDpin(23)
     // GPIO Numbers are Broadcom (BCM) numbers
     // For Raspberry Pi GPIO pin numbering see
     // https://pinout.xyz/
