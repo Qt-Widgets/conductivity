@@ -69,7 +69,7 @@ void
 Plot2D::paintEvent(QPaintEvent *event) {
   QPainter painter;
   painter.begin(this);
-  //painter.setRenderHint(QPainter::Antialiasing);
+  painter.setFont(QFont("Helvetica", 14, QFont::Normal));
   DrawPlot(&painter, event);
   painter.end();
 }
@@ -598,7 +598,6 @@ Plot2D::DrawPlot(QPainter* painter, QPaintEvent *event) {
     SetLimits (Ax.XMin, Ax.XMax, Ax.YMin, Ax.YMax, Ax.AutoX, Ax.AutoY, Ax.LogX, Ax.LogY);
   }
   painter->fillRect(event->rect(), QBrush(QColor(0, 0, 0)));
-  painter->setFont(QFont("Helvetica", 8, QFont::Normal));
   QFontMetrics fontMetrics = painter->fontMetrics();
 
   Pf.left = fontMetrics.width("-0.00000") + 2.0;
