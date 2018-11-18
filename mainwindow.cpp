@@ -791,8 +791,8 @@ MainWindow::onTimeToCheckT() {
         connect(&stabilizingTimer, SIGNAL(timeout()),
                 this, SLOT(onSteadyTReached()));
         stabilizingTimer.start(configureIvsVDialog.iTimeToSteadyT*60*1000);
-        ui->statusBar->showMessage(QString("T Reached: Thermal Stabilization for %1 min.")
-                                   .arg(configureIvsVDialog.iTimeToSteadyT));
+        ui->statusBar->showMessage(QString("Thermal Stabilization for %1 min.")
+                                   .arg(ceil(stabilizingTimer.remainingTime()/(60.0*1000))));
     }
     else {
         currentTime = QDateTime::currentDateTime();
@@ -803,8 +803,8 @@ MainWindow::onTimeToCheckT() {
             connect(&stabilizingTimer, SIGNAL(timeout()),
                     this, SLOT(onSteadyTReached()));
             stabilizingTimer.start(configureIvsVDialog.iTimeToSteadyT*60*1000);
-            ui->statusBar->showMessage(QString("T Reached: Thermal Stabilization for %1 min.")
-                                       .arg(configureIvsVDialog.iTimeToSteadyT));
+            ui->statusBar->showMessage(QString("Thermal Stabilization for %1 min.")
+                                       .arg(ceil(stabilizingTimer.remainingTime()/(60.0*1000))));
         }
     }
 }
@@ -841,7 +841,7 @@ MainWindow::onTimeToCheckReachedT() {
         stabilizingTimer.start(configureRvsTDialog.iStabilizingTime*60*1000);
         //qDebug() << QString("Starting T Reached: Thermal Stabilization...");
         ui->statusBar->showMessage(QString("Starting T Reached: Thermal Stabilization for %1 min.")
-                                   .arg(configureRvsTDialog.iStabilizingTime));
+                                   .arg(ceil(stabilizingTimer.remainingTime()/(60.0*1000))));
         // Compute the new time needed for the measurement:
         startMeasuringTime = QDateTime::currentDateTime();
         double deltaT, expectedMinutes;
@@ -866,7 +866,7 @@ MainWindow::onTimeToCheckReachedT() {
             stabilizingTimer.start(configureRvsTDialog.iStabilizingTime*60*1000);
             //qDebug() << QString("Max Reaching Time Exceed...Thermal Stabilization...");
             ui->statusBar->showMessage(QString("Max Time Exceeded: Stabilization for %1 min.")
-                                       .arg(configureRvsTDialog.iStabilizingTime));
+                                       .arg(stabilizingTimer.remainingTime()/(60*1000)));
         }
     }
 }
@@ -931,6 +931,10 @@ MainWindow::onTimeToReadT() {
                                double(startReadingTTime.secsTo(currentTime)),
                                currentTemperature);
     pPlotTemperature->UpdatePlot();
+    if(stabilizingTimer.isActive()) {
+        ui->statusBar->showMessage(QString("Thermal Stabilization for %1 min.")
+                                   .arg(ceil(stabilizingTimer.remainingTime()/(60.0*1000))));
+    }
 }
 
 
