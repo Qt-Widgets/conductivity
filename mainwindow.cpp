@@ -68,6 +68,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     sNormalStyle = ui->complianceButton->styleSheet();
     sErrorStyle  = "QRadioButton { color: rgb(255, 255, 255); background: rgb(255, 0, 0); selection-background-color: rgb(128, 128, 255); }";
+    sDarkStyle   = "QLabel { color: rgb(255, 255, 255); background: rgb(0, 0, 0); selection-background-color: rgb(128, 128, 255); }";
+    sPhotoStyle  = "QLabel { color: rgb(0, 0, 0); background: rgb(255, 255, 0); selection-background-color: rgb(128, 128, 255); }";
 
     ui->startRvsTButton->show();
     ui->startIvsVButton->show();
@@ -75,7 +77,6 @@ MainWindow::MainWindow(QWidget *parent)
     gpibBoardID           = 0;
     presentMeasure        = NoMeasure;
     bRunning              = false;
-    currentLampStatus     = LAMP_OFF;
     isK236ReadyForTrigger = false;
     maxPlotPoints         = 3000;
 
@@ -263,25 +264,29 @@ MainWindow::checkInstruments() {
 
 void
 MainWindow::switchLampOn() {
-    ui->photoButton->setChecked(true);
+    ui->photoLabel->setStyleSheet(sPhotoStyle);
+    ui->photoLabel->setText("Photo");
     if(bUseMonochromator)
         pCornerStone130->openShutter();
 #if defined(Q_PROCESSOR_ARM)
     if(gpioHostHandle >= 0)
         gpio_write(gpioHostHandle, gpioLEDpin, 1);
 #endif
+    currentLampStatus = LAMP_ON;
 }
 
 
 void
 MainWindow::switchLampOff() {
-    ui->photoButton->setChecked(false);
+    ui->photoLabel->setStyleSheet(sDarkStyle);
+    ui->photoLabel->setText("Dark");
     if(bUseMonochromator)
         pCornerStone130->closeShutter();
 #if defined(Q_PROCESSOR_ARM)
     if(gpioHostHandle >= 0)
         gpio_write(gpioHostHandle, gpioLEDpin, 0);
 #endif
+    currentLampStatus = LAMP_OFF;
 }
 
 
@@ -351,10 +356,10 @@ MainWindow::on_startRvsTButton_clicked() {
             QApplication::restoreOverrideCursor();
             return;
         }
-        switchLampOff();
         pCornerStone130->setGrating(configureRvsTDialog.iGratingNumber);
         pCornerStone130->setWavelength(configureRvsTDialog.dWavelength);
     }
+    switchLampOff();
     // Initializing Keithley 236
     ui->statusBar->showMessage("Initializing Keithley 236...");
     if(pKeithley->init()) {
@@ -1005,7 +1010,6 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
             pPlotMeasurements->NewPoint(iPlotDark, 1000.0/currentTemperature, current/voltage);
             pPlotMeasurements->UpdatePlot();
         }
-        currentLampStatus = LAMP_ON;
         switchLampOn();
     }
     else {
@@ -1013,7 +1017,6 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
             pPlotMeasurements->NewPoint(iPlotPhoto, 1000.0/currentTemperature, current/voltage);
             pPlotMeasurements->UpdatePlot();
         }
-        currentLampStatus = LAMP_OFF;
         pOutputFile->write("\n");
         switchLampOff();
     }

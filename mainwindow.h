@@ -94,6 +94,8 @@ private:
 private:
   QString sNormalStyle;
   QString sErrorStyle;
+  QString sDarkStyle;
+  QString sPhotoStyle;
 
   QFile        *pOutputFile;
 
