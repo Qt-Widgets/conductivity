@@ -362,7 +362,7 @@ Keithley236::initISweep(double startCurrent,
         qCritical() << sError;
         return false;
     }
-    sCommand = QString("M%1,0X").arg(SWEEP_DONE + READY_FOR_TRIGGER);
+    sCommand = QString("M%1,0X").arg(COMPLIANCE + SWEEP_DONE + READY_FOR_TRIGGER);
     gpibWrite(k236, sCommand);   // SRQ On Sweep Done
     if(isGpibError("Keithley236::initISweep(): Error enabling SRQ Mask"))
         return false;
@@ -413,7 +413,7 @@ Keithley236::initVSweep(double startVoltage,
         qCritical() << sError;
         return false;
     }
-    sCommand = QString("M%1,0X").arg(SWEEP_DONE + READY_FOR_TRIGGER);
+    sCommand = QString("M%1,0X").arg(COMPLIANCE + SWEEP_DONE + READY_FOR_TRIGGER);
     gpibWrite(k236, sCommand);   // SRQ On Sweep Done
     if(isGpibError("Keithley236::initVSweep(): Error enabling SRQ Mask"))
         return false;
@@ -445,10 +445,11 @@ Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long
     Q_UNUSED(LocalIbcntl)
 
     if(ibrsp(LocalUd, &spollByte) & ERR) {
-        qCritical() << QString("GPIB error %1").arg(LocalIberr);
+        qCritical() << QString("Keithley236::onGpibCallback: GPIB error %1").arg(LocalIberr);
     }
 
     if(spollByte & COMPLIANCE) {// Compliance
+        spollByte &= ~READING_DONE;
         iComplianceEvents++;
 //        qCritical() << QString("Keithley236::onGpibCallback: ComplianceEvents[%1]")
 //                       .arg(iComplianceEvents);
