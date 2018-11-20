@@ -65,15 +65,17 @@ FORMS   += axesdialog.ui
 
 # For National Instruments GPIB Boards
 windows {
-  message("Running on Windows")
-  INCLUDEPATH += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/include"
-  LIBS += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/lib32/msvc/gpib-32.obj"
+    message("Running on Windows")
+    INCLUDEPATH += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/include"
+    LIBS += "C:/Program Files (x86)/National Instruments/Shared/ExternalCompilerSupport/C/lib32/msvc/gpib-32.obj"
 }
 linux {
-  message("Running on Linux")
-  LIBS += -L"/usr/local/lib" -lgpib # To include libgpib.so from /usr/local/lib
-  INCLUDEPATH += /usr/local/include
-  LIBS += -lpigpiod_if2 # To include libpigpiod_if2.so from /usr/local/lib
+    message("Running on Linux")
+    LIBS += -L"/usr/local/lib" -lgpib # To include libgpib.so from /usr/local/lib
+    INCLUDEPATH += /usr/local/include
+    contains(QMAKE_HOST.arch, "armv7l") || contains(QMAKE_HOST.arch, "armv6l"): {
+        LIBS += -lpigpiod_if2 # To include libpigpiod_if2.so from /usr/local/lib
+    }
 }
 
 

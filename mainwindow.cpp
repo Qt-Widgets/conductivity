@@ -66,8 +66,8 @@ MainWindow::MainWindow(QWidget *parent)
     setFixedSize(size());
     setWindowIcon(QIcon("qrc:/myLogoT.png"));
 
-    sNormalStyle = ui->complianceButton->styleSheet();
-    sErrorStyle  = "QRadioButton { color: rgb(255, 255, 255); background: rgb(255, 0, 0); selection-background-color: rgb(128, 128, 255); }";
+    sNormalStyle = ui->labelCompliance->styleSheet();
+    sErrorStyle  = "QLabel { color: rgb(255, 255, 255); background: rgb(255, 0, 0); selection-background-color: rgb(128, 128, 255); }";
     sDarkStyle   = "QLabel { color: rgb(255, 255, 255); background: rgb(0, 0, 0); selection-background-color: rgb(128, 128, 255); }";
     sPhotoStyle  = "QLabel { color: rgb(0, 0, 0); background: rgb(255, 255, 0); selection-background-color: rgb(128, 128, 255); }";
 
@@ -264,8 +264,8 @@ MainWindow::checkInstruments() {
 
 void
 MainWindow::switchLampOn() {
-    ui->photoLabel->setStyleSheet(sPhotoStyle);
-    ui->photoLabel->setText("Photo");
+    ui->labelPhoto->setStyleSheet(sPhotoStyle);
+    ui->labelPhoto->setText("Photo");
     if(bUseMonochromator)
         pCornerStone130->openShutter();
 #if defined(Q_PROCESSOR_ARM)
@@ -278,8 +278,8 @@ MainWindow::switchLampOn() {
 
 void
 MainWindow::switchLampOff() {
-    ui->photoLabel->setStyleSheet(sDarkStyle);
-    ui->photoLabel->setText("Dark");
+    ui->labelPhoto->setStyleSheet(sDarkStyle);
+    ui->labelPhoto->setText("Dark");
     if(bUseMonochromator)
         pCornerStone130->closeShutter();
 #if defined(Q_PROCESSOR_ARM)
@@ -946,16 +946,16 @@ MainWindow::onTimeToReadT() {
 
 void
 MainWindow::onComplianceEvent() {
-    ui->complianceButton->setChecked(true);
-    ui->complianceButton->setStyleSheet(sErrorStyle);
+    ui->labelCompliance->setText("Compliance");
+    ui->labelCompliance->setStyleSheet(sErrorStyle);
 //    qCritical() << "Compliance Event";
 }
 
 
 void
 MainWindow::onClearComplianceEvent() {
-    ui->complianceButton->setChecked(false);
-    ui->complianceButton->setStyleSheet(sNormalStyle);
+    ui->labelCompliance->setText("");
+    ui->labelCompliance->setStyleSheet(sNormalStyle);
 }
 
 

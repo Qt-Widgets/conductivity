@@ -49,14 +49,14 @@
       <x>150</x>
       <y>10</y>
       <width>231</width>
-      <height>301</height>
+      <height>231</height>
      </rect>
     </property>
     <property name="title">
-     <string>Instrument Status</string>
+     <string>           Instrument Status</string>
     </property>
     <property name="alignment">
-     <set>Qt::AlignCenter</set>
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
     <widget class="QLabel" name="labelTemperature">
      <property name="geometry">
@@ -193,43 +193,11 @@
       <string>Voltage</string>
      </property>
     </widget>
-    <widget class="QLabel" name="label">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>250</y>
-       <width>211</width>
-       <height>17</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Expected Time to End</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="endTimeEdit">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>270</y>
-       <width>211</width>
-       <height>25</height>
-      </rect>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
-     </property>
-     <property name="readOnly">
-      <bool>true</bool>
-     </property>
-    </widget>
-    <widget class="QLabel" name="photoLabel">
+    <widget class="QLabel" name="labelPhoto">
      <property name="geometry">
       <rect>
        <x>140</x>
-       <y>180</y>
+       <y>160</y>
        <width>67</width>
        <height>25</height>
       </rect>
@@ -241,24 +209,53 @@
       <set>Qt::AlignCenter</set>
      </property>
     </widget>
+    <widget class="QLabel" name="labelCompliance">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>160</y>
+       <width>90</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
    </widget>
-   <widget class="QRadioButton" name="complianceButton">
-    <property name="enabled">
-     <bool>true</bool>
-    </property>
+   <widget class="QLineEdit" name="endTimeEdit">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>190</y>
-      <width>118</width>
-      <height>26</height>
+      <x>160</x>
+      <y>280</y>
+      <width>211</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="labelMeasureTime">
+    <property name="geometry">
+     <rect>
+      <x>160</x>
+      <y>260</y>
+      <width>211</width>
+      <height>17</height>
      </rect>
     </property>
     <property name="text">
-     <string>Compliance</string>
+     <string>Expected Time to End</string>
     </property>
-    <property name="checkable">
-     <bool>true</bool>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
   </widget>
