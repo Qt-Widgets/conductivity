@@ -41,6 +41,10 @@ public:
     int    iWaitTime;
     int    iNSweepPoints;
 
+    double dWavelength;
+    int    iGratingNumber;
+    bool   bPhoto;
+
     double dTStart;
     double dTStop;
     double dTStep;
@@ -63,10 +67,12 @@ protected:
     bool isVoltageValid(double dVoltage);
     bool isWaitTimeValid(int iWaitTime);
     bool isSweepPointNumberValid(int nSweepPoints);
+    bool isWavelengthValid(double wavelength);
     bool isTemperatureValid(double dTemperature);
     bool isTStepValid(double dTStep);
     bool isReachingTimeValid(int iReachingTime);
     bool isTimeToSteadyTValid(int iTime);
+    void enableMonochromator(bool bEnable);
 
 private slots:
     void on_outFilePathButton_clicked();
@@ -77,6 +83,7 @@ private slots:
     void on_IStopEdit_textChanged(const QString &arg1);
     void on_VStartEdit_textChanged(const QString &arg1);
     void on_VStopEdit_textChanged(const QString &arg1);
+    void on_WavelengthEdit_textChanged(const QString &arg1);
     void on_TStartEdit_textChanged(const QString &arg1);
     void on_TStopEdit_textChanged(const QString &arg1);
     void on_waitTimeEdit_textChanged(const QString &arg1);
@@ -85,6 +92,8 @@ private slots:
     void on_TimeToSteadyTEdit_textChanged(const QString &arg1);
 
     void on_TStepEdit_textChanged(const QString &arg1);
+
+    void on_darkPhotoCheck_clicked();
 
 private:
     // QLineEdit styles
@@ -96,6 +105,8 @@ private:
     const double currentMax;
     const double voltageMin;
     const double voltageMax;
+    const double wavelengthMin;
+    const double wavelengthMax;
     const double temperatureMin;
     const double temperatureMax;
     const int    waitTimeMin;

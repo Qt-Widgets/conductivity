@@ -35,6 +35,8 @@ ConfigureIvsVDialog::ConfigureIvsVDialog(QWidget *parent)
     , currentMax(1.0e-2)
     , voltageMin(-110.0)
     , voltageMax(110.0)
+    , wavelengthMin(200.0)
+    , wavelengthMax(1000.0)
     , temperatureMin(0.0)
     , temperatureMax(475.0)
     , waitTimeMin(100)
@@ -95,6 +97,23 @@ ConfigureIvsVDialog::initUI() {
         iNSweepPoints = 100;
     ui->sweepPointsEdit->setText(QString("%1").arg(iNSweepPoints));
 
+    // Monochromator parameters
+    if(iGratingNumber == 1) {
+        ui->radioButtonGrating1->setChecked(true);
+        ui->radioButtonGrating2->setChecked(false);
+    }
+    else {
+        iGratingNumber = 2;
+        ui->radioButtonGrating1->setChecked(false);
+        ui->radioButtonGrating2->setChecked(true);
+    }
+    ui->darkPhotoCheck->setChecked(bPhoto);
+    if(!isWavelengthValid(dWavelength)) {
+        qDebug() << QString("Invalid Wavelength value %1").arg(dWavelength);
+        dWavelength = wavelengthMax;
+    }
+    ui->WavelengthEdit->setText(QString("%1").arg(dWavelength, 0, 'f', 2));
+
     // Temperature Control
     if(!isTemperatureValid(dTStart))
         dTStart = 300.0;
@@ -148,6 +167,11 @@ ConfigureIvsVDialog::restoreSettings() {
     iWaitTime      = settings.value("ConfigureIvsVWaitTime", 100).toInt();
     iNSweepPoints  = settings.value("ConfigureIvsVSweepPoints", 100).toInt();
 
+    dWavelength    = settings.value("ConfigureIvsVWavelength", wavelengthMax).toDouble();
+    iGratingNumber = settings.value("ConfigureIvsVGrating", 1).toInt();
+    bPhoto         = settings.value("ConfigureIvsVPhoto", false).toBool();
+    enableMonochromator(bPhoto);
+
     dTStart        = settings.value("ConfigureIvsVTStart", 300.0).toDouble();
     dTStop         = settings.value("ConfigureIvsVTStop", dTStart).toDouble();
     dTStep         = settings.value("ConfigureIvsVTStep", 1.0).toDouble();
@@ -171,6 +195,10 @@ ConfigureIvsVDialog::saveSettings() {
     settings.setValue("ConfigureIvsVVStop", dVStop);
     settings.setValue("ConfigureIvsVWaitTime", iWaitTime);
     settings.setValue("ConfigureIvsVSweepPoints", iNSweepPoints);
+
+    settings.setValue("ConfigureIvsVWavelength", dWavelength);
+    settings.setValue("ConfigureIvsVGrating", iGratingNumber);
+    settings.setValue("ConfigureIvsVPhoto", bPhoto);
 
     settings.setValue("ConfigureIvsVTStart", dTStart);
     settings.setValue("ConfigureIvsVTStop", dTStop);
@@ -465,3 +493,38 @@ ConfigureIvsVDialog::on_sweepPointsEdit_textChanged(const QString &arg1) {
         ui->sweepPointsEdit->setStyleSheet(sErrorStyle);
     }
 }
+
+
+void
+ConfigureIvsVDialog::on_WavelengthEdit_textChanged(const QString &arg1) {
+    if(isWavelengthValid(arg1.toDouble())) {
+        dWavelength = arg1.toDouble();
+        ui->WavelengthEdit->setStyleSheet(sNormalStyle);
+    }
+    else {
+        ui->WavelengthEdit->setStyleSheet(sErrorStyle);
+    }
+}
+
+
+bool
+ConfigureIvsVDialog::isWavelengthValid(double wavelength) {
+    return (wavelength >= wavelengthMin) && (wavelength <= wavelengthMax);
+}
+
+
+
+void
+ConfigureIvsVDialog::on_darkPhotoCheck_clicked() {
+    bPhoto = ui->darkPhotoCheck->isChecked();
+    enableMonochromator(bPhoto);
+}
+
+
+void
+ConfigureIvsVDialog::enableMonochromator(bool bEnable) {
+    ui->radioButtonGrating1->setEnabled(bEnable);
+    ui->radioButtonGrating2->setEnabled(bEnable);
+    ui->WavelengthEdit->setEnabled(bEnable);
+}
+

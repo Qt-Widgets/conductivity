@@ -164,36 +164,36 @@ MainWindow::checkInstruments() {
     // Identify the instruments connected to the GPIB Bus
     char readBuf[257];
     int cornerstoneId = 0;
-    if(bUseMonochromator) {
-        // Check for the monochromator...
-        for(int i=0; i<nDevices; i++) {
-            sCommand = "INFO?\r\n";
-            Send(gpibBoardID, resultlist[i], sCommand.toUtf8().constData(), sCommand.length(), DABend);
-            Receive(gpibBoardID, resultlist[i], readBuf, 256, 0x0A);
-            readBuf[ThreadIbcnt()] = '\0';
-            sInstrumentID = QString(readBuf);
+    // Check for the monochromator...
+    sCommand = "INFO?\r\n";
+    for(int i=0; i<nDevices; i++) {
+        Send(gpibBoardID, resultlist[i], sCommand.toUtf8().constData(), sCommand.length(), DABend);
+        Receive(gpibBoardID, resultlist[i], readBuf, 256, 0x0A);
+        readBuf[ThreadIbcnt()] = '\0';
+        sInstrumentID = QString(readBuf);
 //            qDebug() << QString("Address= %1 - InstrumentID= %2")
 //                        .arg(resultlist[i])
 //                        .arg(sInstrumentID);
-            if(sInstrumentID.contains("Cornerstone 130", Qt::CaseInsensitive)) {
-                cornerstoneId = resultlist[i];
-                if(pCornerStone130 == Q_NULLPTR) {
-                    pCornerStone130 = new CornerStone130(gpibBoardID, resultlist[i], this);
-                }
-                break;
+        if(sInstrumentID.contains("Cornerstone 130", Qt::CaseInsensitive)) {
+            cornerstoneId = resultlist[i];
+            if(pCornerStone130 == Q_NULLPTR) {
+                pCornerStone130 = new CornerStone130(gpibBoardID, resultlist[i], this);
             }
+            break;
         }
-        if(pCornerStone130 == Q_NULLPTR) {
-            QMessageBox::warning(this, "Error", "Cornerstone 130 not Connected",
-                                 QMessageBox::Abort, QMessageBox::Abort);
-            return false;
-        }
+    }
+    if(pCornerStone130 == Q_NULLPTR) {
+//            QMessageBox::warning(this, "Error", "Cornerstone 130 not Connected",
+//                                 QMessageBox::Abort, QMessageBox::Abort);
+//            return false;
+        bUseMonochromator = false;
     }
     // Check for the temperature controller...
     sCommand = "*IDN?\r\n";
     int lakeShoreID = 0;
     for(int i=0; i<nDevices; i++) {
         if(resultlist[i] == cornerstoneId) continue;
+        DevClear(gpibBoardID, resultlist[i]);
         Send(gpibBoardID, resultlist[i], sCommand.toUtf8().constData(), sCommand.length(), DABend);
         Receive(gpibBoardID, resultlist[i], readBuf, 256, STOPend);
         readBuf[ThreadIbcnt()] = '\0';
@@ -220,6 +220,7 @@ MainWindow::checkInstruments() {
     for(int i=0; i<nDevices; i++) {
         if(resultlist[i] == cornerstoneId) continue;
         if(resultlist[i] == lakeShoreID) continue;
+        DevClear(gpibBoardID, resultlist[i]);
         Send(gpibBoardID, resultlist[i], sCommand.toUtf8().constData(), sCommand.length(), DABend);
         Receive(gpibBoardID, resultlist[i], readBuf, 256, STOPend);
         readBuf[ThreadIbcnt()] = '\0';
@@ -235,7 +236,8 @@ MainWindow::checkInstruments() {
         }
     }
     if(pKeithley == Q_NULLPTR) {
-        ui->statusBar->showMessage(QString("Error: Source Measure Unit not Connected"));
+        QMessageBox::warning(this, "Error", "Source Measure Unit not Connected",
+                             QMessageBox::Abort, QMessageBox::Abort);
         return false;
     }
 
@@ -271,6 +273,9 @@ MainWindow::switchLampOn() {
 #if defined(Q_PROCESSOR_ARM)
     if(gpioHostHandle >= 0)
         gpio_write(gpioHostHandle, gpioLEDpin, 1);
+    else
+        ui->statusBar->showMessage(QString("Unable to set GPIO%1 On")
+                                   .arg(gpioLEDpin));
 #endif
     currentLampStatus = LAMP_ON;
 }
@@ -285,6 +290,9 @@ MainWindow::switchLampOff() {
 #if defined(Q_PROCESSOR_ARM)
     if(gpioHostHandle >= 0)
         gpio_write(gpioHostHandle, gpioLEDpin, 0);
+    else
+        ui->statusBar->showMessage(QString("Unable to set GPIO%1 Off")
+                                   .arg(gpioLEDpin));
 #endif
     currentLampStatus = LAMP_OFF;
 }
@@ -486,6 +494,21 @@ MainWindow::on_startIvsVButton_clicked() {
         stopIvsV();
         return;
     }
+    if(bUseMonochromator) {
+        //Initializing Corner Stone 130
+        ui->statusBar->showMessage("Initializing Corner Stone 130...");
+        if(pCornerStone130->init() != NO_ERROR){
+            ui->statusBar->showMessage("Unable to Initialize Corner Stone 130...");
+            QApplication::restoreOverrideCursor();
+            return;
+        }
+        pCornerStone130->setGrating(configureRvsTDialog.iGratingNumber);
+        pCornerStone130->setWavelength(configureRvsTDialog.dWavelength);
+    }
+    if(configureIvsVDialog.bPhoto)
+        switchLampOn();
+    else
+        switchLampOff();
     // Initializing Keithley 236
     ui->statusBar->showMessage("Initializing Keithley 236...");
     if(pKeithley->init()) {
@@ -663,6 +686,7 @@ MainWindow::stopIvsV() {
         pLakeShore->deleteLater();
         pLakeShore = Q_NULLPTR;
     }
+    switchLampOff();
     ui->endTimeEdit->clear();
     ui->startIvsVButton->setText("Start I vs V");
     ui->startRvsTButton->setEnabled(true);
