@@ -225,6 +225,9 @@ ConfigureIvsVDialog::setToolTips() {
     ui->waitTimeEdit->setToolTip(sHeader.arg(waitTimeMin).arg(waitTimeMax));
     ui->sweepPointsEdit->setToolTip((sHeader.arg(nSweepPointsMin).arg(nSweepPointsMax)));
 
+    ui->WavelengthEdit->setToolTip(sHeader.arg(wavelengthMin).arg(wavelengthMax));
+    ui->darkPhotoCheck->setToolTip("Choose a Photo or Dark Measurement");
+
     ui->ThermostatCheckBox->setToolTip(QString("Enable/Disable Thermostat Use"));
     ui->TStartEdit->setToolTip(sHeader.arg(temperatureMin).arg(temperatureMax));
     ui->TStopEdit->setToolTip(sHeader.arg(temperatureMin).arg(temperatureMax));
