@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>595</height>
+    <width>450</width>
+    <height>665</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>220</x>
-     <y>550</y>
+     <y>630</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -300,6 +300,9 @@
    <property name="title">
     <string>Measure Type</string>
    </property>
+   <property name="alignment">
+    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+   </property>
    <widget class="QLineEdit" name="VStartEdit">
     <property name="geometry">
      <rect>
@@ -518,8 +521,8 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>440</y>
-     <width>381</width>
+     <y>530</y>
+     <width>411</width>
      <height>91</height>
     </rect>
    </property>
@@ -531,7 +534,7 @@
      <rect>
       <x>10</x>
       <y>59</y>
-      <width>351</width>
+      <width>385</width>
       <height>21</height>
      </rect>
     </property>
@@ -539,7 +542,7 @@
    <widget class="QPushButton" name="outFilePathButton">
     <property name="geometry">
      <rect>
-      <x>340</x>
+      <x>380</x>
       <y>28</y>
       <width>21</width>
       <height>23</height>
@@ -557,7 +560,7 @@
      <rect>
       <x>10</x>
       <y>28</y>
-      <width>321</width>
+      <width>350</width>
       <height>21</height>
      </rect>
     </property>
@@ -570,7 +573,7 @@
    <property name="geometry">
     <rect>
      <x>110</x>
-     <y>550</y>
+     <y>630</y>
      <width>75</width>
      <height>23</height>
     </rect>
