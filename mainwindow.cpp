@@ -249,12 +249,12 @@ MainWindow::checkInstruments() {
     }
     if(gpioHostHandle >= 0) {
         if(set_mode(gpioHostHandle, gpioLEDpin, PI_OUTPUT) < 0) {
-            ui->statusBar->showMessage(QString("Unable to initialize %1 as Output")
+            ui->statusBar->showMessage(QString("Unable to initialize GPIO%1 as Output")
                                        .arg(gpioLEDpin));
             return false;
         }
         if(set_pull_up_down(gpioHostHandle, gpioLEDpin, PI_PUD_UP) < 0) {
-            ui->statusBar->showMessage(QString("Unable to set %1 Pull-Up")
+            ui->statusBar->showMessage(QString("Unable to set GPIO%1 Pull-Up")
                                        .arg(gpioLEDpin));
             return false;
         }
