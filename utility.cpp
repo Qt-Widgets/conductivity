@@ -99,7 +99,7 @@ gpibRead(int ud) {
   do {
     ibrd(ud, gpibUtilities::readBuf, sizeof(gpibUtilities::readBuf)-1);
     if(isGpibError("GPIB Reading Error"))
-      return sString;
+      return QString();
     gpibUtilities::readBuf[ThreadIbcnt()] = 0;
     sString += QString(gpibUtilities::readBuf);
   } while(ThreadIbcnt() == sizeof(gpibUtilities::readBuf)-1);

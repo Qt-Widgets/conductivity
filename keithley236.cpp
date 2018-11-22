@@ -449,7 +449,7 @@ Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long
     }
 
     if(spollByte & COMPLIANCE) {// Compliance
-        spollByte &= ~READING_DONE;
+//        spollByte &= ~READING_DONE;
         iComplianceEvents++;
 //        qCritical() << QString("Keithley236::onGpibCallback: ComplianceEvents[%1]")
 //                       .arg(iComplianceEvents);
@@ -499,8 +499,10 @@ Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long
 
     if(spollByte & READING_DONE) {// Reading Done
         sResponse = gpibRead(LocalUd);
-        QDateTime currentTime = QDateTime::currentDateTime();
-        emit newReading(currentTime, sResponse);
+        if(sResponse != QString()) {
+            QDateTime currentTime = QDateTime::currentDateTime();
+            emit newReading(currentTime, sResponse);
+        }
     }
 
     keithley236::rearmMask = RQS;
