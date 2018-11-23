@@ -264,6 +264,19 @@
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
+   <widget class="QPushButton" name="lampButton">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>170</y>
+      <width>90</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Lamp On</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
  </widget>

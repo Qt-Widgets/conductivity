@@ -130,6 +130,7 @@ MainWindow::closeEvent(QCloseEvent *event) {
 
 bool
 MainWindow::checkInstruments() {
+    ui->statusBar->showMessage("Checking for the GPIB Instruments");
     Addr4882_t padlist[31];
     Addr4882_t resultlist[31];
     for(short i=0; i<30; i++) padlist[i] = i+1;
@@ -260,6 +261,7 @@ MainWindow::checkInstruments() {
         }
     }
 #endif
+    switchLampOff();
     return true;
 }
 
@@ -278,6 +280,7 @@ MainWindow::switchLampOn() {
                                    .arg(gpioLEDpin));
 #endif
     currentLampStatus = LAMP_ON;
+    ui->lampButton->setText(QString("Lamp Off"));
 }
 
 
@@ -295,6 +298,7 @@ MainWindow::switchLampOff() {
                                    .arg(gpioLEDpin));
 #endif
     currentLampStatus = LAMP_OFF;
+    ui->lampButton->setText(QString("Lamp On"));
 }
 
 
@@ -332,6 +336,7 @@ MainWindow::stopRvsT() {
     ui->endTimeEdit->clear();
     ui->startRvsTButton->setText("Start R vs T");
     ui->startIvsVButton->setEnabled(true);
+    ui->lampButton->setEnabled(true);
     QApplication::restoreOverrideCursor();
 }
 
@@ -348,14 +353,6 @@ MainWindow::on_startRvsTButton_clicked() {
         return;
 
     QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
-
-    // Are the GPIB instruments connectd and ready to start ?
-    ui->statusBar->showMessage("Checking for the GPIB Instruments");
-    if(!checkInstruments()) {
-        ui->statusBar->showMessage("GPIB Instruments not found");
-        QApplication::restoreOverrideCursor();
-        return;
-    }
     if(bUseMonochromator) {
         //Initializing Corner Stone 130
         ui->statusBar->showMessage("Initializing Corner Stone 130...");
@@ -466,6 +463,7 @@ MainWindow::on_startRvsTButton_clicked() {
     // now we are waiting for reaching the initial temperature
     ui->startIvsVButton->setDisabled(true);
     ui->startRvsTButton->setText("Stop R vs T");
+    ui->lampButton->setDisabled(true);
     ui->statusBar->showMessage(QString("%1 Waiting Initial T [%2K]")
                                .arg(waitingTStartTime.toString())
                                .arg(configureRvsTDialog.dTempStart));
@@ -486,14 +484,6 @@ MainWindow::on_startIvsVButton_clicked() {
         return;
 
     QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
-
-    // Are the GPIB instruments connectd and ready to start ?
-    ui->statusBar->showMessage("Checking for the GPIB Instruments");
-    if(!checkInstruments()) {
-        ui->statusBar->showMessage("GPIB Instruments not found");
-        stopIvsV();
-        return;
-    }
     if(bUseMonochromator) {
         //Initializing Corner Stone 130
         ui->statusBar->showMessage("Initializing Corner Stone 130...");
@@ -575,7 +565,6 @@ MainWindow::on_startIvsVButton_clicked() {
     startMeasuringTime = QDateTime::currentDateTime();
     expectedSeconds = 0.32+configureIvsVDialog.iWaitTime/1000.0;
     expectedSeconds *= configureIvsVDialog.iNSweepPoints;
-//    qDebug() << "The measure will last" << expectedSeconds << "sec.";
     if(configureIvsVDialog.bUseThermostat) {
         connect(&waitingTStartTimer, SIGNAL(timeout()),
                 this, SLOT(onTimeToCheckT()));
@@ -600,12 +589,12 @@ MainWindow::on_startIvsVButton_clicked() {
     else {
         startI_V();
     }
-//    qDebug() << "The measure will last" << expectedSeconds << "sec.";
     endMeasureTime = startMeasuringTime.addSecs(expectedSeconds);
     QString sString = endMeasureTime.toString("hh:mm:ss dd-MM-yyyy");
     ui->endTimeEdit->setText(sString);
     ui->startRvsTButton->setDisabled(true);
     ui->startIvsVButton->setText("Stop I vs V");
+    ui->lampButton->setDisabled(true);
 }
 
 
@@ -690,6 +679,7 @@ MainWindow::stopIvsV() {
     ui->endTimeEdit->clear();
     ui->startIvsVButton->setText("Start I vs V");
     ui->startRvsTButton->setEnabled(true);
+    ui->lampButton->setEnabled(true);
     QApplication::restoreOverrideCursor();
 }
 
@@ -1220,4 +1210,15 @@ MainWindow::getNewMeasure() {
         return false;
     isK236ReadyForTrigger = false;
     return pKeithley->sendTrigger();
+}
+
+
+void
+MainWindow::on_lampButton_clicked() {
+    if(currentLampStatus==LAMP_ON) {
+        switchLampOff();
+    }
+    else {
+        switchLampOn();
+    }
 }

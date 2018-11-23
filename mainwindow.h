@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 namespace Ui {
-class MainWindow;
+    class MainWindow;
 }
 
 QT_FORWARD_DECLARE_CLASS(QFile)
@@ -39,106 +39,108 @@ QT_FORWARD_DECLARE_CLASS(Plot2D)
 
 class MainWindow : public QMainWindow
 {
-  Q_OBJECT
+    Q_OBJECT
 
 public:
-  explicit MainWindow(QWidget *parent = 0);
-  ~MainWindow();
+    explicit MainWindow(QWidget *parent = 0);
+    ~MainWindow();
+    bool checkInstruments();
 
 signals:
 
 protected:
-  void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
-  bool checkInstruments();
-  bool getNewMeasure();
-  void initRvsTPlots();
-  void stopRvsT();
-  void startI_V();
-  void stopIvsV();
-  void initIvsVPlots();
-  bool prepareOutputFile(QString sBaseDir, QString sFileName);
-  void switchLampOn();
-  void switchLampOff();
+    void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
+    bool getNewMeasure();
+    void initRvsTPlots();
+    void stopRvsT();
+    void startI_V();
+    void stopIvsV();
+    void initIvsVPlots();
+    bool prepareOutputFile(QString sBaseDir, QString sFileName);
+    void switchLampOn();
+    void switchLampOff();
 
 private slots:
-  void on_startRvsTButton_clicked();
-  void on_startIvsVButton_clicked();
-  void onTimeToCheckReachedT();
-  void onTimeToCheckT();
-  void onTimerStabilizeT();
-  void onSteadyTReached();
-  void onTimeToReadT();
-  void onTimeToGetNewMeasure();
-  void onComplianceEvent();
-  void onClearComplianceEvent();
-  void onKeithleyReadyForTrigger();
-  void onNewKeithleyReading(QDateTime dataTime, QString sDataRead);
-  bool onKeithleyReadyForSweepTrigger();
-  void onKeithleySweepDone(QDateTime dataTime, QString sData);
-  void onIForwardSweepDone(QDateTime, QString sData);
-  void onVReverseSweepDone(QDateTime, QString sData);
+    void on_startRvsTButton_clicked();
+    void on_startIvsVButton_clicked();
+    void onTimeToCheckReachedT();
+    void onTimeToCheckT();
+    void onTimerStabilizeT();
+    void onSteadyTReached();
+    void onTimeToReadT();
+    void onTimeToGetNewMeasure();
+    void onComplianceEvent();
+    void onClearComplianceEvent();
+    void onKeithleyReadyForTrigger();
+    void onNewKeithleyReading(QDateTime dataTime, QString sDataRead);
+    bool onKeithleyReadyForSweepTrigger();
+    void onKeithleySweepDone(QDateTime dataTime, QString sData);
+    void onIForwardSweepDone(QDateTime, QString sData);
+    void onVReverseSweepDone(QDateTime, QString sData);
+
+    void on_lampButton_clicked();
 
 private:
-  Ui::MainWindow *ui;
+    Ui::MainWindow *ui;
 
-  enum measure {
-      NoMeasure   = 0,
-      RvsTSourceI = 1,
-      RvsTSourceV = 2,
-      IvsVSourceI = 3,
-      IvsVSourceV = 4,
-      IvsV        = 5
-  };
-  measure presentMeasure;
+    enum measure {
+        NoMeasure   = 0,
+        RvsTSourceI = 1,
+        RvsTSourceV = 2,
+        IvsVSourceI = 3,
+        IvsVSourceV = 4,
+        IvsV        = 5
+    };
+    measure presentMeasure;
 
 private:
-  QString sNormalStyle;
-  QString sErrorStyle;
-  QString sDarkStyle;
-  QString sPhotoStyle;
+    QString sNormalStyle;
+    QString sErrorStyle;
+    QString sDarkStyle;
+    QString sPhotoStyle;
 
-  QFile        *pOutputFile;
+    QFile        *pOutputFile;
 
-  Keithley236    *pKeithley;
-  LakeShore330   *pLakeShore;
-  CornerStone130 *pCornerStone130;
+    Keithley236    *pKeithley;
+    LakeShore330   *pLakeShore;
+    CornerStone130 *pCornerStone130;
 
-  Plot2D       *pPlotMeasurements;
-  Plot2D       *pPlotTemperature;
+    Plot2D       *pPlotMeasurements;
+    Plot2D       *pPlotTemperature;
 
-  QDateTime     currentTime;
-  QDateTime     waitingTStartTime;
-  QDateTime     startReadingTTime;
-  QDateTime     startMeasuringTime;
-  QDateTime     endMeasureTime;
+    QDateTime     currentTime;
+    QDateTime     waitingTStartTime;
+    QDateTime     startReadingTTime;
+    QDateTime     startMeasuringTime;
+    QDateTime     endMeasureTime;
 
-  QTimer        waitingTStartTimer;
-  QTimer        stabilizingTimer;
-  QTimer        readingTTimer;
-  QTimer        measuringTimer;
+    QTimer        waitingTStartTimer;
+    QTimer        stabilizingTimer;
+    QTimer        readingTTimer;
+    QTimer        measuringTimer;
 
-  ConfigureRvsTDialog configureRvsTDialog;
-  ConfigureIvsVDialog configureIvsVDialog;
+    ConfigureRvsTDialog configureRvsTDialog;
+    ConfigureIvsVDialog configureIvsVDialog;
 
-  const quint8  LAMP_ON  = 1;
-  const quint8  LAMP_OFF = 0;
-  const int     iPlotDark = 1;
-  const int     iPlotPhoto = 2;
+    const quint8  LAMP_ON  = 1;
+    const quint8  LAMP_OFF = 0;
+    const int     iPlotDark = 1;
+    const int     iPlotPhoto = 2;
 
-  double        currentTemperature;
-  double        setPointT;
-  int           iCurrentTPlot;
-  int           gpibBoardID;
-  quint8        currentLampStatus;
-  QString       sMeasurementPlotLabel;
-  QString       sTemperaturePlotLabel;
-  int           maxPlotPoints;
-  volatile bool isK236ReadyForTrigger;
-  bool          bRunning;
-  int           junctionDirection;
-  bool          bUseMonochromator;
-  int           gpioHostHandle;
-  int           gpioLEDpin;
+    double        currentTemperature;
+    double        setPointT;
+    int           iCurrentTPlot;
+    int           gpibBoardID;
+    quint8        currentLampStatus;
+    QString       sMeasurementPlotLabel;
+    QString       sTemperaturePlotLabel;
+    int           maxPlotPoints;
+    volatile bool isK236ReadyForTrigger;
+    bool          bRunning;
+    int           junctionDirection;
+    bool          bUseMonochromator;
+    int           gpioHostHandle;
+    int           gpioLEDpin;
 };
 
    #endif // MAINWINDOW_H

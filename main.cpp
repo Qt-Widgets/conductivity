@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "mainwindow.h"
 #include <QApplication>
+#include <QMessageBox>
 
 
 void
@@ -58,6 +59,17 @@ main(int argc, char *argv[]) {
   MainWindow w;
   w.setWindowIcon(QIcon("qrc:/myLogoT.png"));
   w.show();
-
+  QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
+  while(!w.checkInstruments()) {
+      if(QMessageBox::critical(Q_NULLPTR,
+                               QString("Error: GPIB Instruments not Found"),
+                               QString("Switch on and retry"),
+                               QMessageBox::Abort|QMessageBox::Retry,
+                               QMessageBox::Retry) == QMessageBox::Abort)
+      {
+          return 0;
+      }
+  }
+  QApplication::restoreOverrideCursor();
   return a.exec();
 }
