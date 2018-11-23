@@ -262,6 +262,7 @@ MainWindow::checkInstruments() {
     }
 #endif
     switchLampOff();
+    ui->statusBar->showMessage("GPIB Instruments Found! Ready to Start");
     return true;
 }
 
