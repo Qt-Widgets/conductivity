@@ -258,7 +258,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Expected Time to End</string>
+     <string>Expected End Time</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
