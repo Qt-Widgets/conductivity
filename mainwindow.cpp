@@ -323,14 +323,10 @@ MainWindow::stopRvsT() {
     if(pKeithley != Q_NULLPTR) {
         pKeithley->disconnect();
         pKeithley->endVvsT();
-        pKeithley->deleteLater();
-        pKeithley = Q_NULLPTR;
     }
     if(pLakeShore != Q_NULLPTR) {
         pLakeShore->disconnect();
         pLakeShore->switchPowerOff();
-        pLakeShore->deleteLater();
-        pLakeShore = Q_NULLPTR;
     }
     switchLampOff();
 
@@ -667,14 +663,10 @@ MainWindow::stopIvsV() {
     if(pKeithley != Q_NULLPTR) {
         pKeithley->disconnect();
         pKeithley->stopSweep();
-        pKeithley->deleteLater();
-        pKeithley = Q_NULLPTR;
     }
     if(pLakeShore != Q_NULLPTR) {
         pLakeShore->disconnect();
         pLakeShore->switchPowerOff();
-        pLakeShore->deleteLater();
-        pLakeShore = Q_NULLPTR;
     }
     switchLampOff();
     ui->endTimeEdit->clear();

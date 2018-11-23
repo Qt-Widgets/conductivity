@@ -7,6 +7,7 @@
 #include <QPainter>
 #include <QCloseEvent>
 #include <QDebug>
+#include <QIcon>
 
 
 Plot2D::Plot2D(QWidget *parent, QString Title)
@@ -17,6 +18,7 @@ Plot2D::Plot2D(QWidget *parent, QString Title)
   setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
   setWindowFlags(windowFlags() | Qt::WindowMinMaxButtonsHint);
 //  setAttribute(Qt::WA_AlwaysShowToolTips);
+  setWindowIcon(QIcon("qrc:/plot.png"));
   QSettings settings;
   restoreGeometry(settings.value(sTitle+QString("Plot2D")).toByteArray());
   xMarker      = 0.0;
