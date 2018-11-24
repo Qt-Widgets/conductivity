@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "configureRvsTdialog.h"
 #include "configureIvsVdialog.h"
+#include "ivsvdialog.h"
 
 
 namespace Ui {
@@ -42,7 +43,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(QWidget *parent = Q_NULLPTR);
     ~MainWindow();
     bool checkInstruments();
 
@@ -120,7 +121,9 @@ private:
     QTimer        measuringTimer;
 
     ConfigureRvsTDialog configureRvsTDialog;
-    ConfigureIvsVDialog configureIvsVDialog;
+//    ConfigureIvsVDialog configureIvsVDialog;
+    IvsVDialog          configureIvsVDialog;
+
 
     const quint8  LAMP_ON  = 1;
     const quint8  LAMP_OFF = 0;

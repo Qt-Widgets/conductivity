@@ -29,7 +29,11 @@ TARGET = conductivity
 TEMPLATE = app
 
 
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    ivsvdialog.cpp \
+    k236tab.cpp \
+    ls330tab.cpp \
+    cs130tab.cpp
 SOURCES += mainwindow.cpp
 SOURCES += cornerstone130.cpp
 SOURCES += keithley236.cpp
@@ -44,7 +48,11 @@ SOURCES += configureIvsVdialog.cpp
 SOURCES += configureRvsTdialog.cpp
 SOURCES += utility.cpp
 
-HEADERS += mainwindow.h
+HEADERS += mainwindow.h \
+    ivsvdialog.h \
+    k236tab.h \
+    ls330tab.h \
+    cs130tab.h
 HEADERS += cornerstone130.h
 HEADERS += keithley236.h
 HEADERS += lakeshore330.h
