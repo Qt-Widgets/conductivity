@@ -1,5 +1,4 @@
-#ifndef IVSVDIALOG_H
-#define IVSVDIALOG_H
+#pragma once
 
 #include <QDialog>
 
@@ -31,4 +30,3 @@ private:
     QDialogButtonBox *buttonBox;
 };
 
-#endif // IVSVDIALOG_H

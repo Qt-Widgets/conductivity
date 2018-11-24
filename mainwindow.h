@@ -32,11 +32,13 @@ namespace Ui {
     class MainWindow;
 }
 
+
 QT_FORWARD_DECLARE_CLASS(QFile)
 QT_FORWARD_DECLARE_CLASS(Keithley236)
 QT_FORWARD_DECLARE_CLASS(LakeShore330)
 QT_FORWARD_DECLARE_CLASS(CornerStone130)
 QT_FORWARD_DECLARE_CLASS(Plot2D)
+
 
 class MainWindow : public QMainWindow
 {
@@ -44,7 +46,7 @@ class MainWindow : public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = Q_NULLPTR);
-    ~MainWindow();
+    ~MainWindow() Q_DECL_OVERRIDE;
     bool checkInstruments();
 
 signals:
@@ -100,14 +102,14 @@ private:
     QString sDarkStyle;
     QString sPhotoStyle;
 
-    QFile        *pOutputFile;
+    QFile *pOutputFile;
 
     Keithley236    *pKeithley;
     LakeShore330   *pLakeShore;
     CornerStone130 *pCornerStone130;
 
-    Plot2D       *pPlotMeasurements;
-    Plot2D       *pPlotTemperature;
+    Plot2D *pPlotMeasurements;
+    Plot2D *pPlotTemperature;
 
     QDateTime     currentTime;
     QDateTime     waitingTStartTime;
