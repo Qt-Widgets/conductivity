@@ -33,8 +33,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MAX_COMPLIANCE_EVENTS 5
 
 namespace keithley236 {
-int rearmMask;
 #if !defined(Q_OS_LINUX)
+int rearmMask;
 int __stdcall
 myCallback(int LocalUd, unsigned long LocalIbsta, unsigned long LocalIberr, long LocalIbcntl, void* callbackData) {
     reinterpret_cast<Keithley236*>(callbackData)->onGpibCallback(LocalUd, LocalIbsta, LocalIberr, LocalIbcntl);
@@ -63,6 +63,9 @@ Keithley236::Keithley236(int gpio, int address, QObject *parent)
     , k236(-1)
 {
     iComplianceEvents = 0;
+#if defined(Q_OS_LINUX)
+    pollInterval = 500;
+#endif
 }
 
 
@@ -72,7 +75,7 @@ Keithley236::~Keithley236() {
         pollTimer.stop();
         pollTimer.disconnect();
 #else
-        ibnotify (k236, 0, NULL, NULL);// disable notification
+        ibnotify(k236, 0, NULL, NULL);// disable notification
 #endif
         ibonl(k236, 0);// Disable hardware and software.
     }
@@ -101,7 +104,7 @@ Keithley236::init() {
 #if defined(Q_OS_LINUX)
     connect(&pollTimer, SIGNAL(timeout()),
             this, SLOT(checkNotify()));
-    pollTimer.start(200);
+    pollTimer.start(pollInterval);
 #else
     ibnotify(k236,
              RQS,
@@ -531,8 +534,9 @@ void
 Keithley236::checkNotify() {
 #if defined(Q_OS_LINUX)
     ibrsp(k236, &spollByte);
+    if(isGpibError("Keithley236::checkNotify(): ibrsp() Error"))
     if(!(spollByte & 64))
         return; // SRQ not enabled
-    onGpibCallback(k236, ThreadIbsta(), ThreadIberr(), ThreadIbcnt());
+    onGpibCallback(k236, uint(ThreadIbsta()), uint(ThreadIberr()), ThreadIbcnt());
 #endif
 }

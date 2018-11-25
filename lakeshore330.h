@@ -16,8 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
-#ifndef LAKESHORE330_H
-#define LAKESHORE330_H
+#pragma once
 
 #include <QtGlobal>
 #include <QObject>
@@ -26,50 +25,53 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class LakeShore330 : public QObject
 {
-  Q_OBJECT
+    Q_OBJECT
 
 public:
-  explicit LakeShore330(int gpio, int address, QObject *parent = 0);
-  virtual ~LakeShore330();
-  int      init();
-  void     onGpibCallback(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
-  double   getTemperature();
-  bool     setTemperature(double Temperature);
-  bool     switchPowerOn(int iRange);
-  bool     switchPowerOff();
-  bool     startRamp(double targetT, double rate);
-  bool     isRamping();
+    explicit LakeShore330(int gpio, int address, QObject *parent=Q_NULLPTR);
+    virtual ~LakeShore330();
+    int      init();
+    void     onGpibCallback(int ud, unsigned long ibsta, unsigned long iberr, long ibcntl);
+    double   getTemperature();
+    bool     setTemperature(double Temperature);
+    bool     switchPowerOn(int iRange);
+    bool     switchPowerOff();
+    bool     startRamp(double targetT, double rate);
+    bool     isRamping();
 
 signals:
 
 public slots:
-  void checkNotify();
+#if defined(Q_OS_LINUX)
+    void checkNotify();
+#endif
 
 protected:
-  QTimer pollTimer;
+    QTimer pollTimer;
 
 private:
-  int gpibNumber;
-  int ls330Address;
-  int ls330;
-  int iMask;
-  QString sCommand;
-  QString sResponse;
-  char spollByte;
-  // Status Byte Register
-  const quint8 SRQ;// Service Request
-  const quint8 ESB;// Standard Event Status
-  const quint8 OVI;// Overload Indicator
-  const quint8 CLE;// Control Limit Error
-  const quint8 CDR;// Control Data Ready
-  const quint8 SDR;// Sample Data Ready
-  // Standard Event Status Register
-  const quint8 PON;// Power On
-  const quint8 CME;// Command Error
-  const quint8 EXE;// Execution Error
-  const quint8 DDE;// Device Dependent Error
-  const quint8 QYE;// Query Error
-  const quint8 OPC;// Operation Complete
+    int gpibNumber;
+    int ls330Address;
+    int ls330;
+    int iMask;
+    QString sCommand;
+    QString sResponse;
+    char spollByte;
+    // Status Byte Register
+    const quint8 SRQ;// Service Request
+    const quint8 ESB;// Standard Event Status
+    const quint8 OVI;// Overload Indicator
+    const quint8 CLE;// Control Limit Error
+    const quint8 CDR;// Control Data Ready
+    const quint8 SDR;// Sample Data Ready
+    // Standard Event Status Register
+    const quint8 PON;// Power On
+    const quint8 CME;// Command Error
+    const quint8 EXE;// Execution Error
+    const quint8 DDE;// Device Dependent Error
+    const quint8 QYE;// Query Error
+    const quint8 OPC;// Operation Complete
+#if defined(Q_OS_LINUX)
+    int pollInterval;
+#endif
 };
-
-#endif // LAKESHORE330_H

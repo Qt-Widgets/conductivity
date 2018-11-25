@@ -7,6 +7,7 @@
 #include <QDialogButtonBox>
 #include <QVBoxLayout>
 
+
 IvsVDialog::IvsVDialog(QWidget *parent)
     : QDialog(parent)
 {
@@ -22,8 +23,10 @@ IvsVDialog::IvsVDialog(QWidget *parent)
 
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok |
                                      QDialogButtonBox::Cancel);
-    connect(buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
-    connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
+    connect(buttonBox, SIGNAL(accepted()),
+            this, SLOT(onOk()));
+    connect(buttonBox, SIGNAL(rejected()),
+            this, SLOT(onCancel()));
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
     mainLayout->addWidget(tabWidget);
@@ -31,3 +34,24 @@ IvsVDialog::IvsVDialog(QWidget *parent)
     setLayout(mainLayout);
     setWindowTitle("I versus V");
 }
+
+
+void
+IvsVDialog::onCancel() {
+    pK236Tab->restoreSettings();
+    //pLS330Tab->restoreSettings();
+    //pCS130Tab->restoreSettings();
+    emit reject();
+}
+
+
+
+void
+IvsVDialog::onOk(){
+    pK236Tab->saveSettings();
+    //pLS330Tab->saveSettings();
+    //pCS130Tab->saveSettings();
+    emit accept();
+}
+
+

@@ -19,6 +19,8 @@ public:
 signals:
 
 public slots:
+    void onCancel();
+    void onOk();
 
 public:
     K236Tab          *pK236Tab;

@@ -5,6 +5,8 @@
 
 
 QT_FORWARD_DECLARE_CLASS(QLineEdit)
+QT_FORWARD_DECLARE_CLASS(QRadioButton)
+QT_FORWARD_DECLARE_CLASS(QLabel)
 
 
 class K236Tab : public QWidget
@@ -12,35 +14,40 @@ class K236Tab : public QWidget
     Q_OBJECT
 public:
     explicit K236Tab(QWidget *parent = nullptr);
+    void restoreSettings();
+    void saveSettings();
 
 signals:
 
 public slots:
-    void onIStartEdit_textChanged(const QString &arg1);
-    void onIStopEdit_textChanged(const QString &arg1);
-    void onVStartEdit_textChanged(const QString &arg1);
-    void onVStopEdit_textChanged(const QString &arg1);
+    void onSourceIChecked();
+    void onSourceVChecked();
+    void onStartEdit_textChanged(const QString &arg1);
+    void onStopEdit_textChanged(const QString &arg1);
+    void onComplianceEdit_textChanged(const QString &arg1);
     void onWaitTimeEdit_textChanged(const QString &arg1);
     void onSweepPointsEdit_textChanged(const QString &arg1);
 
 protected:
-    void restoreSettings();
-    void saveSettings();
     void setToolTips();
     void closeEvent(QCloseEvent *event);
     void setCaptions();
+    void initUI();
+    void connectSignals();
     bool isCurrentValid(double dCurrent);
     bool isVoltageValid(double dVoltage);
+    bool isComplianceValid(double dCompliance);
     bool isWaitTimeValid(int iWaitTime);
     bool isSweepPointNumberValid(int nSweepPoints);
 
 public:
-    double dIStart;
-    double dIStop;
-    double dVStart;
-    double dVStop;
+    double dStart;
+    double dStop;
+    double dCompliance;
     int    iWaitTime;
     int    iNSweepPoints;
+    bool   bSourceI;
+
 
 private:
     // Limit Values
@@ -54,14 +61,19 @@ private:
     const int    nSweepPointsMax;
 
     // QLineEdit styles
-    QString     sNormalStyle;
-    QString     sErrorStyle;
+    QString sNormalStyle;
+    QString sErrorStyle;
 
-    QLineEdit   *pIStartEdit;
-    QLineEdit   *pIStopEdit;
-    QLineEdit   *pVStartEdit;
-    QLineEdit   *pVStopEdit;
-    QLineEdit   *pWaitTimeEdit;
-    QLineEdit   *pSweepPointsEdit;
+    // UI Elements
+    QRadioButton *pSourceIButton;
+    QRadioButton *pSourceVButton;
+    QLabel       *pStartLabel;
+    QLabel       *pStopLabel;
+    QLabel       *pComplianceLabel;
+    QLineEdit    *pStartEdit;
+    QLineEdit    *pStopEdit;
+    QLineEdit    *pComplianceEdit;
+    QLineEdit    *pWaitTimeEdit;
+    QLineEdit    *pSweepPointsEdit;
 };
 

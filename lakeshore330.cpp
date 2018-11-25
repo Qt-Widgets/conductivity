@@ -30,8 +30,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace
 lakeshore330 {
-int rearmMask;
 #if !defined(Q_OS_LINUX)
+int rearmMask;
 int __stdcall
 myCallback(int LocalUd, unsigned long LocalIbsta, unsigned long LocalIberr, long LocalIbcntl, void* callbackData) {
     reinterpret_cast<LakeShore330*>(callbackData)->onGpibCallback(LocalUd, LocalIbsta, LocalIberr, LocalIbcntl);
@@ -61,7 +61,9 @@ LakeShore330::LakeShore330(int gpio, int address, QObject *parent)
     , QYE(4)  // Query Error
     , OPC(1)  // Operation Complete
 {
-
+#if defined(Q_OS_LINUX)
+    pollInterval = 500;
+#endif
 }
 
 
@@ -69,17 +71,17 @@ LakeShore330::~LakeShore330() {
     //  qDebug() << "LakeShore330::~LakeShore330()";
     if(ls330 != -1) {
         switchPowerOff();
-#if defined(Q_OS_LINUX)
-#else
+#if !defined(Q_OS_LINUX)
         ibnotify (ls330, 0, NULL, NULL);// disable notification
 #endif
         ibonl(ls330, 0);// Disable hardware and software.
     }
 }
 
+
 int
 LakeShore330::init() {
-    //  qDebug() << "LakeShore330::init()";
+    //qDebug() << "LakeShore330::init()";
     ls330 = ibdev(gpibNumber, ls330Address, 0, T3s, 1, 0);
     if(ls330 < 0) {
         qCritical() << "LakeShore330::init() ibdev() Failed";
@@ -99,7 +101,7 @@ LakeShore330::init() {
 #if defined(Q_OS_LINUX)
     connect(&pollTimer, SIGNAL(timeout()),
             this, SLOT(checkNotify()));
-    pollTimer.start(200);
+    pollTimer.start(pollInterval);
 #else
     // set up the asynchronous event notification routine on RQS
     ibnotify(ls330,
@@ -139,15 +141,14 @@ LakeShore330::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned lon
     Q_UNUSED(LocalIbsta)
     Q_UNUSED(LocalIberr)
     Q_UNUSED(LocalIbcntl)
-    //  qDebug() << "LakeShore330::onGpibCallback()";
-
+    //qDebug() << "LakeShore330::onGpibCallback()";
     quint8 spollByte;
-    ibrsp(ls330, (char *)&spollByte);
+    ibrsp(ls330, reinterpret_cast<char*>(&spollByte));
     if(isGpibError("LakeShore330::onGpibCallback(): ibrsp() Failed"))
         return;
-    //  qDebug() << "spollByte=" << spollByte;
+    //qDebug() << "spollByte=" << spollByte;
     if(spollByte & ESB) {
-        //    qDebug() << "LakeShore330::onGpibCallback(): Standard Event Status";
+        //qDebug() << "LakeShore330::onGpibCallback(): Standard Event Status";
         gpibWrite(ls330, "*ESR?\r\n");// Query Std. Event Status Register
         if(isGpibError("LakeShore330::onGpibCallback(): *ESR? Failed"))
             return;
@@ -155,22 +156,22 @@ LakeShore330::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned lon
         if(isGpibError("LakeShore330::onGpibCallback(): Read of Std. Event Status Register Failed"))
             return;
         if(esr & PON) {
-            //      qDebug() << "LakeShore330::onGpibCallback(): Event Status Register PON";
+            //qDebug() << "LakeShore330::onGpibCallback(): Event Status Register PON";
         }
         if(esr & CME) {
-            //      qDebug() << "LakeShore330::onGpibCallback(): Event Status Register CME";
+            //qDebug() << "LakeShore330::onGpibCallback(): Event Status Register CME";
         }
         if(esr & EXE) {
-            //      qDebug() << "LakeShore330::onGpibCallback(): Event Status Register EXE";
+            //qDebug() << "LakeShore330::onGpibCallback(): Event Status Register EXE";
         }
         if(esr & DDE) {
-            //      qDebug() << "LakeShore330::onGpibCallback(): Event Status Register DDE";
+            //qDebug() << "LakeShore330::onGpibCallback(): Event Status Register DDE";
         }
         if(esr & QYE) {
-            //      qDebug() << "LakeShore330::onGpibCallback(): Event Status Register QYE";
+            //qDebug() << "LakeShore330::onGpibCallback(): Event Status Register QYE";
         }
         if(esr & OPC) {
-            //      qDebug() << "LakeShore330::onGpibCallback(): Event Status Register OPC";
+            //qDebug() << "LakeShore330::onGpibCallback(): Event Status Register OPC";
         }
     }
     if(spollByte & OVI) {
@@ -190,7 +191,7 @@ LakeShore330::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned lon
 
 double
 LakeShore330::getTemperature() {
-    //  qDebug() << "LakeShore330::getTemperature()";
+    //qDebug() << "LakeShore330::getTemperature()";
     gpibWrite(ls330, "SDAT?\r\n");// Query the Sample Sensor Data.
     if(isGpibError("LakeShore330::getTemperature(): SDAT? Failed"))
         return 0.0;
@@ -203,7 +204,7 @@ LakeShore330::getTemperature() {
 
 bool
 LakeShore330::setTemperature(double Temperature) {
-    //  qDebug() << QString("LakeShore330::setTemperature(%1)").arg(Temperature);
+    //qDebug() << QString("LakeShore330::setTemperature(%1)").arg(Temperature);
     if(Temperature < 0.0 || Temperature > 900.0) return false;
     sCommand = QString("SETP %1\r\n").arg(Temperature, 0, 'f', 2);
     gpibWrite(ls330, sCommand);// Sets the Setpoint
@@ -215,9 +216,6 @@ LakeShore330::setTemperature(double Temperature) {
 
 bool
 LakeShore330::switchPowerOn(int iRange) {
-    //  qDebug() << QString("LakeShore330::switchPowerOn(%1)").arg(iRange);
-    //  sCommand = QString("*SRE %1\r\n").arg(SRQ | ESB | OVI | CLE | CDR | SDR);
-    //  gpibWrite(ls330, sCommand);
     // Sets heater status: 1 = low, 2 = medium, 3 = high.
     gpibWrite(ls330, QString("RANG %1\r\n").arg(iRange));
     if(isGpibError(QString("LakeShore330::switchPowerOn(%1): Failed").arg(iRange)))
@@ -232,7 +230,7 @@ LakeShore330::switchPowerOn(int iRange) {
 
 bool
 LakeShore330::switchPowerOff() {
-    //  qDebug() << "LakeShore330::switchPowerOff()";
+    //qDebug() << "LakeShore330::switchPowerOff()";
     gpibWrite(ls330, "*SRE 0\r\n");// Set Service Request Enable to No SRQ
     // Sets heater status: 0 = off.
     gpibWrite(ls330, "RANG 0\r\n");
@@ -255,7 +253,7 @@ LakeShore330::startRamp(double targetT, double rate) {
     QThread::sleep(1);
     if(isGpibError("Unable to Start Ramp"))
         return false;
-    //  qDebug() << QString("LakeShore330::startRamp(%1)").arg(rate);
+    //qDebug() << QString("LakeShore330::startRamp(%1)").arg(rate);
     return true;
 }
 
@@ -273,12 +271,14 @@ LakeShore330::isRamping() {
 }
 
 
+#if defined(Q_OS_LINUX)
 void
 LakeShore330::checkNotify() {
-#if defined(Q_OS_LINUX)
     ibrsp(ls330, &spollByte);
+    if(isGpibError("Unable to query Ramp Status"))
+        return;
     if(!(spollByte & 64))
-        return; // SRQ not enabled
-    onGpibCallback(ls330, ThreadIbsta(), ThreadIberr(), ThreadIbcnt());
-#endif
+        return;// SRQ not enabled
+    onGpibCallback(ls330, ulong(ThreadIbsta()), ulong(ThreadIberr()), ThreadIbcnt());
 }
+#endif
