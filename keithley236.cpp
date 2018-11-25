@@ -133,7 +133,7 @@ Keithley236::initVvsTSourceI(double dAppliedCurrent, double dCompliance) {
     sCommand = QString("L%1,0X").arg(dCompliance);
     iErr |= gpibWrite(k236, sCommand);    // Set Compliance, Autorange Measure
     iErr |= gpibWrite(k236, "G5,2,0");    // Output Source, Measure, No Prefix, DC
-    iErr |= gpibWrite(k236, "Z0");        // Disable Zero suppression
+    iErr |= gpibWrite(k236, "Z0");        // Disable suppression
     iErr |= gpibWrite(k236, "P5");        // 32 Reading Filter
     iErr |= gpibWrite(k236, "S3");        // 20ms integration time
     iErr |= gpibWrite(k236, "F1,0");      // Place in Source I Measure V
