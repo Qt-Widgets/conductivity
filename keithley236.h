@@ -71,6 +71,7 @@ public:
     const int K236_ERROR;
     const int COMPLIANCE;
 
+
 private:
     int gpibNumber;
     int k236Address;

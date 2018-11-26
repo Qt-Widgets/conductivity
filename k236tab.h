@@ -30,7 +30,6 @@ public slots:
 
 protected:
     void setToolTips();
-    void closeEvent(QCloseEvent *event);
     void setCaptions();
     void initUI();
     void connectSignals();
@@ -47,7 +46,6 @@ public:
     int    iWaitTime;
     int    iNSweepPoints;
     bool   bSourceI;
-
 
 private:
     // Limit Values

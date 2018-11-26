@@ -27,14 +27,22 @@ public slots:
     void onCancel();
     void onOk();
 
+protected:
+    void setToolTips();
+
 public:
     K236Tab          TabK236;
     LS330Tab         TabLS330;
     CS130Tab         TabCS130;
     FileTab          TabFile;
+    bool             bPhoto;// <<<<<<<<<<<<<<<<Da Cambiare
 
 private:
     QTabWidget       *tabWidget;
     QDialogButtonBox *buttonBox;
+    int iSourceIndex;
+    int iThermIndex;
+    int iMonoIndex;
+    int iFileIndex;
 };
 

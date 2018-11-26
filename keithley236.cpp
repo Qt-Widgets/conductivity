@@ -33,12 +33,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MAX_COMPLIANCE_EVENTS 5
 
 namespace keithley236 {
+static int  rearmMask;
 #if !defined(Q_OS_LINUX)
-int rearmMask;
 int __stdcall
 myCallback(int LocalUd, unsigned long LocalIbsta, unsigned long LocalIberr, long LocalIbcntl, void* callbackData) {
     reinterpret_cast<Keithley236*>(callbackData)->onGpibCallback(LocalUd, LocalIbsta, LocalIberr, LocalIbcntl);
-    return rearmMask;
+    return Keithley236::rearmMask;
 }
 #endif
 }

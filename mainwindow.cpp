@@ -566,26 +566,26 @@ MainWindow::on_startIvsVButton_clicked() {
     startMeasuringTime = QDateTime::currentDateTime();
     expectedSeconds = 0.32+configureIvsVDialog.TabK236.iWaitTime/1000.0;
     expectedSeconds *= configureIvsVDialog.TabK236.iNSweepPoints;
-    if(configureIvsVDialog.bUseThermostat) {
+    if(configureIvsVDialog.TabLS330.bUseThermostat) {
         connect(&waitingTStartTimer, SIGNAL(timeout()),
                 this, SLOT(onTimeToCheckT()));
         waitingTStartTime = QDateTime::currentDateTime();
         // Start the reaching of the Initial Temperature
         // Configure Thermostat
-        setPointT = configureIvsVDialog.dTStart;
+        setPointT = configureIvsVDialog.TabLS330.dTStart;
         pLakeShore->setTemperature(setPointT);
         pLakeShore->switchPowerOn(3);
         waitingTStartTimer.start(5000);
         ui->statusBar->showMessage(QString("%1 Waiting Initial T[%2K]")
                                    .arg(waitingTStartTime.toString())
-                                   .arg(configureIvsVDialog.dTStart));
+                                   .arg(configureIvsVDialog.TabLS330.dTStart));
         // All done... compute the time needed for the measurement:
         double deltaT;
-        deltaT = configureIvsVDialog.dTStop -
-                 configureIvsVDialog.dTStart;
-        expectedSeconds += 60.0 *(configureIvsVDialog.iReachingTStart +
-                                  configureIvsVDialog.iTimeToSteadyT);
-        expectedSeconds *= int(deltaT / configureIvsVDialog.dTStep);
+        deltaT = configureIvsVDialog.TabLS330.dTStop -
+                 configureIvsVDialog.TabLS330.dTStart;
+        expectedSeconds += 60.0 *(configureIvsVDialog.TabLS330.iReachingTStart +
+                                  configureIvsVDialog.TabLS330.iTimeToSteadyT);
+        expectedSeconds *= int(deltaT / configureIvsVDialog.TabLS330.dTStep);
     }
     else {
         startI_V();
@@ -804,19 +804,19 @@ MainWindow::onTimeToCheckT() {
         waitingTStartTimer.disconnect();
         connect(&stabilizingTimer, SIGNAL(timeout()),
                 this, SLOT(onSteadyTReached()));
-        stabilizingTimer.start(configureIvsVDialog.iTimeToSteadyT*60000);
+        stabilizingTimer.start(configureIvsVDialog.TabLS330.iTimeToSteadyT*60000);
         ui->statusBar->showMessage(QString("Thermal Stabilization for %1 min.")
                                    .arg(configureRvsTDialog.iStabilizingTime));
     }
     else {
         currentTime = QDateTime::currentDateTime();
         qint64 elapsedSec = waitingTStartTime.secsTo(currentTime);
-        if(elapsedSec > qint64(configureIvsVDialog.iReachingTStart)*60) {
+        if(elapsedSec > qint64(configureIvsVDialog.TabLS330.iReachingTStart)*60) {
             waitingTStartTimer.stop();
             waitingTStartTimer.disconnect();
             connect(&stabilizingTimer, SIGNAL(timeout()),
                     this, SLOT(onSteadyTReached()));
-            stabilizingTimer.start(configureIvsVDialog.iTimeToSteadyT*60000);
+            stabilizingTimer.start(configureIvsVDialog.TabLS330.iTimeToSteadyT*60000);
             ui->statusBar->showMessage(QString("Thermal Stabilization for %1 min.")
                                        .arg(configureRvsTDialog.iStabilizingTime));
         }
@@ -1062,10 +1062,10 @@ MainWindow::onKeithleySweepDone(QDateTime dataTime, QString sData) {
     }
     pPlotMeasurements->UpdatePlot();
     pOutputFile->flush();
-    if(configureIvsVDialog.bUseThermostat) {
-        setPointT += configureIvsVDialog.dTStep;
+    if(configureIvsVDialog.TabLS330.bUseThermostat) {
+        setPointT += configureIvsVDialog.TabLS330.dTStep;
 //        qDebug() << QString("New Set Point: %1").arg(setPointT);
-        if(setPointT > configureIvsVDialog.dTStop) {
+        if(setPointT > configureIvsVDialog.TabLS330.dTStop) {
             stopIvsV();
             ui->statusBar->showMessage("Measure Done");
             onClearComplianceEvent();

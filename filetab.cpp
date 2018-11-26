@@ -5,21 +5,26 @@
 #include <QLineEdit>
 #include <QSettings>
 #include <QMessageBox>
+#include <QGridLayout>
+
 
 FileTab::FileTab(QWidget *parent)
     : QWidget(parent)
     , sBaseDir(QDir::homePath())
-    , sOutFileName("junction.dat")
+    , sOutFileName("data.dat")
 {
     pSampleInformationEdit = new QPlainTextEdit();
     pOutPathEdit = new QLineEdit();
-    pOutFileEdit = new QLineEdit();;
+    pOutFileEdit = new QLineEdit();
 
+    // Build the Tab layout
+    QGridLayout* pLayout = new QGridLayout();
+
+    setLayout(pLayout);
     restoreSettings();
     setToolTips();
     initUI();
 }
-
 
 
 void
@@ -27,6 +32,15 @@ FileTab::initUI() {
     pSampleInformationEdit->setPlainText(sSampleInfo);
     pOutPathEdit->setText(sBaseDir);
     pOutFileEdit->setText(sOutFileName);
+}
+
+
+void
+FileTab::setToolTips() {
+    pSampleInformationEdit->setToolTip(QString("Enter Sample description (multiline)"));
+    pOutPathEdit->setToolTip(QString("Output File Folder"));
+    pOutFileEdit->setToolTip(QString("Enter Output File Name"));
+//    pOutFilePathButton->setToolTip((QString("Press to Change Output File Folder")));
 }
 
 

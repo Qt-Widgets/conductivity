@@ -8,12 +8,13 @@
 IvsVDialog::IvsVDialog(QWidget *parent)
     : QDialog(parent)
 {
+    setAttribute(Qt::WA_AlwaysShowToolTips);
     tabWidget = new QTabWidget;
 
-    tabWidget->addTab(&TabK236, tr("K236"));
-    tabWidget->addTab(&TabLS330,tr("LS330"));
-    tabWidget->addTab(&TabCS130,tr("CS130"));
-    tabWidget->addTab(&TabFile,tr("Out File"));
+    iSourceIndex = tabWidget->addTab(&TabK236, tr("K236"));
+    iThermIndex = tabWidget->addTab(&TabLS330,tr("LS330"));
+    iMonoIndex = tabWidget->addTab(&TabCS130,tr("CS130"));
+    iFileIndex = tabWidget->addTab(&TabFile,tr("Out File"));
 
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok |
                                      QDialogButtonBox::Cancel);
@@ -27,13 +28,25 @@ IvsVDialog::IvsVDialog(QWidget *parent)
     mainLayout->addWidget(buttonBox);
     setLayout(mainLayout);
     setWindowTitle("I versus V");
+    setToolTips();
+
+    bPhoto= true;// <<<<<<<<<<<<<<<<<<<< Da levare
+}
+
+
+void
+IvsVDialog::setToolTips() {
+    tabWidget->setTabToolTip(iSourceIndex, QString("Source-Measure Unit configuration"));
+    tabWidget->setTabToolTip(iThermIndex, QString("Thermostat configuration"));
+    tabWidget->setTabToolTip(iMonoIndex, QString("Monochromator configuration"));
+    tabWidget->setTabToolTip(iFileIndex, QString("Output File configuration"));
 }
 
 
 void
 IvsVDialog::onCancel() {
     TabK236.restoreSettings();
-    //TabLS330.restoreSettings();
+    TabLS330.restoreSettings();
     //TabCS130.restoreSettings();
     TabFile.restoreSettings();
     reject();
@@ -44,8 +57,8 @@ IvsVDialog::onCancel() {
 void
 IvsVDialog::onOk() {
     TabK236.saveSettings();
-    //LS330Tab.saveSettings();
-    //CS130Tab.saveSettings();
+    TabLS330.saveSettings();
+    //TabCS130.saveSettings();
     TabFile.saveSettings();
     accept();
 }

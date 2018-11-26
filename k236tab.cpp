@@ -18,9 +18,7 @@ K236Tab::K236Tab(QWidget *parent)
     , nSweepPointsMin(3)
     , nSweepPointsMax(500)
 {
-    setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
-    setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
-
+    setAttribute(Qt::WA_AlwaysShowToolTips);
     // Create UI Elements
     pSourceIButton   = new QRadioButton(QString("Source I"), this);
     pSourceVButton   = new QRadioButton(QString("Source V"), this);
@@ -30,7 +28,7 @@ K236Tab::K236Tab(QWidget *parent)
     pWaitTimeEdit    = new QLineEdit(this);
     pSweepPointsEdit = new QLineEdit(this);
 
-    // Build the Dialog layout
+    // Build the Tab layout
     QGridLayout* pLayout = new QGridLayout();
     // Radio Buttons
     pLayout->addWidget(pSourceIButton, 0, 0, 1, 1);
@@ -69,16 +67,8 @@ K236Tab::K236Tab(QWidget *parent)
 
 
 void
-K236Tab::closeEvent(QCloseEvent *event) {
-    Q_UNUSED(event)
-    saveSettings();
-}
-
-
-void
 K236Tab::restoreSettings() {
     QSettings settings;
-    restoreGeometry(settings.value("K236TabGeometry").toByteArray());
     bSourceI       = settings.value("K236TabSourceI", true).toBool();
     dStart        = settings.value("K236TabStart", 0.0).toDouble();
     dStop         = settings.value("K236TabStop", 0.0).toDouble();
