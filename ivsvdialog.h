@@ -1,18 +1,13 @@
 #pragma once
 
-#include <QDialog>
 #include "k236tab.h"
 #include "ls330tab.h"
 #include "cs130tab.h"
 #include "filetab.h"
 
-
-QT_FORWARD_DECLARE_CLASS(QDialogButtonBox)
-QT_FORWARD_DECLARE_CLASS(QTabWidget)
-QT_FORWARD_DECLARE_CLASS(K236Tab)
-QT_FORWARD_DECLARE_CLASS(LS330Tab)
-QT_FORWARD_DECLARE_CLASS(CS130Tab)
-QT_FORWARD_DECLARE_CLASS(FileTab)
+#include <QDialog>
+#include <QTabWidget>
+#include <QDialogButtonBox>
 
 
 class IvsVDialog : public QDialog
@@ -28,17 +23,18 @@ public slots:
     void onOk();
 
 protected:
+    void connectSignals();
     void setToolTips();
 
 public:
-    K236Tab          TabK236;
-    LS330Tab         TabLS330;
-    CS130Tab         TabCS130;
-    FileTab          TabFile;
+    K236Tab  TabK236;
+    LS330Tab TabLS330;
+    CS130Tab TabCS130;
+    FileTab  TabFile;
     bool             bPhoto;// <<<<<<<<<<<<<<<<Da Cambiare
 
 private:
-    QTabWidget       *tabWidget;
+    QTabWidget        tabWidget;
     QDialogButtonBox *buttonBox;
     int iSourceIndex;
     int iThermIndex;

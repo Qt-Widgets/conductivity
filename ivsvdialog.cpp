@@ -9,22 +9,19 @@ IvsVDialog::IvsVDialog(QWidget *parent)
     : QDialog(parent)
 {
     setAttribute(Qt::WA_AlwaysShowToolTips);
-    tabWidget = new QTabWidget;
 
-    iSourceIndex = tabWidget->addTab(&TabK236, tr("K236"));
-    iThermIndex = tabWidget->addTab(&TabLS330,tr("LS330"));
-    iMonoIndex = tabWidget->addTab(&TabCS130,tr("CS130"));
-    iFileIndex = tabWidget->addTab(&TabFile,tr("Out File"));
+    iSourceIndex = tabWidget.addTab(&TabK236, tr("K236"));
+    iThermIndex = tabWidget.addTab(&TabLS330,tr("LS330"));
+    iMonoIndex = tabWidget.addTab(&TabCS130,tr("CS130"));
+    iFileIndex = tabWidget.addTab(&TabFile,tr("Out File"));
 
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok |
                                      QDialogButtonBox::Cancel);
-    connect(buttonBox, SIGNAL(accepted()),
-            this, SLOT(onOk()));
-    connect(buttonBox, SIGNAL(rejected()),
-            this, SLOT(onCancel()));
+
+    connectSignals();
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
-    mainLayout->addWidget(tabWidget);
+    mainLayout->addWidget(&tabWidget);
     mainLayout->addWidget(buttonBox);
     setLayout(mainLayout);
     setWindowTitle("I versus V");
@@ -36,10 +33,19 @@ IvsVDialog::IvsVDialog(QWidget *parent)
 
 void
 IvsVDialog::setToolTips() {
-    tabWidget->setTabToolTip(iSourceIndex, QString("Source-Measure Unit configuration"));
-    tabWidget->setTabToolTip(iThermIndex, QString("Thermostat configuration"));
-    tabWidget->setTabToolTip(iMonoIndex, QString("Monochromator configuration"));
-    tabWidget->setTabToolTip(iFileIndex, QString("Output File configuration"));
+    tabWidget.setTabToolTip(iSourceIndex, QString("Source-Measure Unit configuration"));
+    tabWidget.setTabToolTip(iThermIndex, QString("Thermostat configuration"));
+    tabWidget.setTabToolTip(iMonoIndex, QString("Monochromator configuration"));
+    tabWidget.setTabToolTip(iFileIndex, QString("Output File configuration"));
+}
+
+
+void
+IvsVDialog::connectSignals() {
+    connect(buttonBox, SIGNAL(accepted()),
+            this, SLOT(onOk()));
+    connect(buttonBox, SIGNAL(rejected()),
+            this, SLOT(onCancel()));
 }
 
 

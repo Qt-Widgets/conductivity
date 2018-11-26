@@ -18,7 +18,6 @@ K236Tab::K236Tab(QWidget *parent)
     , nSweepPointsMin(3)
     , nSweepPointsMax(500)
 {
-    setAttribute(Qt::WA_AlwaysShowToolTips);
     // Create UI Elements
     pSourceIButton   = new QRadioButton(QString("Source I"), this);
     pSourceVButton   = new QRadioButton(QString("Source V"), this);
