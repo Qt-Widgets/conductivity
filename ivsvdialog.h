@@ -1,6 +1,10 @@
 #pragma once
 
 #include <QDialog>
+#include "k236tab.h"
+#include "ls330tab.h"
+#include "cs130tab.h"
+#include "filetab.h"
 
 
 QT_FORWARD_DECLARE_CLASS(QDialogButtonBox)
@@ -8,6 +12,7 @@ QT_FORWARD_DECLARE_CLASS(QTabWidget)
 QT_FORWARD_DECLARE_CLASS(K236Tab)
 QT_FORWARD_DECLARE_CLASS(LS330Tab)
 QT_FORWARD_DECLARE_CLASS(CS130Tab)
+QT_FORWARD_DECLARE_CLASS(FileTab)
 
 
 class IvsVDialog : public QDialog
@@ -23,9 +28,10 @@ public slots:
     void onOk();
 
 public:
-    K236Tab          *pK236Tab;
-    LS330Tab         *pLS330Tab;
-    CS130Tab         *pCS130Tab;
+    K236Tab          TabK236;
+    LS330Tab         TabLS330;
+    CS130Tab         TabCS130;
+    FileTab          TabFile;
 
 private:
     QTabWidget       *tabWidget;

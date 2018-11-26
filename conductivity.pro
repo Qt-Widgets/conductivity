@@ -33,7 +33,8 @@ SOURCES += main.cpp \
     ivsvdialog.cpp \
     k236tab.cpp \
     ls330tab.cpp \
-    cs130tab.cpp
+    cs130tab.cpp \
+    filetab.cpp
 SOURCES += mainwindow.cpp
 SOURCES += cornerstone130.cpp
 SOURCES += keithley236.cpp
@@ -52,7 +53,8 @@ HEADERS += mainwindow.h \
     ivsvdialog.h \
     k236tab.h \
     ls330tab.h \
-    cs130tab.h
+    cs130tab.h \
+    filetab.h
 HEADERS += cornerstone130.h
 HEADERS += keithley236.h
 HEADERS += lakeshore330.h

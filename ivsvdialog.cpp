@@ -1,7 +1,4 @@
 #include "ivsvdialog.h"
-#include "k236tab.h"
-#include "ls330tab.h"
-#include "cs130tab.h"
 
 #include <QTabWidget>
 #include <QDialogButtonBox>
@@ -13,13 +10,10 @@ IvsVDialog::IvsVDialog(QWidget *parent)
 {
     tabWidget = new QTabWidget;
 
-    pK236Tab  = new K236Tab();
-    pLS330Tab = new LS330Tab();
-    pCS130Tab = new CS130Tab();
-
-    tabWidget->addTab(pK236Tab, tr("K236"));
-    tabWidget->addTab(pLS330Tab,tr("LS330"));
-    tabWidget->addTab(pCS130Tab,tr("CS130"));
+    tabWidget->addTab(&TabK236, tr("K236"));
+    tabWidget->addTab(&TabLS330,tr("LS330"));
+    tabWidget->addTab(&TabCS130,tr("CS130"));
+    tabWidget->addTab(&TabFile,tr("Out File"));
 
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok |
                                      QDialogButtonBox::Cancel);
@@ -38,20 +32,22 @@ IvsVDialog::IvsVDialog(QWidget *parent)
 
 void
 IvsVDialog::onCancel() {
-    pK236Tab->restoreSettings();
-    //pLS330Tab->restoreSettings();
-    //pCS130Tab->restoreSettings();
-    emit reject();
+    TabK236.restoreSettings();
+    //TabLS330.restoreSettings();
+    //TabCS130.restoreSettings();
+    TabFile.restoreSettings();
+    reject();
 }
 
 
 
 void
-IvsVDialog::onOk(){
-    pK236Tab->saveSettings();
-    //pLS330Tab->saveSettings();
-    //pCS130Tab->saveSettings();
-    emit accept();
+IvsVDialog::onOk() {
+    TabK236.saveSettings();
+    //LS330Tab.saveSettings();
+    //CS130Tab.saveSettings();
+    TabFile.saveSettings();
+    accept();
 }
 
 
