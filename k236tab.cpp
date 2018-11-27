@@ -8,7 +8,7 @@
 #include <QtDebug>
 
 
-K236Tab::K236Tab(QWidget *parent)
+K236Tab::K236Tab(int iConfiguration, QWidget *parent)
     : QWidget(parent)
     , currentMin(-1.0e-2)
     , currentMax(1.0e-2)
@@ -18,6 +18,9 @@ K236Tab::K236Tab(QWidget *parent)
     , waitTimeMax(65000)
     , nSweepPointsMin(3)
     , nSweepPointsMax(500)
+    , intervalMin(0.1)
+    , intervalMax(60.0)
+    , myConfiguration(iConfiguration)
 {
     // Create UI Elements
     SourceIButton.setText(QString("Source I - Measure V"));
@@ -36,14 +39,24 @@ K236Tab::K236Tab(QWidget *parent)
     pLayout->addWidget(&StartLabel,                  1, 0, 1, 1);
     pLayout->addWidget(&StopLabel,                   2, 0, 1, 1);
     pLayout->addWidget(&ComplianceLabel,             3, 0, 1, 1);
-    pLayout->addWidget(new QLabel("Rdgs Intv [ms]"), 4, 0, 1, 1);
-    pLayout->addWidget(new QLabel("N°of Points"),    5, 0, 1, 1);
+    if(myConfiguration == 1) {
+        pLayout->addWidget(new QLabel("Rdgs Intv [ms]"), 4, 0, 1, 1);
+        pLayout->addWidget(new QLabel("N°of Points"),    5, 0, 1, 1);
+    }
+    else {
+        pLayout->addWidget(new QLabel("Meas. Intv [s]"), 4, 0, 1, 1);
+    }
     //Line Edits
     pLayout->addWidget(&StartEdit,       1, 1, 1, 1);
     pLayout->addWidget(&StopEdit,        2, 1, 1, 1);
     pLayout->addWidget(&ComplianceEdit,  3, 1, 1, 1);
-    pLayout->addWidget(&WaitTimeEdit,    4, 1, 1, 1);
-    pLayout->addWidget(&SweepPointsEdit, 5, 1, 1, 1);
+    if(myConfiguration == 1) {
+        pLayout->addWidget(&WaitTimeEdit,    4, 1, 1, 1);
+        pLayout->addWidget(&SweepPointsEdit, 5, 1, 1, 1);
+    }
+    else {
+        pLayout->addWidget(&MeasureIntervalEdit, 4, 1, 1, 1);
+    }
     // Set the Layout
     setLayout(pLayout);
 
@@ -61,12 +74,6 @@ K236Tab::K236Tab(QWidget *parent)
 }
 
 
-K236Tab::~K236Tab(){
-    qDebug() << Q_FUNC_INFO;
-}
-
-
-
 void
 K236Tab::restoreSettings() {
     QSettings settings;
@@ -76,6 +83,7 @@ K236Tab::restoreSettings() {
     dCompliance   = settings.value("K236TabCompliance", 0.0).toDouble();
     iWaitTime     = settings.value("K236TabWaitTime", 100).toInt();
     iNSweepPoints = settings.value("K236TabSweepPoints", 100).toInt();
+    dInterval     = settings.value("K236TabMeasureInterval", 0.1).toDouble();
 }
 
 
@@ -88,6 +96,7 @@ K236Tab::saveSettings() {
     settings.setValue("K236TabCompliance",  dCompliance);
     settings.setValue("K236TabWaitTime",    iWaitTime);
     settings.setValue("K236TabSweepPoints", iNSweepPoints);
+    settings.setValue("K236TabMeasureInterval", dInterval);
 }
 
 
@@ -108,6 +117,7 @@ K236Tab::setToolTips() {
     SourceVButton.setToolTip("Source Voltage - Measure Current");
     WaitTimeEdit.setToolTip(sHeader.arg(waitTimeMin).arg(waitTimeMax));
     SweepPointsEdit.setToolTip((sHeader.arg(nSweepPointsMin).arg(nSweepPointsMax)));
+    MeasureIntervalEdit.setToolTip(sHeader.arg(intervalMin).arg(intervalMax));
 }
 
 
@@ -145,6 +155,10 @@ K236Tab::initUI() {
     if(!isSweepPointNumberValid(iNSweepPoints))
         iNSweepPoints = 100;
     SweepPointsEdit.setText(QString("%1").arg(iNSweepPoints));
+    if(!isIntervalValid(dInterval)) {
+        dInterval = intervalMin;
+    }
+    MeasureIntervalEdit.setText(QString("%1").arg(dInterval, 0, 'f', 2));
     setToolTips();
 }
 
@@ -165,6 +179,8 @@ K236Tab::connectSignals() {
             this, SLOT(onSourceIChecked()));
     connect(&SourceVButton, SIGNAL(clicked()),
             this, SLOT(onSourceVChecked()));
+    connect(&MeasureIntervalEdit, SIGNAL(textChanged(const QString)),
+            this, SLOT(onMeasureIntervalEdit_textChanged(const QString)));
 }
 
 
@@ -202,6 +218,12 @@ bool
 K236Tab::isSweepPointNumberValid(int nSweepPoints) {
     return (nSweepPoints >= nSweepPointsMin) &&
             (nSweepPoints <= nSweepPointsMax);
+}
+
+
+bool
+K236Tab::isIntervalValid(double interval) {
+    return (interval >= intervalMin) && (interval <= intervalMax);
 }
 
 
@@ -285,4 +307,17 @@ K236Tab::onSweepPointsEdit_textChanged(const QString &arg1) {
         SweepPointsEdit.setStyleSheet(sErrorStyle);
     }
 }
+
+
+void
+K236Tab::onMeasureIntervalEdit_textChanged(const QString &arg1) {
+    if(isIntervalValid(arg1.toDouble())){
+        dInterval = arg1.toDouble();
+        MeasureIntervalEdit.setStyleSheet(sNormalStyle);
+    }
+    else {
+        MeasureIntervalEdit.setStyleSheet(sErrorStyle);
+    }
+}
+
 

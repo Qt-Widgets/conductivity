@@ -11,8 +11,7 @@ class LS330Tab : public QWidget
 {
     Q_OBJECT
 public:
-    explicit LS330Tab(QWidget *parent = nullptr);
-    ~LS330Tab() Q_DECL_OVERRIDE;
+    explicit LS330Tab(int iConfiguration, QWidget *parent = nullptr);
     void restoreSettings();
     void saveSettings();
     void connectSignals();
@@ -21,6 +20,7 @@ public:
     double dTStart;
     double dTStop;
     double dTStep;
+    double dTRate;
     int    iReachingTStart;
     int    iTimeToSteadyT;
     bool   bUseThermostat;
@@ -34,6 +34,7 @@ public slots:
     void on_TStepEdit_textChanged(const QString &arg1);
     void on_MaxTimeToTStartEdit_textChanged(const QString &arg1);
     void on_TimeToSteadyTEdit_textChanged(const QString &arg1);
+    void on_TRateEdit_textChanged(const QString &arg1);
 
 protected:
     void initUI();
@@ -42,6 +43,7 @@ protected:
     bool isTStepValid(double dTStep);
     bool isReachingTimeValid(int iReachingTime);
     bool isTimeToSteadyTValid(int iTime);
+    bool isTRateValid(double dTRate);
 
 private:
     // QLineEdit styles
@@ -51,18 +53,22 @@ private:
     QLineEdit TStartEdit;
     QLineEdit TStopEdit;
     QLineEdit TStepEdit;
+    QLineEdit TRateEdit;
     QLineEdit MaxTimeToTStartEdit;
     QLineEdit TimeToSteadyTEdit;
 
     QCheckBox ThermostatCheckBox;
 
-
     const double temperatureMin;
     const double temperatureMax;
+    const double TRateMin;
+    const double TRateMax;
     const int    waitTimeMin;
     const int    waitTimeMax;
     const int    reachingTMin;
     const int    reachingTMax;
     const int    timeToSteadyTMin;
     const int    timeToSteadyTMax;
+
+    int          myConfiguration;
 };

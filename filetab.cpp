@@ -8,10 +8,11 @@
 #include <QtDebug>
 
 
-FileTab::FileTab(QWidget *parent)
+FileTab::FileTab(int iConfiguration, QWidget *parent)
     : QWidget(parent)
     , sBaseDir(QDir::homePath())
     , sOutFileName("data.dat")
+    , myConfiguration(iConfiguration)
 {
     outFilePathButton.setText(QString("..."));
 
@@ -30,11 +31,6 @@ FileTab::FileTab(QWidget *parent)
     restoreSettings();
     setToolTips();
     initUI();
-}
-
-
-FileTab::~FileTab(){
-    qDebug() << Q_FUNC_INFO;
 }
 
 

@@ -24,10 +24,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QtDebug>
 
 
-CS130Tab::CS130Tab(QWidget *parent)
+CS130Tab::CS130Tab(int iConfiguration, QWidget *parent)
     : QWidget(parent)
     , wavelengthMin(200.0)
     , wavelengthMax(1000.0)
+    , myConfiguration(iConfiguration)
 {
     radioButtonGrating1.setText("Grating #1");
     radioButtonGrating2.setText("Grating #2");
@@ -52,11 +53,6 @@ CS130Tab::CS130Tab(QWidget *parent)
     connectSignals();
     restoreSettings();
     initUI();
-}
-
-
-CS130Tab::~CS130Tab(){
-    qDebug() << Q_FUNC_INFO;
 }
 
 

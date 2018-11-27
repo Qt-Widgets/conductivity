@@ -11,8 +11,7 @@ class K236Tab : public QWidget
 {
     Q_OBJECT
 public:
-    explicit K236Tab(QWidget *parent = nullptr);
-    ~K236Tab() Q_DECL_OVERRIDE;
+    explicit K236Tab(int iConfiguration, QWidget *parent = nullptr);
     void restoreSettings();
     void saveSettings();
 
@@ -26,6 +25,7 @@ public slots:
     void onComplianceEdit_textChanged(const QString &arg1);
     void onWaitTimeEdit_textChanged(const QString &arg1);
     void onSweepPointsEdit_textChanged(const QString &arg1);
+    void onMeasureIntervalEdit_textChanged(const QString &arg1);
 
 protected:
     void setToolTips();
@@ -37,6 +37,7 @@ protected:
     bool isComplianceValid(double dCompliance);
     bool isWaitTimeValid(int iWaitTime);
     bool isSweepPointNumberValid(int nSweepPoints);
+    bool isIntervalValid(double interval);
 
 public:
     double dStart;
@@ -44,8 +45,8 @@ public:
     double dCompliance;
     int    iWaitTime;
     int    iNSweepPoints;
+    double dInterval;
     bool   bSourceI;
-    bool   bDummy[7];
 
 private:
     // Limit Values
@@ -57,6 +58,8 @@ private:
     const int    waitTimeMax;
     const int    nSweepPointsMin;
     const int    nSweepPointsMax;
+    const double intervalMin;
+    const double intervalMax;
 
     // QLineEdit styles
     QString sNormalStyle;
@@ -73,5 +76,8 @@ private:
     QLineEdit    ComplianceEdit;
     QLineEdit    WaitTimeEdit;
     QLineEdit    SweepPointsEdit;
+    QLineEdit    MeasureIntervalEdit;
+
+    int          myConfiguration;
 };
 

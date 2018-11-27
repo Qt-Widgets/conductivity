@@ -9,10 +9,10 @@ IvsVDialog::IvsVDialog(QWidget *parent)
     : QDialog(parent)
 {
     setAttribute(Qt::WA_AlwaysShowToolTips);
-    pTabK236  = new K236Tab();
-    pTabLS330 = new LS330Tab();
-    pTabCS130 = new CS130Tab();
-    pTabFile  = new FileTab();
+    pTabK236  = new K236Tab(1, this);//1 => IvsV configuration
+    pTabLS330 = new LS330Tab(1, this);
+    pTabCS130 = new CS130Tab(1, this);
+    pTabFile  = new FileTab(1, this);
 
     pTabWidget = new QTabWidget();
 
@@ -24,19 +24,14 @@ IvsVDialog::IvsVDialog(QWidget *parent)
     pButtonBox = new QDialogButtonBox(QDialogButtonBox::Ok |
                                       QDialogButtonBox::Cancel);
 
-    connectSignals();
-
     QVBoxLayout *mainLayout = new QVBoxLayout;
     mainLayout->addWidget(pTabWidget);
     mainLayout->addWidget(pButtonBox);
     setLayout(mainLayout);
+
     setWindowTitle("I versus V");
+    connectSignals();
     setToolTips();
-}
-
-
-IvsVDialog::~IvsVDialog(){
-    qDebug() << Q_FUNC_INFO;
 }
 
 

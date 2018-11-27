@@ -15,7 +15,6 @@ class IvsVDialog : public QDialog
     Q_OBJECT
 public:
     explicit IvsVDialog(QWidget *parent = nullptr);
-    ~IvsVDialog() Q_DECL_OVERRIDE;
 
 signals:
 

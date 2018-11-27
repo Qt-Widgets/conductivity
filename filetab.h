@@ -12,8 +12,7 @@ class FileTab : public QWidget
 {
     Q_OBJECT
 public:
-    explicit FileTab(QWidget *parent = nullptr);
-    ~FileTab() Q_DECL_OVERRIDE;
+    explicit FileTab(int iConfiguration, QWidget *parent = nullptr);
     void restoreSettings();
     void saveSettings();
     bool checkFileName();
@@ -38,6 +37,8 @@ private:
     QLineEdit      outPathEdit;
     QLineEdit      outFileEdit;
     QPushButton    outFilePathButton;
+
+    int            myConfiguration;
 };
 
 #endif // FILETAB_H

@@ -8,16 +8,19 @@
 #include <QtDebug>
 
 
-LS330Tab::LS330Tab(QWidget *parent)
+LS330Tab::LS330Tab(int iConfiguration, QWidget *parent)
     : QWidget(parent)
     , temperatureMin(0.0)
     , temperatureMax(475.0)
+    , TRateMin(0.1)
+    , TRateMax(10.0)
     , waitTimeMin(100)
     , waitTimeMax(65000)
     , reachingTMin(0)// In minutes
     , reachingTMax(60)// In minutes
     , timeToSteadyTMin(0)// In minutes
     , timeToSteadyTMax(INT_MAX/(60*1000))// In minutes
+    , myConfiguration(iConfiguration)
 {
     sNormalStyle = TStartEdit.styleSheet();
 
@@ -34,13 +37,19 @@ LS330Tab::LS330Tab(QWidget *parent)
 
     pLayout->addWidget(new QLabel("T Start [K]"),               0, 1, 1, 1, Qt::AlignRight);
     pLayout->addWidget(new QLabel("T Stop[K]"),                 1, 1, 1, 1, Qt::AlignRight);
-    pLayout->addWidget(new QLabel("T Step[K]"),                 2, 1, 1, 1, Qt::AlignRight);
+    if(myConfiguration == 1)
+        pLayout->addWidget(new QLabel("T Step[K]"),             2, 1, 1, 1, Qt::AlignRight);
+    else
+        pLayout->addWidget(new QLabel("T Rate[K/min]"),         2, 1, 1, 1, Qt::AlignRight);
     pLayout->addWidget(new QLabel("Max wait for T Start[min]"), 3, 0, 1, 2, Qt::AlignRight);
     pLayout->addWidget(new QLabel("Time to steady Temp.[min]"), 4, 0, 1, 2, Qt::AlignRight);
 
     pLayout->addWidget(&TStartEdit,          0, 2, 1, 1);
     pLayout->addWidget(&TStopEdit,           1, 2, 1, 1);
-    pLayout->addWidget(&TStepEdit,           2, 2, 1, 1);
+    if(myConfiguration == 1)
+        pLayout->addWidget(&TStepEdit,       2, 2, 1, 1);
+    else
+        pLayout->addWidget(&TRateEdit,       2, 2, 1, 1);
     pLayout->addWidget(&MaxTimeToTStartEdit, 3, 2, 1, 1);
     pLayout->addWidget(&TimeToSteadyTEdit,   4, 2, 1, 1);
 
@@ -53,16 +62,12 @@ LS330Tab::LS330Tab(QWidget *parent)
 }
 
 
-LS330Tab::~LS330Tab(){
-    qDebug() << Q_FUNC_INFO;
-}
-
-
 void
 LS330Tab::restoreSettings() {
     QSettings settings;
     dTStart        = settings.value("LS330TabTStart", 300.0).toDouble();
     dTStop         = settings.value("LS330TabTStop", dTStart).toDouble();
+    dTRate         = settings.value("LS330TabTRate", 1.0).toDouble();
     dTStep         = settings.value("LS330TabTStep", 1.0).toDouble();
     iReachingTStart= settings.value("LS330TabReachingTStart", 0).toInt();
     iTimeToSteadyT = settings.value("LS330TabSteadyT", 0).toInt();
@@ -75,6 +80,7 @@ LS330Tab::saveSettings() {
     QSettings settings;
     settings.setValue("LS330TabTStart", dTStart);
     settings.setValue("LS330TabTStop", dTStop);
+    settings.setValue("LS330TabTRate", dTRate);
     settings.setValue("LS330TabTStep", dTStep);
     settings.setValue("LS330TabReachingTStart", iReachingTStart);
     settings.setValue("LS330TabSteadyT", iTimeToSteadyT);
@@ -88,6 +94,7 @@ LS330Tab::setToolTips() {
     ThermostatCheckBox.setToolTip(QString("Enable/Disable Thermostat Use"));
     TStartEdit.setToolTip(sHeader.arg(temperatureMin).arg(temperatureMax));
     TStopEdit.setToolTip(sHeader.arg(temperatureMin).arg(temperatureMax));
+    TRateEdit.setToolTip(sHeader.arg(TRateMin).arg(TRateMax));
     TStepEdit.setToolTip("Enter values greater than 1.0");
     MaxTimeToTStartEdit.setToolTip(sHeader.arg(reachingTMin).arg(reachingTMax));
     TimeToSteadyTEdit.setToolTip(sHeader.arg(timeToSteadyTMin).arg(timeToSteadyTMax));
@@ -103,6 +110,10 @@ LS330Tab::initUI() {
     if(!isTemperatureValid(dTStop))
         dTStop = dTStart;
     TStopEdit.setText(QString("%1").arg(dTStop, 0, 'f', 2));
+    if(!isTRateValid(dTRate)) {
+        dTRate = 1.0;
+    }
+    TRateEdit.setText(QString("%1").arg(dTRate, 0, 'f', 2));
     if(!isTStepValid(dTStep))
         dTStep = 1.0;
     TStepEdit.setText(QString("%1").arg(dTStep, 0, 'f', 2));
@@ -130,6 +141,8 @@ LS330Tab::connectSignals() {
             this, SLOT(on_TStartEdit_textChanged(const QString)));
     connect(&TStopEdit, SIGNAL(textChanged(const QString)),
             this, SLOT(on_TStopEdit_textChanged(const QString)));
+    connect(&TRateEdit, SIGNAL(textChanged(const QString)),
+            this, SLOT(on_TRateEdit_textChanged(const QString)));
     connect(&TStepEdit, SIGNAL(textChanged(const QString)),
             this, SLOT(on_TStepEdit_textChanged(const QString)));
     connect(&MaxTimeToTStartEdit, SIGNAL(textChanged(const QString)),
@@ -143,6 +156,12 @@ bool
 LS330Tab::isTemperatureValid(double dTemperature) {
     return (dTemperature >= temperatureMin) &&
             (dTemperature <= temperatureMax);
+}
+
+
+bool
+LS330Tab::isTRateValid(double dTRate) {
+    return (dTRate >= TRateMin) && (dTRate <= TRateMax);
 }
 
 
@@ -197,6 +216,18 @@ LS330Tab::on_TStopEdit_textChanged(const QString &arg1) {
     }
     else {
         TStopEdit.setStyleSheet(sErrorStyle);
+    }
+}
+
+
+void
+LS330Tab::on_TRateEdit_textChanged(const QString &arg1) {
+    if(isTRateValid(arg1.toDouble())){
+        dTRate = arg1.toDouble();
+        TRateEdit.setStyleSheet(sNormalStyle);
+    }
+    else {
+        TRateEdit.setStyleSheet(sErrorStyle);
     }
 }
 

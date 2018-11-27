@@ -11,8 +11,7 @@ class CS130Tab : public QWidget
 {
     Q_OBJECT
 public:
-    explicit CS130Tab(QWidget *parent = nullptr);
-    ~CS130Tab() Q_DECL_OVERRIDE;
+    explicit CS130Tab(int iConfiguration, QWidget *parent = nullptr);
     void restoreSettings();
     void saveSettings();
 
@@ -49,4 +48,6 @@ private:
 
     const double wavelengthMin;
     const double wavelengthMax;
+
+    int          myConfiguration;
 };
