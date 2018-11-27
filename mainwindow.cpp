@@ -362,8 +362,8 @@ MainWindow::on_startRvsTButton_clicked() {
             QApplication::restoreOverrideCursor();
             return;
         }
-        pCornerStone130->setGrating(configureRvsTDialog.iGratingNumber);
-        pCornerStone130->setWavelength(configureRvsTDialog.dWavelength);
+        pCornerStone130->setGrating(configureRvsTDialog.pTabCS130->iGratingNumber);
+        pCornerStone130->setWavelength(configureRvsTDialog.pTabCS130->dWavelength);
     }
     switchLampOff();
     // Initializing Keithley 236
@@ -391,8 +391,8 @@ MainWindow::on_startRvsTButton_clicked() {
     }
     // Open the Output file
     ui->statusBar->showMessage("Opening Output file...");
-    if(!prepareOutputFile(configureRvsTDialog.sBaseDir,
-                          configureRvsTDialog.sOutFileName))
+    if(!prepareOutputFile(configureRvsTDialog.pTabFile->sBaseDir,
+                          configureRvsTDialog.pTabFile->sOutFileName))
     {
         ui->statusBar->showMessage("Unable to Open the Output file...");
         QApplication::restoreOverrideCursor();
@@ -408,7 +408,7 @@ MainWindow::on_startRvsTButton_clicked() {
                        .arg("V-Photo[V]", 12)
                        .arg("I-Photo[A]\n", 12)
                        .toLocal8Bit());
-    QStringList HeaderLines = configureRvsTDialog.sSampleInfo.split("\n");
+    QStringList HeaderLines = configureRvsTDialog.pTabFile->sSampleInfo.split("\n");
     for(int i=0; i<HeaderLines.count(); i++) {
         pOutputFile->write("#");
         pOutputFile->write(HeaderLines.at(i).toLocal8Bit());
@@ -416,26 +416,26 @@ MainWindow::on_startRvsTButton_clicked() {
     }
     if(bUseMonochromator) {
         pOutputFile->write(QString("Grating #= %1 Wavelength = %2 nm")
-                                   .arg(configureRvsTDialog.iGratingNumber)
-                                   .arg(configureRvsTDialog.dWavelength).toLocal8Bit());
+                                   .arg(configureRvsTDialog.pTabCS130->iGratingNumber)
+                                   .arg(configureRvsTDialog.pTabCS130->dWavelength).toLocal8Bit());
         pOutputFile->write("\n");
     }
     pOutputFile->flush();
     // Init the Plots
     initRvsTPlots();
     // Configure Thermostat
-    pLakeShore->setTemperature(configureRvsTDialog.dTempStart);
+    pLakeShore->setTemperature(configureRvsTDialog.pTabLS330->dTStart);
     pLakeShore->switchPowerOn(3);
     // Configure Source-Measure Unit
-    double dCompliance = configureRvsTDialog.dCompliance;
-    if(configureRvsTDialog.bSourceI) {
+    double dCompliance = configureRvsTDialog.pTabK236->dCompliance;
+    if(configureRvsTDialog.pTabK236->bSourceI) {
         presentMeasure = RvsTSourceI;
-        double dAppliedCurrent = configureRvsTDialog.dSourceValue;
+        double dAppliedCurrent = configureRvsTDialog.pTabK236->dStart;
         pKeithley->initVvsTSourceI(dAppliedCurrent, dCompliance);
     }
     else {
         presentMeasure = RvsTSourceV;
-        double dAppliedVoltage = configureRvsTDialog.dSourceValue;
+        double dAppliedVoltage = configureRvsTDialog.pTabK236->dStart;
         pKeithley->initVvsTSourceV(dAppliedVoltage, dCompliance);
     }
     // Configure the needed timers
@@ -452,11 +452,11 @@ MainWindow::on_startRvsTButton_clicked() {
     // All done... compute the time needed for the measurement:
     startMeasuringTime = QDateTime::currentDateTime();
     double deltaT, expectedMinutes;
-    deltaT = configureRvsTDialog.dTempEnd -
-             configureRvsTDialog.dTempStart;
-    expectedMinutes = deltaT / configureRvsTDialog.dTRate +
-                      configureRvsTDialog.iReachingTime +
-                      configureRvsTDialog.iStabilizingTime;
+    deltaT = configureRvsTDialog.pTabLS330->dTStop -
+             configureRvsTDialog.pTabLS330->dTStart;
+    expectedMinutes = deltaT / configureRvsTDialog.pTabLS330->dTRate +
+                      configureRvsTDialog.pTabLS330->iReachingTStart +
+                      configureRvsTDialog.pTabLS330->iTimeToSteadyT;
     endMeasureTime = startMeasuringTime.addSecs(qint64(expectedMinutes*60.0));
     QString sString = endMeasureTime.toString("hh:mm dd-MM-yyyy");
     ui->endTimeEdit->setText(sString);
@@ -467,7 +467,7 @@ MainWindow::on_startRvsTButton_clicked() {
     ui->lampButton->setDisabled(true);
     ui->statusBar->showMessage(QString("%1 Waiting Initial T [%2K]")
                                .arg(waitingTStartTime.toString())
-                               .arg(configureRvsTDialog.dTempStart));
+                               .arg(configureRvsTDialog.pTabLS330->dTStart));
     // Start the reaching of the Initial Temperature
     waitingTStartTimer.start(5000);
 }
@@ -493,8 +493,8 @@ MainWindow::on_startIvsVButton_clicked() {
             QApplication::restoreOverrideCursor();
             return;
         }
-        pCornerStone130->setGrating(configureRvsTDialog.iGratingNumber);
-        pCornerStone130->setWavelength(configureRvsTDialog.dWavelength);
+        pCornerStone130->setGrating(configureRvsTDialog.pTabCS130->iGratingNumber);
+        pCornerStone130->setWavelength(configureRvsTDialog.pTabCS130->dWavelength);
     }
     if(configureIvsVDialog.pTabCS130->bPhoto)
         switchLampOn();
@@ -806,7 +806,7 @@ MainWindow::onTimeToCheckT() {
                 this, SLOT(onSteadyTReached()));
         stabilizingTimer.start(configureIvsVDialog.pTabLS330->iTimeToSteadyT*60000);
         ui->statusBar->showMessage(QString("Thermal Stabilization for %1 min.")
-                                   .arg(configureRvsTDialog.iStabilizingTime));
+                                   .arg(configureRvsTDialog.pTabLS330->iTimeToSteadyT));
     }
     else {
         currentTime = QDateTime::currentDateTime();
@@ -818,7 +818,7 @@ MainWindow::onTimeToCheckT() {
                     this, SLOT(onSteadyTReached()));
             stabilizingTimer.start(configureIvsVDialog.pTabLS330->iTimeToSteadyT*60000);
             ui->statusBar->showMessage(QString("Thermal Stabilization for %1 min.")
-                                       .arg(configureRvsTDialog.iStabilizingTime));
+                                       .arg(configureRvsTDialog.pTabLS330->iTimeToSteadyT));
         }
     }
 }
@@ -832,9 +832,9 @@ MainWindow::onSteadyTReached() {
     stabilizingTimer.disconnect();
     // Update the time needed for the measurement:
     double deltaT, expectedMinutes;
-    deltaT = configureRvsTDialog.dTempEnd -
-             configureRvsTDialog.dTempStart;
-    expectedMinutes = deltaT / configureRvsTDialog.dTRate;
+    deltaT = configureRvsTDialog.pTabLS330->dTStop -
+             configureRvsTDialog.pTabLS330->dTStart;
+    expectedMinutes = deltaT / configureRvsTDialog.pTabLS330->dTRate;
     endMeasureTime = QDateTime::currentDateTime().addSecs(qint64(expectedMinutes*60.0));
     QString sString = endMeasureTime.toString("hh:mm dd-MM-yyyy");
     ui->endTimeEdit->setText(sString);
@@ -847,22 +847,22 @@ MainWindow::onSteadyTReached() {
 void
 MainWindow::onTimeToCheckReachedT() {
     double T = pLakeShore->getTemperature();
-    if(fabs(T-configureRvsTDialog.dTempStart) < 0.15) {
+    if(fabs(T-configureRvsTDialog.pTabLS330->dTStart) < 0.15) {
         waitingTStartTimer.disconnect();
         waitingTStartTimer.stop();
         connect(&stabilizingTimer, SIGNAL(timeout()),
                 this, SLOT(onTimerStabilizeT()));
-        stabilizingTimer.start(configureRvsTDialog.iStabilizingTime*60000);
+        stabilizingTimer.start(configureRvsTDialog.pTabLS330->iTimeToSteadyT*60000);
         //qDebug() << QString("Starting T Reached: Thermal Stabilization...");
         ui->statusBar->showMessage(QString("Starting T Reached: Thermal Stabilization for %1 min.")
-                                   .arg(configureRvsTDialog.iStabilizingTime));
+                                   .arg(configureRvsTDialog.pTabLS330->iTimeToSteadyT));
         // Compute the new time needed for the measurement:
         startMeasuringTime = QDateTime::currentDateTime();
         double deltaT, expectedMinutes;
-        deltaT = configureRvsTDialog.dTempEnd -
-                 configureRvsTDialog.dTempStart;
-        expectedMinutes = deltaT / configureRvsTDialog.dTRate +
-                          configureRvsTDialog.iStabilizingTime;
+        deltaT = configureRvsTDialog.pTabLS330->dTStop -
+                 configureRvsTDialog.pTabLS330->dTStart;
+        expectedMinutes = deltaT / configureRvsTDialog.pTabLS330->dTRate +
+                          configureRvsTDialog.pTabLS330->iTimeToSteadyT;
         endMeasureTime = startMeasuringTime.addSecs(qint64(expectedMinutes*60.0));
         QString sString = endMeasureTime.toString("hh:mm dd-MM-yyyy");
         ui->endTimeEdit->setText(sString);
@@ -872,15 +872,15 @@ MainWindow::onTimeToCheckReachedT() {
         qint64 elapsedSec = waitingTStartTime.secsTo(currentTime);
         //qDebug() << "Elapsed:" << elapsedSec
         //         << "Maximum:" << quint64(configureRvsTDialog.iReachingTime)*60;
-        if(elapsedSec >= qint64(configureRvsTDialog.iReachingTime)*60) {
+        if(elapsedSec >= qint64(configureRvsTDialog.pTabLS330->iReachingTStart)*60) {
             waitingTStartTimer.disconnect();
             waitingTStartTimer.stop();
             connect(&stabilizingTimer, SIGNAL(timeout()),
                     this, SLOT(onTimerStabilizeT()));
-            stabilizingTimer.start(configureRvsTDialog.iStabilizingTime*60000);
+            stabilizingTimer.start(configureRvsTDialog.pTabLS330->iTimeToSteadyT*60000);
             //qDebug() << QString("Max Reaching Time Exceed...Thermal Stabilization...");
             ui->statusBar->showMessage(QString("Max Time Exceeded: Stabilization for %1 min.")
-                                       .arg(configureRvsTDialog.iStabilizingTime));
+                                       .arg(configureRvsTDialog.pTabLS330->iTimeToSteadyT));
         }
     }
 }
@@ -905,17 +905,17 @@ MainWindow::onTimerStabilizeT() {
     ui->statusBar->showMessage(QString("Thermal Stabilization Reached: Measure Started"));
     connect(&measuringTimer, SIGNAL(timeout()),
             this, SLOT(onTimeToGetNewMeasure()));
-    if(!pLakeShore->startRamp(configureRvsTDialog.dTempEnd, configureRvsTDialog.dTRate)) {
+    if(!pLakeShore->startRamp(configureRvsTDialog.pTabLS330->dTStop, configureRvsTDialog.pTabLS330->dTRate)) {
         ui->statusBar->showMessage(QString("Error Starting the Measure"));
         return;
     }
-    double timeBetweenMeasurements = configureRvsTDialog.dInterval*1000.0;
+    double timeBetweenMeasurements = configureRvsTDialog.pTabK236->dInterval*1000.0;
     measuringTimer.start(int(timeBetweenMeasurements));
     // Update the time needed for the measurement:
     double deltaT, expectedMinutes;
-    deltaT = configureRvsTDialog.dTempEnd -
-             configureRvsTDialog.dTempStart;
-    expectedMinutes = deltaT / configureRvsTDialog.dTRate;
+    deltaT = configureRvsTDialog.pTabLS330->dTStop -
+             configureRvsTDialog.pTabLS330->dTStart;
+    expectedMinutes = deltaT / configureRvsTDialog.pTabLS330->dTRate;
     endMeasureTime = QDateTime::currentDateTime().addSecs(qint64(expectedMinutes*60.0));
     QString sString = endMeasureTime.toString("hh:mm dd-MM-yyyy");
     ui->endTimeEdit->setText(sString);
@@ -992,7 +992,7 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
     }
     currentTemperature = pLakeShore->getTemperature();
     double current, voltage;
-    if(configureRvsTDialog.bSourceI) {
+    if(configureRvsTDialog.pTabK236->bSourceI) {
         current = sMeasures.at(0).toDouble();
         voltage = sMeasures.at(1).toDouble();
     }

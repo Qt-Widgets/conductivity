@@ -37,9 +37,9 @@ K236Tab::K236Tab(int iConfiguration, QWidget *parent)
     StopLabel.setText("I Stop [A]");
     ComplianceLabel.setText("Compliance [V]");
     pLayout->addWidget(&StartLabel,                  1, 0, 1, 1);
-    pLayout->addWidget(&StopLabel,                   2, 0, 1, 1);
     pLayout->addWidget(&ComplianceLabel,             3, 0, 1, 1);
     if(myConfiguration == 1) {
+        pLayout->addWidget(&StopLabel,                   2, 0, 1, 1);
         pLayout->addWidget(new QLabel("Rdgs Intv [ms]"), 4, 0, 1, 1);
         pLayout->addWidget(new QLabel("N°of Points"),    5, 0, 1, 1);
     }
@@ -48,9 +48,9 @@ K236Tab::K236Tab(int iConfiguration, QWidget *parent)
     }
     //Line Edits
     pLayout->addWidget(&StartEdit,       1, 1, 1, 1);
-    pLayout->addWidget(&StopEdit,        2, 1, 1, 1);
     pLayout->addWidget(&ComplianceEdit,  3, 1, 1, 1);
     if(myConfiguration == 1) {
+        pLayout->addWidget(&StopEdit,        2, 1, 1, 1);
         pLayout->addWidget(&WaitTimeEdit,    4, 1, 1, 1);
         pLayout->addWidget(&SweepPointsEdit, 5, 1, 1, 1);
     }

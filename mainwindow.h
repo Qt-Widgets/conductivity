@@ -22,9 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDateTime>
 #include <QTimer>
 
-#include "configureRvsTdialog.h"
-#include "configureIvsVdialog.h"
 #include "ivsvdialog.h"
+#include "rvstdialog.h"
+
 
 
 namespace Ui {
@@ -107,42 +107,41 @@ private:
     LakeShore330   *pLakeShore;
     CornerStone130 *pCornerStone130;
 
-    Plot2D *pPlotMeasurements;
-    Plot2D *pPlotTemperature;
+    Plot2D         *pPlotMeasurements;
+    Plot2D         *pPlotTemperature;
 
-    QDateTime     currentTime;
-    QDateTime     waitingTStartTime;
-    QDateTime     startReadingTTime;
-    QDateTime     startMeasuringTime;
-    QDateTime     endMeasureTime;
+    QDateTime      currentTime;
+    QDateTime      waitingTStartTime;
+    QDateTime      startReadingTTime;
+    QDateTime      startMeasuringTime;
+    QDateTime      endMeasureTime;
 
-    QTimer        waitingTStartTimer;
-    QTimer        stabilizingTimer;
-    QTimer        readingTTimer;
-    QTimer        measuringTimer;
+    QTimer         waitingTStartTimer;
+    QTimer         stabilizingTimer;
+    QTimer         readingTTimer;
+    QTimer         measuringTimer;
 
-    ConfigureRvsTDialog configureRvsTDialog;
-//    ConfigureIvsVDialog configureIvsVDialog;
-    IvsVDialog          configureIvsVDialog;
+    RvsTDialog     configureRvsTDialog;
+    IvsVDialog     configureIvsVDialog;
 
-    const quint8  LAMP_ON    = 1;
-    const quint8  LAMP_OFF   = 0;
-    const int     iPlotDark  = 1;
-    const int     iPlotPhoto = 2;
+    const quint8   LAMP_ON    = 1;
+    const quint8   LAMP_OFF   = 0;
+    const int      iPlotDark  = 1;
+    const int      iPlotPhoto = 2;
 
-    double        currentTemperature;
-    double        setPointT;
-    int           iCurrentTPlot;
-    int           gpibBoardID;
-    quint8        currentLampStatus;
-    QString       sMeasurementPlotLabel;
-    QString       sTemperaturePlotLabel;
-    int           maxPlotPoints;
-    volatile bool isK236ReadyForTrigger;
-    bool          bRunning;
-    int           junctionDirection;
-    bool          bUseMonochromator;
-    int           gpioHostHandle;
-    int           gpioLEDpin;
+    double         currentTemperature;
+    double         setPointT;
+    int            iCurrentTPlot;
+    int            gpibBoardID;
+    quint8         currentLampStatus;
+    QString        sMeasurementPlotLabel;
+    QString        sTemperaturePlotLabel;
+    int            maxPlotPoints;
+    volatile bool  isK236ReadyForTrigger;
+    bool           bRunning;
+    int            junctionDirection;
+    bool           bUseMonochromator;
+    int            gpioHostHandle;
+    int            gpioLEDpin;
 };
 
