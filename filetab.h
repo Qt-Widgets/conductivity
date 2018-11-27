@@ -3,9 +3,10 @@
 
 #include <QObject>
 #include <QWidget>
+#include <QLineEdit>
+#include <QPlainTextEdit>
+#include <QPushButton>
 
-QT_FORWARD_DECLARE_CLASS(QLineEdit)
-QT_FORWARD_DECLARE_CLASS(QPlainTextEdit)
 
 class FileTab : public QWidget
 {
@@ -14,16 +15,17 @@ public:
     explicit FileTab(QWidget *parent = nullptr);
     void restoreSettings();
     void saveSettings();
+    bool checkFileName();
 
 signals:
 
 public slots:
     void on_outFilePathButton_clicked();
-    void focusOutEvent(QFocusEvent* event);
 
 protected:
     void initUI();
     void setToolTips();
+    void connectSignals();
 
 public:
     QString sSampleInfo;
@@ -31,9 +33,10 @@ public:
     QString sOutFileName;
 
 private:
-    QPlainTextEdit *pSampleInformationEdit;
-    QLineEdit      *pOutPathEdit;
-    QLineEdit      *pOutFileEdit;
+    QPlainTextEdit sampleInformationEdit;
+    QLineEdit      outPathEdit;
+    QLineEdit      outFileEdit;
+    QPushButton    outFilePathButton;
 };
 
 #endif // FILETAB_H

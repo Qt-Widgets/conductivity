@@ -1,8 +1,7 @@
 #include "filetab.h"
 #include <QDir>
 #include <QFileDialog>
-#include <QPlainTextEdit>
-#include <QLineEdit>
+#include <QLabel>
 #include <QSettings>
 #include <QMessageBox>
 #include <QGridLayout>
@@ -13,14 +12,20 @@ FileTab::FileTab(QWidget *parent)
     , sBaseDir(QDir::homePath())
     , sOutFileName("data.dat")
 {
-    pSampleInformationEdit = new QPlainTextEdit();
-    pOutPathEdit = new QLineEdit();
-    pOutFileEdit = new QLineEdit();
+    outFilePathButton.setText(QString("..."));
 
     // Build the Tab layout
     QGridLayout* pLayout = new QGridLayout();
-
+    pLayout->addWidget(new QLabel("File Path"),          0, 0, 1, 1);
+    pLayout->addWidget(&outPathEdit,                     0, 1, 1, 5);
+    pLayout->addWidget(&outFilePathButton,               0, 6, 1, 1);
+    pLayout->addWidget(new QLabel("File Name"),          1, 0, 1, 1);
+    pLayout->addWidget(&outFileEdit,                     1, 1, 1, 6);
+    pLayout->addWidget(new QLabel("Sample Information"), 2, 0, 1, 7);
+    pLayout->addWidget(&sampleInformationEdit,           3, 0, 4, 7);
     setLayout(pLayout);
+
+    connectSignals();
     restoreSettings();
     setToolTips();
     initUI();
@@ -29,18 +34,25 @@ FileTab::FileTab(QWidget *parent)
 
 void
 FileTab::initUI() {
-    pSampleInformationEdit->setPlainText(sSampleInfo);
-    pOutPathEdit->setText(sBaseDir);
-    pOutFileEdit->setText(sOutFileName);
+    sampleInformationEdit.setPlainText(sSampleInfo);
+    outPathEdit.setText(sBaseDir);
+    outFileEdit.setText(sOutFileName);
 }
 
 
 void
 FileTab::setToolTips() {
-    pSampleInformationEdit->setToolTip(QString("Enter Sample description (multiline)"));
-    pOutPathEdit->setToolTip(QString("Output File Folder"));
-    pOutFileEdit->setToolTip(QString("Enter Output File Name"));
-//    pOutFilePathButton->setToolTip((QString("Press to Change Output File Folder")));
+    sampleInformationEdit.setToolTip(QString("Enter Sample description (multiline)"));
+    outPathEdit.setToolTip(QString("Output File Folder"));
+    outFileEdit.setToolTip(QString("Enter Output File Name"));
+    outFilePathButton.setToolTip((QString("Press to Change Output File Folder")));
+}
+
+
+void
+FileTab::connectSignals() {
+    connect(&outFilePathButton, SIGNAL(clicked()),
+            this, SLOT(on_outFilePathButton_clicked()));
 }
 
 
@@ -56,7 +68,7 @@ FileTab::restoreSettings() {
 void
 FileTab::saveSettings() {
     QSettings settings;
-    sSampleInfo = pSampleInformationEdit->toPlainText();
+    sSampleInfo = sampleInformationEdit.toPlainText();
     settings.setValue("FileTabSampleInfo", sSampleInfo);
     settings.setValue("FileTabBaseDir", sBaseDir);
     settings.setValue("FileTabOutFileName", sOutFileName);
@@ -74,21 +86,20 @@ FileTab::on_outFilePathButton_clicked() {
         chooseDirDialog.setDirectory(QDir::homePath());
     if(chooseDirDialog.exec() == QDialog::Accepted)
         sBaseDir = chooseDirDialog.selectedFiles().at(0);
-    pOutPathEdit->setText(sBaseDir);
+    outPathEdit.setText(sBaseDir);
 }
 
 
-void
-FileTab::focusOutEvent(QFocusEvent* event) {
-    if(!event->lostFocus()) return;
-    pOutFileEdit->text();
+bool
+FileTab::checkFileName() {
+    sOutFileName = outFileEdit.text();
     if(sOutFileName == QString()) {
         QMessageBox::information(
                     this,
                     QString("Empty Output Filename"),
                     QString("Please enter a Valid Output File Name"));
-        pOutFileEdit->setFocus();
-        return;
+        outFileEdit.setFocus();
+        return false;
     }
     if(QDir(sBaseDir).exists(sOutFileName)) {
         int iAnswer = QMessageBox::question(
@@ -99,8 +110,9 @@ FileTab::focusOutEvent(QFocusEvent* event) {
                     QMessageBox::No,
                     QMessageBox::NoButton);
         if(iAnswer == QMessageBox::No) {
-            pOutFileEdit->setFocus();
-            return;
+            outFileEdit.setFocus();
+            return false;
         }
     }
+    return true;
 }

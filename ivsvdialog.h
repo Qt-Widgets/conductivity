@@ -31,11 +31,10 @@ public:
     LS330Tab TabLS330;
     CS130Tab TabCS130;
     FileTab  TabFile;
-    bool             bPhoto;// <<<<<<<<<<<<<<<<Da Cambiare
 
 private:
-    QTabWidget        tabWidget;
-    QDialogButtonBox *buttonBox;
+    QTabWidget       tabWidget;
+    QDialogButtonBox buttonBox;
     int iSourceIndex;
     int iThermIndex;
     int iMonoIndex;

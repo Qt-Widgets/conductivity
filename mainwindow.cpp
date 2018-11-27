@@ -496,7 +496,7 @@ MainWindow::on_startIvsVButton_clicked() {
         pCornerStone130->setGrating(configureRvsTDialog.iGratingNumber);
         pCornerStone130->setWavelength(configureRvsTDialog.dWavelength);
     }
-    if(configureIvsVDialog.bPhoto)
+    if(configureIvsVDialog.TabCS130.bPhoto)
         switchLampOn();
     else
         switchLampOff();

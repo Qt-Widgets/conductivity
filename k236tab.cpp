@@ -19,8 +19,8 @@ K236Tab::K236Tab(QWidget *parent)
     , nSweepPointsMax(500)
 {
     // Create UI Elements
-    SourceIButton.setText(QString("Source I"));
-    SourceVButton.setText(QString("Source V"));
+    SourceIButton.setText(QString("Source I - Measure V"));
+    SourceVButton.setText(QString("Source V - Measure I"));
 
     // Build the Tab layout
     QGridLayout* pLayout = new QGridLayout();
