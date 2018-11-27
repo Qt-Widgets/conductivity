@@ -46,8 +46,8 @@ SOURCES += axesdialog.cpp
 SOURCES += AxisLimits.cpp
 SOURCES += AxisFrame.cpp
 SOURCES += DataSetProperties.cpp
-SOURCES += configureIvsVdialog.cpp
-SOURCES += configureRvsTdialog.cpp
+SOURCES +=
+SOURCES +=
 SOURCES += utility.cpp
 
 HEADERS += mainwindow.h \
@@ -66,8 +66,8 @@ HEADERS += axesdialog.h
 HEADERS += AxisLimits.h
 HEADERS += AxisFrame.h
 HEADERS += DataSetProperties.h
-HEADERS += configureIvsVdialog.h
-HEADERS += configureRvsTdialog.h
+HEADERS +=
+HEADERS +=
 HEADERS += utility.h
 
 FORMS   += mainwindow.ui
