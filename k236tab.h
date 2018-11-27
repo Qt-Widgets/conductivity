@@ -2,11 +2,9 @@
 
 #include <QObject>
 #include <QWidget>
-
-
-QT_FORWARD_DECLARE_CLASS(QLineEdit)
-QT_FORWARD_DECLARE_CLASS(QRadioButton)
-QT_FORWARD_DECLARE_CLASS(QLabel)
+#include <QLineEdit>
+#include <QRadioButton>
+#include <QLabel>
 
 
 class K236Tab : public QWidget
@@ -46,6 +44,7 @@ public:
     int    iWaitTime;
     int    iNSweepPoints;
     bool   bSourceI;
+    bool   bDummy[7];
 
 private:
     // Limit Values
@@ -63,15 +62,15 @@ private:
     QString sErrorStyle;
 
     // UI Elements
-    QRadioButton *pSourceIButton;
-    QRadioButton *pSourceVButton;
-    QLabel       *pStartLabel;
-    QLabel       *pStopLabel;
-    QLabel       *pComplianceLabel;
-    QLineEdit    *pStartEdit;
-    QLineEdit    *pStopEdit;
-    QLineEdit    *pComplianceEdit;
-    QLineEdit    *pWaitTimeEdit;
-    QLineEdit    *pSweepPointsEdit;
+    QRadioButton SourceIButton;
+    QRadioButton SourceVButton;
+    QLabel       StartLabel;
+    QLabel       StopLabel;
+    QLabel       ComplianceLabel;
+    QLineEdit    StartEdit;
+    QLineEdit    StopEdit;
+    QLineEdit    ComplianceEdit;
+    QLineEdit    WaitTimeEdit;
+    QLineEdit    SweepPointsEdit;
 };
 
