@@ -13,6 +13,7 @@ class FileTab : public QWidget
     Q_OBJECT
 public:
     explicit FileTab(QWidget *parent = nullptr);
+    ~FileTab() Q_DECL_OVERRIDE;
     void restoreSettings();
     void saveSettings();
     bool checkFileName();

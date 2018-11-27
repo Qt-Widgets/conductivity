@@ -5,6 +5,7 @@
 #include <QRadioButton>
 #include <QGridLayout>
 #include <QSettings>
+#include <QtDebug>
 
 
 K236Tab::K236Tab(QWidget *parent)
@@ -60,15 +61,21 @@ K236Tab::K236Tab(QWidget *parent)
 }
 
 
+K236Tab::~K236Tab(){
+    qDebug() << Q_FUNC_INFO;
+}
+
+
+
 void
 K236Tab::restoreSettings() {
     QSettings settings;
-    bSourceI       = settings.value("K236TabSourceI", true).toBool();
+    bSourceI      = settings.value("K236TabSourceI", true).toBool();
     dStart        = settings.value("K236TabStart", 0.0).toDouble();
     dStop         = settings.value("K236TabStop", 0.0).toDouble();
     dCompliance   = settings.value("K236TabCompliance", 0.0).toDouble();
-    iWaitTime      = settings.value("K236TabWaitTime", 100).toInt();
-    iNSweepPoints  = settings.value("K236TabSweepPoints", 100).toInt();
+    iWaitTime     = settings.value("K236TabWaitTime", 100).toInt();
+    iNSweepPoints = settings.value("K236TabSweepPoints", 100).toInt();
 }
 
 

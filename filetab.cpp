@@ -5,6 +5,7 @@
 #include <QSettings>
 #include <QMessageBox>
 #include <QGridLayout>
+#include <QtDebug>
 
 
 FileTab::FileTab(QWidget *parent)
@@ -29,6 +30,11 @@ FileTab::FileTab(QWidget *parent)
     restoreSettings();
     setToolTips();
     initUI();
+}
+
+
+FileTab::~FileTab(){
+    qDebug() << Q_FUNC_INFO;
 }
 
 

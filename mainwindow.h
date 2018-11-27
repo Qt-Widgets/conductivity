@@ -16,8 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 #include <QMainWindow>
 #include <QDateTime>
@@ -126,10 +125,9 @@ private:
 //    ConfigureIvsVDialog configureIvsVDialog;
     IvsVDialog          configureIvsVDialog;
 
-
-    const quint8  LAMP_ON  = 1;
-    const quint8  LAMP_OFF = 0;
-    const int     iPlotDark = 1;
+    const quint8  LAMP_ON    = 1;
+    const quint8  LAMP_OFF   = 0;
+    const int     iPlotDark  = 1;
     const int     iPlotPhoto = 2;
 
     double        currentTemperature;
@@ -148,4 +146,3 @@ private:
     int           gpioLEDpin;
 };
 
-   #endif // MAINWINDOW_H

@@ -2,58 +2,68 @@
 
 #include <QTabWidget>
 #include <QVBoxLayout>
+#include <QtDebug>
 
 
 IvsVDialog::IvsVDialog(QWidget *parent)
     : QDialog(parent)
 {
     setAttribute(Qt::WA_AlwaysShowToolTips);
+    pTabK236  = new K236Tab();
+    pTabLS330 = new LS330Tab();
+    pTabCS130 = new CS130Tab();
+    pTabFile  = new FileTab();
 
-    iSourceIndex = tabWidget.addTab(&TabK236,  tr("K236"));
-    iThermIndex  = tabWidget.addTab(&TabLS330, tr("LS330"));
-    iMonoIndex   = tabWidget.addTab(&TabCS130, tr("CS130"));
-    iFileIndex   = tabWidget.addTab(&TabFile,  tr("Out File"));
+    pTabWidget = new QTabWidget();
 
-    buttonBox.addButton(QString("Ok"), QDialogButtonBox::ButtonRole::AcceptRole);
-    buttonBox.addButton(QString("Cancel"), QDialogButtonBox::ButtonRole::RejectRole);
-//            = new QDialogButtonBox(QDialogButtonBox::Ok |
-//                                     QDialogButtonBox::Cancel);
+    iSourceIndex = pTabWidget->addTab(pTabK236,  tr("K236"));
+    iThermIndex  = pTabWidget->addTab(pTabLS330, tr("LS330"));
+    iMonoIndex   = pTabWidget->addTab(pTabCS130, tr("CS130"));
+    iFileIndex   = pTabWidget->addTab(pTabFile,  tr("Out File"));
+
+    pButtonBox = new QDialogButtonBox(QDialogButtonBox::Ok |
+                                      QDialogButtonBox::Cancel);
 
     connectSignals();
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
-    mainLayout->addWidget(&tabWidget);
-    mainLayout->addWidget(&buttonBox);
+    mainLayout->addWidget(pTabWidget);
+    mainLayout->addWidget(pButtonBox);
     setLayout(mainLayout);
     setWindowTitle("I versus V");
     setToolTips();
 }
 
 
+IvsVDialog::~IvsVDialog(){
+    qDebug() << Q_FUNC_INFO;
+}
+
+
 void
 IvsVDialog::setToolTips() {
-    tabWidget.setTabToolTip(iSourceIndex, QString("Source-Measure Unit configuration"));
-    tabWidget.setTabToolTip(iThermIndex, QString("Thermostat configuration"));
-    tabWidget.setTabToolTip(iMonoIndex, QString("Monochromator configuration"));
-    tabWidget.setTabToolTip(iFileIndex, QString("Output File configuration"));
+    pTabWidget->setTabToolTip(iSourceIndex, QString("Source-Measure Unit configuration"));
+    pTabWidget->setTabToolTip(iThermIndex, QString("Thermostat configuration"));
+    pTabWidget->setTabToolTip(iMonoIndex, QString("Monochromator configuration"));
+    pTabWidget->setTabToolTip(iFileIndex, QString("Output File configuration"));
 }
 
 
 void
 IvsVDialog::connectSignals() {
-    connect(&buttonBox, SIGNAL(accepted()),
+    connect(pButtonBox, SIGNAL(accepted()),
             this, SLOT(onOk()));
-    connect(&buttonBox, SIGNAL(rejected()),
+    connect(pButtonBox, SIGNAL(rejected()),
             this, SLOT(onCancel()));
 }
 
 
 void
 IvsVDialog::onCancel() {
-    TabK236.restoreSettings();
-    TabLS330.restoreSettings();
-    TabCS130.restoreSettings();
-    TabFile.restoreSettings();
+    pTabK236->restoreSettings();
+    pTabLS330->restoreSettings();
+    pTabCS130->restoreSettings();
+    pTabFile->restoreSettings();
     reject();
 }
 
@@ -61,14 +71,14 @@ IvsVDialog::onCancel() {
 
 void
 IvsVDialog::onOk() {
-    if(TabFile.checkFileName()) {
-        TabK236.saveSettings();
-        TabLS330.saveSettings();
-        TabCS130.saveSettings();
-        TabFile.saveSettings();
+    if(pTabFile->checkFileName()) {
+        pTabK236->saveSettings();
+        pTabLS330->saveSettings();
+        pTabCS130->saveSettings();
+        pTabFile->saveSettings();
         accept();
     }
-    tabWidget.setCurrentIndex(iFileIndex);
+    pTabWidget->setCurrentIndex(iFileIndex);
 }
 
 

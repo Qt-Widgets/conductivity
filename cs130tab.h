@@ -12,6 +12,7 @@ class CS130Tab : public QWidget
     Q_OBJECT
 public:
     explicit CS130Tab(QWidget *parent = nullptr);
+    ~CS130Tab() Q_DECL_OVERRIDE;
     void restoreSettings();
     void saveSettings();
 

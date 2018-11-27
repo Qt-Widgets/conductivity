@@ -21,6 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QGridLayout>
 #include <QSettings>
 #include <QLabel>
+#include <QtDebug>
+
+
 CS130Tab::CS130Tab(QWidget *parent)
     : QWidget(parent)
     , wavelengthMin(200.0)
@@ -50,6 +53,12 @@ CS130Tab::CS130Tab(QWidget *parent)
     restoreSettings();
     initUI();
 }
+
+
+CS130Tab::~CS130Tab(){
+    qDebug() << Q_FUNC_INFO;
+}
+
 
 void
 CS130Tab::restoreSettings() {

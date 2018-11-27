@@ -85,7 +85,6 @@ MainWindow::MainWindow(QWidget *parent)
     QSettings settings;
     restoreGeometry(settings.value("mainWindowGeometry").toByteArray());
     restoreState(settings.value("mainWindowState").toByteArray());
-
 }
 
 
@@ -95,6 +94,7 @@ MainWindow::~MainWindow() {
     if(pCornerStone130 != Q_NULLPTR)   delete pCornerStone130;
     if(pPlotMeasurements != Q_NULLPTR) delete pPlotMeasurements;
     if(pPlotTemperature != Q_NULLPTR)  delete pPlotTemperature;
+    if(pOutputFile != Q_NULLPTR)       delete pOutputFile;
     delete ui;
 }
 
@@ -496,7 +496,7 @@ MainWindow::on_startIvsVButton_clicked() {
         pCornerStone130->setGrating(configureRvsTDialog.iGratingNumber);
         pCornerStone130->setWavelength(configureRvsTDialog.dWavelength);
     }
-    if(configureIvsVDialog.TabCS130.bPhoto)
+    if(configureIvsVDialog.pTabCS130->bPhoto)
         switchLampOn();
     else
         switchLampOff();
@@ -523,8 +523,8 @@ MainWindow::on_startIvsVButton_clicked() {
     }
     // Open the Output file
     ui->statusBar->showMessage("Opening Output file...");
-    if(!prepareOutputFile(configureIvsVDialog.TabFile.sBaseDir,
-                          configureIvsVDialog.TabFile.sOutFileName))
+    if(!prepareOutputFile(configureIvsVDialog.pTabFile->sBaseDir,
+                          configureIvsVDialog.pTabFile->sOutFileName))
     {
         stopIvsV();
         return;
@@ -534,7 +534,7 @@ MainWindow::on_startIvsVButton_clicked() {
                        .arg("#Voltage[V]", 12)
                        .arg("Current[A]", 12)
                        .arg("Temp.[K]", 12).toLocal8Bit());
-    QStringList HeaderLines = configureIvsVDialog.TabFile.sSampleInfo.split("\n");
+    QStringList HeaderLines = configureIvsVDialog.pTabFile->sSampleInfo.split("\n");
     for(int i=0; i<HeaderLines.count(); i++) {
         pOutputFile->write("#");
         pOutputFile->write(HeaderLines.at(i).toLocal8Bit());
@@ -564,28 +564,28 @@ MainWindow::on_startIvsVButton_clicked() {
     onTimeToReadT();
     double expectedSeconds;
     startMeasuringTime = QDateTime::currentDateTime();
-    expectedSeconds = 0.32+configureIvsVDialog.TabK236.iWaitTime/1000.0;
-    expectedSeconds *= configureIvsVDialog.TabK236.iNSweepPoints;
-    if(configureIvsVDialog.TabLS330.bUseThermostat) {
+    expectedSeconds = 0.32+configureIvsVDialog.pTabK236->iWaitTime/1000.0;
+    expectedSeconds *= configureIvsVDialog.pTabK236->iNSweepPoints;
+    if(configureIvsVDialog.pTabLS330->bUseThermostat) {
         connect(&waitingTStartTimer, SIGNAL(timeout()),
                 this, SLOT(onTimeToCheckT()));
         waitingTStartTime = QDateTime::currentDateTime();
         // Start the reaching of the Initial Temperature
         // Configure Thermostat
-        setPointT = configureIvsVDialog.TabLS330.dTStart;
+        setPointT = configureIvsVDialog.pTabLS330->dTStart;
         pLakeShore->setTemperature(setPointT);
         pLakeShore->switchPowerOn(3);
         waitingTStartTimer.start(5000);
         ui->statusBar->showMessage(QString("%1 Waiting Initial T[%2K]")
                                    .arg(waitingTStartTime.toString())
-                                   .arg(configureIvsVDialog.TabLS330.dTStart));
+                                   .arg(configureIvsVDialog.pTabLS330->dTStart));
         // All done... compute the time needed for the measurement:
         double deltaT;
-        deltaT = configureIvsVDialog.TabLS330.dTStop -
-                 configureIvsVDialog.TabLS330.dTStart;
-        expectedSeconds += 60.0 *(configureIvsVDialog.TabLS330.iReachingTStart +
-                                  configureIvsVDialog.TabLS330.iTimeToSteadyT);
-        expectedSeconds *= int(deltaT / configureIvsVDialog.TabLS330.dTStep);
+        deltaT = configureIvsVDialog.pTabLS330->dTStop -
+                 configureIvsVDialog.pTabLS330->dTStart;
+        expectedSeconds += 60.0 *(configureIvsVDialog.pTabLS330->iReachingTStart +
+                                  configureIvsVDialog.pTabLS330->iTimeToSteadyT);
+        expectedSeconds *= int(deltaT / configureIvsVDialog.pTabLS330->dTStep);
     }
     else {
         startI_V();
@@ -605,12 +605,12 @@ MainWindow::startI_V() {
         // No diode junction
         //qDebug() << "No junctions in device";
         ui->statusBar->showMessage("No junctions: Sweeping...Please Wait");
-        double dIStart = configureIvsVDialog.TabK236.dStart;
-        double dIStop = configureIvsVDialog.TabK236.dStop;
-        int nSweepPoints = configureIvsVDialog.TabK236.iNSweepPoints;
+        double dIStart = configureIvsVDialog.pTabK236->dStart;
+        double dIStop = configureIvsVDialog.pTabK236->dStop;
+        int nSweepPoints = configureIvsVDialog.pTabK236->iNSweepPoints;
         double dIStep = qAbs(dIStop - dIStart) / double(nSweepPoints);
-        double dDelayms = double(configureIvsVDialog.TabK236.iWaitTime);
-        double dCompliance = configureIvsVDialog.TabK236.dCompliance;
+        double dDelayms = double(configureIvsVDialog.pTabK236->iWaitTime);
+        double dCompliance = configureIvsVDialog.pTabK236->dCompliance;
         presentMeasure = IvsVSourceI;
         connect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)),
                 this, SLOT(onKeithleySweepDone(QDateTime, QString)));
@@ -620,11 +620,11 @@ MainWindow::startI_V() {
         //qDebug() << "Forward Direction Handling";
         ui->statusBar->showMessage("Forward junction: Sweeping...Please Wait");
         double dIStart = 0.0;
-        double dIStop = configureIvsVDialog.TabK236.dStop;
-        int nSweepPoints = configureIvsVDialog.TabK236.iNSweepPoints;
+        double dIStop = configureIvsVDialog.pTabK236->dStop;
+        int nSweepPoints = configureIvsVDialog.pTabK236->iNSweepPoints;
         double dIStep = qAbs(dIStop - dIStart) / double(nSweepPoints);
-        double dDelayms = double(configureIvsVDialog.TabK236.iWaitTime);
-        double dCompliance = configureIvsVDialog.TabK236.dCompliance;
+        double dDelayms = double(configureIvsVDialog.pTabK236->iWaitTime);
+        double dCompliance = configureIvsVDialog.pTabK236->dCompliance;
         presentMeasure = IvsVSourceI;
         connect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)),
                 this, SLOT(onIForwardSweepDone(QDateTime,QString)));
@@ -634,11 +634,11 @@ MainWindow::startI_V() {
         //qDebug() << "Reverse Direction Handling";
         ui->statusBar->showMessage("Reverse junction: Sweeping...Please Wait");
         double dVStart = 0.0;
-        double dVStop = configureIvsVDialog.TabK236.dStop;
-        int nSweepPoints = configureIvsVDialog.TabK236.iNSweepPoints;
+        double dVStop = configureIvsVDialog.pTabK236->dStop;
+        int nSweepPoints = configureIvsVDialog.pTabK236->iNSweepPoints;
         double dVStep = qAbs(dVStop - dVStart) / double(nSweepPoints);
-        double dDelayms = double(configureIvsVDialog.TabK236.iWaitTime);
-        double dCompliance = configureIvsVDialog.TabK236.dCompliance;
+        double dDelayms = double(configureIvsVDialog.pTabK236->iWaitTime);
+        double dCompliance = configureIvsVDialog.pTabK236->dCompliance;
         presentMeasure = IvsVSourceV;
         connect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)),
                 this, SLOT(onVReverseSweepDone(QDateTime,QString)));
@@ -804,19 +804,19 @@ MainWindow::onTimeToCheckT() {
         waitingTStartTimer.disconnect();
         connect(&stabilizingTimer, SIGNAL(timeout()),
                 this, SLOT(onSteadyTReached()));
-        stabilizingTimer.start(configureIvsVDialog.TabLS330.iTimeToSteadyT*60000);
+        stabilizingTimer.start(configureIvsVDialog.pTabLS330->iTimeToSteadyT*60000);
         ui->statusBar->showMessage(QString("Thermal Stabilization for %1 min.")
                                    .arg(configureRvsTDialog.iStabilizingTime));
     }
     else {
         currentTime = QDateTime::currentDateTime();
         qint64 elapsedSec = waitingTStartTime.secsTo(currentTime);
-        if(elapsedSec > qint64(configureIvsVDialog.TabLS330.iReachingTStart)*60) {
+        if(elapsedSec > qint64(configureIvsVDialog.pTabLS330->iReachingTStart)*60) {
             waitingTStartTimer.stop();
             waitingTStartTimer.disconnect();
             connect(&stabilizingTimer, SIGNAL(timeout()),
                     this, SLOT(onSteadyTReached()));
-            stabilizingTimer.start(configureIvsVDialog.TabLS330.iTimeToSteadyT*60000);
+            stabilizingTimer.start(configureIvsVDialog.pTabLS330->iTimeToSteadyT*60000);
             ui->statusBar->showMessage(QString("Thermal Stabilization for %1 min.")
                                        .arg(configureRvsTDialog.iStabilizingTime));
         }
@@ -1062,10 +1062,10 @@ MainWindow::onKeithleySweepDone(QDateTime dataTime, QString sData) {
     }
     pPlotMeasurements->UpdatePlot();
     pOutputFile->flush();
-    if(configureIvsVDialog.TabLS330.bUseThermostat) {
-        setPointT += configureIvsVDialog.TabLS330.dTStep;
+    if(configureIvsVDialog.pTabLS330->bUseThermostat) {
+        setPointT += configureIvsVDialog.pTabLS330->dTStep;
 //        qDebug() << QString("New Set Point: %1").arg(setPointT);
-        if(setPointT > configureIvsVDialog.TabLS330.dTStop) {
+        if(setPointT > configureIvsVDialog.pTabLS330->dTStop) {
             stopIvsV();
             ui->statusBar->showMessage("Measure Done");
             onClearComplianceEvent();
@@ -1131,18 +1131,18 @@ MainWindow::onIForwardSweepDone(QDateTime dataTime, QString sData) {
     double dVStart;
     double dVStop;
     if(junctionDirection > 0) {// Forward junction
-        dVStart = configureIvsVDialog.TabK236.dStart;
+        dVStart = configureIvsVDialog.pTabK236->dStart;
         dVStop = 0.0;
     }
     else {// Reverse Junction
         dVStart = 0.0;
-        dVStop = configureIvsVDialog.TabK236.dStop;
+        dVStop = configureIvsVDialog.pTabK236->dStop;
     }
-    int nSweepPoints = configureIvsVDialog.TabK236.iNSweepPoints;
+    int nSweepPoints = configureIvsVDialog.pTabK236->iNSweepPoints;
     double dVStep = qAbs(dVStop - dVStart) / double(nSweepPoints);
-    double dDelayms = double(configureIvsVDialog.TabK236.iWaitTime);
-    double dCompliance = qMax(qAbs(configureIvsVDialog.TabK236.dStart),
-                              qAbs(configureIvsVDialog.TabK236.dStop));
+    double dDelayms = double(configureIvsVDialog.pTabK236->iWaitTime);
+    double dCompliance = qMax(qAbs(configureIvsVDialog.pTabK236->dStart),
+                              qAbs(configureIvsVDialog.pTabK236->dStop));
     presentMeasure = IvsVSourceV;
     connect(pKeithley, SIGNAL(readyForTrigger()),
             this, SLOT(onKeithleyReadyForSweepTrigger()));
@@ -1182,12 +1182,12 @@ MainWindow::onVReverseSweepDone(QDateTime dataTime, QString sData) {
     }
     pPlotMeasurements->UpdatePlot();
     pOutputFile->flush();
-    double dIStart = configureIvsVDialog.TabK236.dStart;
+    double dIStart = configureIvsVDialog.pTabK236->dStart;
     double dIStop = 0.0;
-    int nSweepPoints = configureIvsVDialog.TabK236.iNSweepPoints;
+    int nSweepPoints = configureIvsVDialog.pTabK236->iNSweepPoints;
     double dIStep = qAbs(dIStop - dIStart) / double(nSweepPoints);
-    double dDelayms = double(configureIvsVDialog.TabK236.iWaitTime);
-    double dCompliance = configureIvsVDialog.TabK236.dCompliance;
+    double dDelayms = double(configureIvsVDialog.pTabK236->iWaitTime);
+    double dCompliance = configureIvsVDialog.pTabK236->dCompliance;
     presentMeasure = IvsVSourceI;
     connect(pKeithley, SIGNAL(readyForTrigger()),
             this, SLOT(onKeithleyReadyForSweepTrigger()));

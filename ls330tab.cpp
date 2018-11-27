@@ -5,6 +5,7 @@
 #include <QRadioButton>
 #include <QGridLayout>
 #include <QSettings>
+#include <QtDebug>
 
 
 LS330Tab::LS330Tab(QWidget *parent)
@@ -49,6 +50,11 @@ LS330Tab::LS330Tab(QWidget *parent)
     restoreSettings();
     setToolTips();
     initUI();
+}
+
+
+LS330Tab::~LS330Tab(){
+    qDebug() << Q_FUNC_INFO;
 }
 
 

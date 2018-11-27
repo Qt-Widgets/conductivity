@@ -15,6 +15,7 @@ class IvsVDialog : public QDialog
     Q_OBJECT
 public:
     explicit IvsVDialog(QWidget *parent = nullptr);
+    ~IvsVDialog() Q_DECL_OVERRIDE;
 
 signals:
 
@@ -27,14 +28,15 @@ protected:
     void setToolTips();
 
 public:
-    K236Tab  TabK236;
-    LS330Tab TabLS330;
-    CS130Tab TabCS130;
-    FileTab  TabFile;
+    K236Tab  *pTabK236;
+    LS330Tab *pTabLS330;
+    CS130Tab *pTabCS130;
+    FileTab  *pTabFile;
 
 private:
-    QTabWidget       tabWidget;
-    QDialogButtonBox buttonBox;
+    QTabWidget       *pTabWidget;
+    QDialogButtonBox *pButtonBox;
+
     int iSourceIndex;
     int iThermIndex;
     int iMonoIndex;

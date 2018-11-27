@@ -12,6 +12,7 @@ class K236Tab : public QWidget
     Q_OBJECT
 public:
     explicit K236Tab(QWidget *parent = nullptr);
+    ~K236Tab() Q_DECL_OVERRIDE;
     void restoreSettings();
     void saveSettings();
 

@@ -12,6 +12,7 @@ class LS330Tab : public QWidget
     Q_OBJECT
 public:
     explicit LS330Tab(QWidget *parent = nullptr);
+    ~LS330Tab() Q_DECL_OVERRIDE;
     void restoreSettings();
     void saveSettings();
     void connectSignals();
