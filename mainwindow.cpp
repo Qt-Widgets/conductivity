@@ -421,7 +421,7 @@ MainWindow::on_startRvsTButton_clicked() {
     }
     // else
     if(pConfigureDialog) delete pConfigureDialog;
-    pConfigureDialog = new ConfigureDialog(iConfRvsT, this);
+    pConfigureDialog = new ConfigureDialog(iConfRvsT, bUseMonochromator, this);
     if(pConfigureDialog->exec() == QDialog::Rejected)
         return;
 
@@ -471,7 +471,8 @@ MainWindow::on_startRvsTButton_clicked() {
         return;
     }
     // Write the header
-    // To cope with GnuPlot way to handle the comment lines
+    // To cope with the GnuPlot way to handle the comment lines
+    // we need a # as a first chraracter in each row.
     pOutputFile->write(QString("%1 %2 %3 %4 %5 %6")
                        .arg("#T-Dark[K]", 12)
                        .arg("V-Dark[V]", 12)
@@ -554,10 +555,9 @@ MainWindow::on_startIvsVButton_clicked() {
     }
     //else
     if(pConfigureDialog) delete pConfigureDialog;
-    pConfigureDialog = new ConfigureDialog(iConfIvsV, this);
+    pConfigureDialog = new ConfigureDialog(iConfIvsV, bUseMonochromator, this);
     if(pConfigureDialog->exec() == QDialog::Rejected)
         return;
-
     QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
     if(bUseMonochromator) {
         //Initializing Corner Stone 130

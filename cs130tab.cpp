@@ -24,11 +24,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QtDebug>
 
 
-CS130Tab::CS130Tab(int iConfiguration, QWidget *parent)
+CS130Tab::CS130Tab(int iConfiguration, bool enableMonochromator, QWidget *parent)
     : QWidget(parent)
     , wavelengthMin(200.0)
     , wavelengthMax(1000.0)
     , myConfiguration(iConfiguration)
+    , bUseMonochromator(enableMonochromator)
 {
     radioButtonGrating1.setText("Grating #1");
     radioButtonGrating2.setText("Grating #2");
@@ -41,6 +42,10 @@ CS130Tab::CS130Tab(int iConfiguration, QWidget *parent)
     pLayout->addWidget(new QLabel("Wavelength [nm]"), 2, 0, 1, 1);
     pLayout->addWidget(&WavelengthEdit, 2, 1, 1, 1);
     setLayout(pLayout);
+
+    radioButtonGrating1.setEnabled(bUseMonochromator);
+    radioButtonGrating2.setEnabled(bUseMonochromator);
+    WavelengthEdit.setEnabled(bUseMonochromator);
 
     sNormalStyle = WavelengthEdit.styleSheet();
 
@@ -155,6 +160,7 @@ CS130Tab::on_grating2_Selected() {
 
 void
 CS130Tab::enableMonochromator(bool bEnable) {
+    if(!bUseMonochromator) return;
     radioButtonGrating1.setEnabled(bEnable);
     radioButtonGrating2.setEnabled(bEnable);
     WavelengthEdit.setEnabled(bEnable);

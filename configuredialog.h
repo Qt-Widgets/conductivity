@@ -31,7 +31,7 @@ class ConfigureDialog : public QDialog
 {
     Q_OBJECT
 public:
-    explicit ConfigureDialog(int iConfiguration, QWidget *parent = nullptr);
+    explicit ConfigureDialog(int iConfiguration, bool enableMonochromator, QWidget *parent = nullptr);
 
 signals:
 
@@ -58,5 +58,6 @@ private:
     int iMonoIndex;
     int iFileIndex;
     int configurationType;
+    bool bUseMonochromator;
 };
 

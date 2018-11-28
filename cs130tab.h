@@ -29,7 +29,7 @@ class CS130Tab : public QWidget
 {
     Q_OBJECT
 public:
-    explicit CS130Tab(int iConfiguration, QWidget *parent = nullptr);
+    explicit CS130Tab(int iConfiguration, bool enableMonochromator, QWidget *parent = nullptr);
     void restoreSettings();
     void saveSettings();
 
@@ -68,4 +68,5 @@ private:
     const double wavelengthMax;
 
     int          myConfiguration;
+    bool         bUseMonochromator;
 };

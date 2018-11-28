@@ -28,13 +28,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QVBoxLayout>
 
 
-ConfigureDialog::ConfigureDialog(int iConfiguration, QWidget *parent)
+ConfigureDialog::ConfigureDialog(int iConfiguration, bool enableMonochromator, QWidget *parent)
     : QDialog(parent)
     , configurationType(iConfiguration)
+    , bUseMonochromator(enableMonochromator)
 {
     pTabK236  = new K236Tab(configurationType, this);
     pTabLS330 = new LS330Tab(configurationType, this);
-    pTabCS130 = new CS130Tab(configurationType, this);
+    pTabCS130 = new CS130Tab(configurationType, bUseMonochromator, this);
     pTabFile  = new FileTab(configurationType, this);
 
     pTabWidget = new QTabWidget();
