@@ -54,7 +54,7 @@ protected:
     bool getNewMeasure();
     void initRvsTPlots();
     void stopRvsT();
-    void startI_V();
+    void startI_V(bool bSourceI);
     void stopIvsV();
     void initIvsVPlots();
     bool prepareOutputFile(QString sBaseDir, QString sFileName);

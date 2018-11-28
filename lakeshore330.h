@@ -42,9 +42,7 @@ public:
 signals:
 
 public slots:
-#if defined(Q_OS_LINUX)
     void checkNotify();
-#endif
 
 protected:
     QTimer pollTimer;
@@ -71,7 +69,5 @@ private:
     const quint8 DDE;// Device Dependent Error
     const quint8 QYE;// Query Error
     const quint8 OPC;// Operation Complete
-#if defined(Q_OS_LINUX)
     int pollInterval;
-#endif
 };

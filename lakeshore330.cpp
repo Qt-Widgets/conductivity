@@ -61,9 +61,7 @@ LakeShore330::LakeShore330(int gpio, int address, QObject *parent)
     , QYE(4)  // Query Error
     , OPC(1)  // Operation Complete
 {
-#if defined(Q_OS_LINUX)
     pollInterval = 500;
-#endif
 }
 
 
@@ -271,7 +269,6 @@ LakeShore330::isRamping() {
 }
 
 
-#if defined(Q_OS_LINUX)
 void
 LakeShore330::checkNotify() {
     ibrsp(ls330, &spollByte);
@@ -281,4 +278,3 @@ LakeShore330::checkNotify() {
         return;// SRQ not enabled
     onGpibCallback(ls330, ulong(ThreadIbsta()), ulong(ThreadIberr()), ThreadIbcnt());
 }
-#endif

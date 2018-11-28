@@ -391,7 +391,7 @@ Keithley236::initVSweep(double startVoltage,
     sCommand = QString("Q1,%1,%2,%3,0,%4X")
             .arg(startVoltage)
             .arg(stopVoltage)
-            .arg(voltageStep)
+            .arg(qMax(voltageStep, 1.0e-4))
             .arg(delay);
     iErr |= gpibWrite(k236, sCommand);   // Program Sweep
     if(iErr & ERR) {
@@ -404,7 +404,7 @@ Keithley236::initVSweep(double startVoltage,
         qCritical() << sError;
         return false;
     }
-    iErr  = gpibWrite(k236, "R1");        // Arm Trigger
+    iErr  = gpibWrite(k236, "R1");       // Arm Trigger
     iErr |= gpibWrite(k236, "N1X");      // Operate !
     if(iErr & ERR) {
         QString sError;
