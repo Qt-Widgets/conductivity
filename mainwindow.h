@@ -22,8 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDateTime>
 #include <QTimer>
 
-#include "ivsvdialog.h"
-#include "rvstdialog.h"
+#include "configuredialog.h"
 
 
 
@@ -93,55 +92,51 @@ private:
         IvsVSourceV = 4,
         IvsV        = 5
     };
-    measure presentMeasure;
+    measure          presentMeasure;
 
 private:
-    QString sNormalStyle;
-    QString sErrorStyle;
-    QString sDarkStyle;
-    QString sPhotoStyle;
+    QFile           *pOutputFile;
+    Keithley236     *pKeithley;
+    LakeShore330    *pLakeShore;
+    CornerStone130  *pCornerStone130;
+    Plot2D          *pPlotMeasurements;
+    Plot2D          *pPlotTemperature;
+    ConfigureDialog *pConfigureDialog;
 
-    QFile *pOutputFile;
+    QString          sNormalStyle;
+    QString          sErrorStyle;
+    QString          sDarkStyle;
+    QString          sPhotoStyle;
 
-    Keithley236    *pKeithley;
-    LakeShore330   *pLakeShore;
-    CornerStone130 *pCornerStone130;
+    QDateTime        currentTime;
+    QDateTime        waitingTStartTime;
+    QDateTime        startReadingTTime;
+    QDateTime        startMeasuringTime;
+    QDateTime        endMeasureTime;
 
-    Plot2D         *pPlotMeasurements;
-    Plot2D         *pPlotTemperature;
+    QTimer           waitingTStartTimer;
+    QTimer           stabilizingTimer;
+    QTimer           readingTTimer;
+    QTimer           measuringTimer;
 
-    QDateTime      currentTime;
-    QDateTime      waitingTStartTime;
-    QDateTime      startReadingTTime;
-    QDateTime      startMeasuringTime;
-    QDateTime      endMeasureTime;
+    const quint8     LAMP_ON    = 1;
+    const quint8     LAMP_OFF   = 0;
+    const int        iPlotDark  = 1;
+    const int        iPlotPhoto = 2;
 
-    QTimer         waitingTStartTimer;
-    QTimer         stabilizingTimer;
-    QTimer         readingTTimer;
-    QTimer         measuringTimer;
-
-    RvsTDialog     configureRvsTDialog;
-    IvsVDialog     configureIvsVDialog;
-
-    const quint8   LAMP_ON    = 1;
-    const quint8   LAMP_OFF   = 0;
-    const int      iPlotDark  = 1;
-    const int      iPlotPhoto = 2;
-
-    double         currentTemperature;
-    double         setPointT;
-    int            iCurrentTPlot;
-    int            gpibBoardID;
-    quint8         currentLampStatus;
-    QString        sMeasurementPlotLabel;
-    QString        sTemperaturePlotLabel;
-    int            maxPlotPoints;
-    volatile bool  isK236ReadyForTrigger;
-    bool           bRunning;
-    int            junctionDirection;
-    bool           bUseMonochromator;
-    int            gpioHostHandle;
-    int            gpioLEDpin;
+    double           currentTemperature;
+    double           setPointT;
+    int              iCurrentTPlot;
+    int              gpibBoardID;
+    quint8           currentLampStatus;
+    QString          sMeasurementPlotLabel;
+    QString          sTemperaturePlotLabel;
+    int              maxPlotPoints;
+    volatile bool    isK236ReadyForTrigger;
+    bool             bRunning;
+    int              junctionDirection;
+    bool             bUseMonochromator;
+    int              gpioHostHandle;
+    int              gpioLEDpin;
 };
 

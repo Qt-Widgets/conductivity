@@ -1,15 +1,16 @@
-#include "ivsvdialog.h"
+#include "configuredialog.h"
 
 #include <QVBoxLayout>
 
 
-IvsVDialog::IvsVDialog(QWidget *parent)
+ConfigureDialog::ConfigureDialog(int iConfiguration, QWidget *parent)
     : QDialog(parent)
+    , configurationType(iConfiguration)
 {
-    pTabK236  = new K236Tab(1, this);//1 => IvsV configuration
-    pTabLS330 = new LS330Tab(1, this);
-    pTabCS130 = new CS130Tab(1, this);
-    pTabFile  = new FileTab(1, this);
+    pTabK236  = new K236Tab(configurationType, this);
+    pTabLS330 = new LS330Tab(configurationType, this);
+    pTabCS130 = new CS130Tab(configurationType, this);
+    pTabFile  = new FileTab(configurationType, this);
 
     pTabWidget = new QTabWidget();
 
@@ -33,7 +34,7 @@ IvsVDialog::IvsVDialog(QWidget *parent)
 
 
 void
-IvsVDialog::setToolTips() {
+ConfigureDialog::setToolTips() {
     pTabWidget->setTabToolTip(iSourceIndex, QString("Source-Measure Unit configuration"));
     pTabWidget->setTabToolTip(iThermIndex, QString("Thermostat configuration"));
     pTabWidget->setTabToolTip(iMonoIndex, QString("Monochromator configuration"));
@@ -42,7 +43,7 @@ IvsVDialog::setToolTips() {
 
 
 void
-IvsVDialog::connectSignals() {
+ConfigureDialog::connectSignals() {
     connect(pButtonBox, SIGNAL(accepted()),
             this, SLOT(onOk()));
     connect(pButtonBox, SIGNAL(rejected()),
@@ -51,7 +52,7 @@ IvsVDialog::connectSignals() {
 
 
 void
-IvsVDialog::onCancel() {
+ConfigureDialog::onCancel() {
     pTabK236->restoreSettings();
     pTabLS330->restoreSettings();
     pTabCS130->restoreSettings();
@@ -62,7 +63,7 @@ IvsVDialog::onCancel() {
 
 
 void
-IvsVDialog::onOk() {
+ConfigureDialog::onOk() {
     if(pTabFile->checkFileName()) {
         pTabK236->saveSettings();
         pTabLS330->saveSettings();

@@ -10,11 +10,11 @@
 #include <QDialogButtonBox>
 
 
-class IvsVDialog : public QDialog
+class ConfigureDialog : public QDialog
 {
     Q_OBJECT
 public:
-    explicit IvsVDialog(QWidget *parent = nullptr);
+    explicit ConfigureDialog(int iConfiguration, QWidget *parent = nullptr);
 
 signals:
 
@@ -40,5 +40,6 @@ private:
     int iThermIndex;
     int iMonoIndex;
     int iFileIndex;
+    int configurationType;
 };
 
