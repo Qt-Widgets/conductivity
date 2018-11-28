@@ -86,4 +86,5 @@ private:
 #if defined(Q_OS_LINUX)
     int pollInterval;
 #endif
+    bool isSweeping;
 };

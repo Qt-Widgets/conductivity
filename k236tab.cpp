@@ -219,9 +219,9 @@ K236Tab::isVoltageValid(double dVoltage) {
 bool
 K236Tab::isComplianceValid(double dCompliance){
     if(bSourceI)
-        return isCurrentValid(dCompliance);
-    else
         return isVoltageValid(dCompliance);
+    else
+        return isCurrentValid(dCompliance);
 }
 
 

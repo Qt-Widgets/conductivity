@@ -663,29 +663,23 @@ MainWindow::on_startIvsVButton_clicked() {
 void
 MainWindow::startI_V(bool bSourceI) {
     ui->statusBar->showMessage("Sweeping...Please Wait");
+    double dStart = pConfigureDialog->pTabK236->dStart;
+    double dStop = pConfigureDialog->pTabK236->dStop;
+    int nSweepPoints = pConfigureDialog->pTabK236->iNSweepPoints;
+    double dStep = qAbs(dStop - dStart) / double(nSweepPoints);
+    double dDelayms = double(pConfigureDialog->pTabK236->iWaitTime);
+    double dCompliance = pConfigureDialog->pTabK236->dCompliance;
     if(bSourceI) {// Source I Measure V
-        double dIStart = pConfigureDialog->pTabK236->dStart;
-        double dIStop = pConfigureDialog->pTabK236->dStop;
-        int nSweepPoints = pConfigureDialog->pTabK236->iNSweepPoints;
-        double dIStep = qAbs(dIStop - dIStart) / double(nSweepPoints);
-        double dDelayms = double(pConfigureDialog->pTabK236->iWaitTime);
-        double dCompliance = pConfigureDialog->pTabK236->dCompliance;
         presentMeasure = IvsVSourceI;
         connect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)),
                 this, SLOT(onKeithleySweepDone(QDateTime,QString)));
-        pKeithley->initISweep(dIStart, dIStop, dIStep, dDelayms, dCompliance);
+        pKeithley->initISweep(dStart, dStop, dStep, dDelayms, dCompliance);
     }
     else {// Source V Measure I
-        double dVStart = pConfigureDialog->pTabK236->dStart;
-        double dVStop = pConfigureDialog->pTabK236->dStop;
-        int nSweepPoints = pConfigureDialog->pTabK236->iNSweepPoints;
-        double dVStep = qAbs(dVStop - dVStart) / double(nSweepPoints);
-        double dDelayms = double(pConfigureDialog->pTabK236->iWaitTime);
-        double dCompliance = pConfigureDialog->pTabK236->dCompliance;
         presentMeasure = IvsVSourceV;
         connect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)),
                 this, SLOT(onKeithleySweepDone(QDateTime,QString)));
-        pKeithley->initVSweep(dVStart, dVStop, dVStep, dDelayms, dCompliance);
+        pKeithley->initVSweep(dStart, dStop, dStep, dDelayms, dCompliance);
     }
 }
 

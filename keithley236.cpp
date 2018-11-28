@@ -61,6 +61,7 @@ Keithley236::Keithley236(int gpio, int address, QObject *parent)
     , gpibNumber(gpio)
     , k236Address(address)
     , k236(-1)
+    , isSweeping(false)
 {
     iComplianceEvents = 0;
 #if defined(Q_OS_LINUX)
@@ -369,6 +370,7 @@ Keithley236::initISweep(double startCurrent,
     gpibWrite(k236, sCommand);   // SRQ On Sweep Done
     if(isGpibError("Keithley236::initISweep(): Error enabling SRQ Mask"))
         return false;
+    isSweeping = true;
     return true;
 }
 
@@ -420,6 +422,7 @@ Keithley236::initVSweep(double startVoltage,
     gpibWrite(k236, sCommand);   // SRQ On Sweep Done
     if(isGpibError("Keithley236::initVSweep(): Error enabling SRQ Mask"))
         return false;
+    isSweeping = true;
     return true;
 }
 
@@ -437,6 +440,7 @@ Keithley236::stopSweep() {
     gpibWrite(k236, "R0");         // Disarm Trigger
     gpibWrite(k236, "N0X");        // Place in Stand By
     ibclr(k236);
+    isSweeping = false;
     return NO_ERROR;
 }
 
@@ -452,16 +456,9 @@ Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long
     }
 
     if(spollByte & COMPLIANCE) {// Compliance
-//        spollByte &= ~READING_DONE;
         iComplianceEvents++;
-//        qCritical() << QString("Keithley236::onGpibCallback: ComplianceEvents[%1]")
-//                       .arg(iComplianceEvents);
         emit complianceEvent();
         QThread::msleep(300);
-//        if(iComplianceEvents > MAX_COMPLIANCE_EVENTS) {
-//            qCritical() << QString("Keithley236::onGpibCallback:  Compliance Event");
-//            emit complianceEvent();
-//        }
     }
     else
         emit clearCompliance();
@@ -500,7 +497,7 @@ Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long
         emit readyForTrigger();
     }
 
-    if(spollByte & READING_DONE) {// Reading Done
+    if((spollByte & READING_DONE) & !isSweeping){// Reading Done
         sResponse = gpibRead(LocalUd);
         if(sResponse != QString()) {
             QDateTime currentTime = QDateTime::currentDateTime();

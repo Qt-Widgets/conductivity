@@ -61,7 +61,7 @@ LakeShore330::LakeShore330(int gpio, int address, QObject *parent)
     , QYE(4)  // Query Error
     , OPC(1)  // Operation Complete
 {
-    pollInterval = 500;
+    pollInterval = 200;
 }
 
 
@@ -189,7 +189,6 @@ LakeShore330::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned lon
 
 double
 LakeShore330::getTemperature() {
-    //qDebug() << "LakeShore330::getTemperature()";
     gpibWrite(ls330, "SDAT?\r\n");// Query the Sample Sensor Data.
     if(isGpibError("LakeShore330::getTemperature(): SDAT? Failed"))
         return 0.0;
