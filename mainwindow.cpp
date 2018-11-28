@@ -23,6 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utility.h"
 #include "keithley236.h"
 #include "k236tab.h"
+#include "ls330tab.h"
+#include "cs130tab.h"
+#include "filetab.h"
 #include "lakeshore330.h"
 #include "cornerstone130.h"
 #include "plot2d.h"
@@ -38,12 +41,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFile>
 #include <QThread>
 #include <QLayout>
+#include <QFileInfo>
+#include <QDir>
 
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , pOutputFile(Q_NULLPTR)
+    , pLogFile(Q_NULLPTR)
     , pKeithley(Q_NULLPTR)
     , pLakeShore(Q_NULLPTR)
     , pCornerStone130(Q_NULLPTR)
@@ -61,7 +67,11 @@ MainWindow::MainWindow(QWidget *parent)
     // +5V on pins 2 or 4 in the 40 pin GPIO connector.
     // GND on pins 6, 9, 14, 20, 25, 30, 34 or 39
     // in the 40 pin GPIO connector.
+    , sLogFileName(QString("gpibLog.txt"))
 {
+    // Prepare message logging
+    PrepareLogFile();
+
     ui->setupUi(this);
     // Remove the resize-handle in the lower right corner
     ui->statusBar->setSizeGripEnabled(false);
@@ -97,6 +107,7 @@ MainWindow::~MainWindow() {
     if(pPlotTemperature != Q_NULLPTR)  delete pPlotTemperature;
     if(pConfigureDialog!= Q_NULLPTR)   delete pConfigureDialog;
     if(pOutputFile != Q_NULLPTR)       delete pOutputFile;
+    if(pLogFile != Q_NULLPTR)          delete pLogFile;
     delete ui;
 }
 
@@ -129,6 +140,63 @@ MainWindow::closeEvent(QCloseEvent *event) {
     if(gpioHostHandle >= 0)
         pigpio_stop(gpioHostHandle);
 #endif
+    if(pLogFile) {
+        if(pLogFile->isOpen()) {
+            pLogFile->flush();
+        }
+    }
+}
+
+
+/*!
+ * \brief MyApplication::PrepareLogFile Prepare a log file for the session log
+ * \return true
+ */
+bool
+MainWindow::PrepareLogFile() {
+    QFileInfo checkFile(sLogFileName);
+    if(checkFile.exists() && checkFile.isFile()) {
+        QDir renamed;
+        renamed.remove(sLogFileName+QString(".bkp"));
+        renamed.rename(sLogFileName, sLogFileName+QString(".bkp"));
+    }
+    pLogFile = new QFile(sLogFileName);
+    if (!pLogFile->open(QIODevice::WriteOnly)) {
+        QMessageBox::information(Q_NULLPTR, "Conductivity",
+                                 QString("Unable to open file %1: %2.")
+                                 .arg(sLogFileName).arg(pLogFile->errorString()));
+        delete pLogFile;
+        pLogFile = Q_NULLPTR;
+    }
+    return true;
+}
+
+
+/*!
+ * \brief logMessage Log messages on a file (if enabled) or on stdout
+ * \param logFile The file where to write the log
+ * \param sFunctionName The Function which requested to write the message
+ * \param sMessage The informative message
+ */
+void
+MainWindow::logMessage(QString sFunctionName, QString sMessage) {
+    QDateTime dateTime;
+    QString sDebugMessage = dateTime.currentDateTime().toString() +
+                            QString(" - ") +
+                            sFunctionName +
+                            QString(" - ") +
+                            sMessage;
+    if(pLogFile) {
+        if(pLogFile->isOpen()) {
+            pLogFile->write(sDebugMessage.toUtf8().data());
+            pLogFile->write("\n");
+            pLogFile->flush();
+        }
+        else
+            qDebug() << sDebugMessage;
+    }
+    else
+        qDebug() << sDebugMessage;
 }
 
 
@@ -353,7 +421,7 @@ MainWindow::on_startRvsTButton_clicked() {
     }
     // else
     if(pConfigureDialog) delete pConfigureDialog;
-    pConfigureDialog = new ConfigureDialog(2, this);
+    pConfigureDialog = new ConfigureDialog(iConfRvsT, this);
     if(pConfigureDialog->exec() == QDialog::Rejected)
         return;
 
@@ -486,7 +554,7 @@ MainWindow::on_startIvsVButton_clicked() {
     }
     //else
     if(pConfigureDialog) delete pConfigureDialog;
-    pConfigureDialog = new ConfigureDialog(1, this);
+    pConfigureDialog = new ConfigureDialog(iConfIvsV, this);
     if(pConfigureDialog->exec() == QDialog::Rejected)
         return;
 

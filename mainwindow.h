@@ -60,6 +60,8 @@ protected:
     bool prepareOutputFile(QString sBaseDir, QString sFileName);
     void switchLampOn();
     void switchLampOff();
+    bool PrepareLogFile();
+    void logMessage(QString sFunctionName, QString sMessage);
 
 private slots:
     void on_startRvsTButton_clicked();
@@ -78,7 +80,6 @@ private slots:
     void onKeithleySweepDone(QDateTime dataTime, QString sData);
     void onIForwardSweepDone(QDateTime, QString sData);
     void onVReverseSweepDone(QDateTime, QString sData);
-
     void on_lampButton_clicked();
 
 private:
@@ -94,8 +95,8 @@ private:
     };
     measure          presentMeasure;
 
-private:
     QFile           *pOutputFile;
+    QFile           *pLogFile;
     Keithley236     *pKeithley;
     LakeShore330    *pLakeShore;
     CornerStone130  *pCornerStone130;
@@ -123,6 +124,8 @@ private:
     const quint8     LAMP_OFF   = 0;
     const int        iPlotDark  = 1;
     const int        iPlotPhoto = 2;
+    const int        iConfIvsV  = 1;
+    const int        iConfRvsT  = 2;
 
     double           currentTemperature;
     double           setPointT;
@@ -138,5 +141,7 @@ private:
     bool             bUseMonochromator;
     int              gpioHostHandle;
     int              gpioLEDpin;
+
+    QString          sLogFileName;
 };
 

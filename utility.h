@@ -16,8 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
-#ifndef UTILITY_H
-#define UTILITY_H
+#pragma once
 
 #include <QString>
 #if defined(Q_OS_LINUX)
@@ -35,5 +34,3 @@ QString ErrMsg(int sta, int err, long cntl);
 QString gpibRead(int ud);
 uint    gpibWrite(int ud, QString sCmd);
 bool    isGpibError(QString sErrorString);
-
-#endif // UTILITY_H

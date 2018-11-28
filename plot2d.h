@@ -1,5 +1,3 @@
-#ifndef PLOT2D_H
-#define PLOT2D_H
 /*
  *
 Copyright (C) 2016  Gabriele Salvato
@@ -18,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
+#pragma once
 
-#include "plot2d.h"
 #include "cdatastream2d.h"
 #include "AxisLimits.h"
 #include "AxisFrame.h"
@@ -32,7 +30,7 @@ class Plot2D : public QDialog
 {
   Q_OBJECT
 public:
-  explicit Plot2D(QWidget *parent=0, QString Title="Plot 2D");
+  explicit Plot2D(QWidget *parent=Q_NULLPTR, QString Title="Plot 2D");
   ~Plot2D();
   QSize minimumSizeHint() const;
   QSize sizeHint() const;
@@ -101,5 +99,3 @@ protected:
   double xfact, yfact;
   QPoint lastPos, zoomStart, zoomEnd;
 };
-
-#endif // PLOT2D_H
