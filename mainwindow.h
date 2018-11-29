@@ -47,6 +47,10 @@ public:
     ~MainWindow() Q_DECL_OVERRIDE;
     bool checkInstruments();
 
+public:
+    static const int iConfIvsV  = 1;
+    static const int iConfRvsT  = 2;
+
 signals:
 
 protected:
@@ -124,8 +128,6 @@ private:
     const quint8     LAMP_OFF   = 0;
     const int        iPlotDark  = 1;
     const int        iPlotPhoto = 2;
-    const int        iConfIvsV  = 1;
-    const int        iConfRvsT  = 2;
 
     double           currentTemperature;
     double           setPointT;

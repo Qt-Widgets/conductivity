@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
+#include "mainwindow.h"
 #include "configuredialog.h"
 
 #include "k236tab.h"
@@ -52,8 +53,10 @@ ConfigureDialog::ConfigureDialog(int iConfiguration, bool enableMonochromator, Q
     mainLayout->addWidget(pTabWidget);
     mainLayout->addWidget(pButtonBox);
     setLayout(mainLayout);
-
-    setWindowTitle("I versus V");
+    if(configurationType==MainWindow::iConfIvsV)
+        setWindowTitle("I versus V");
+    else
+        setWindowTitle("R versus T");
     connectSignals();
     setToolTips();
 }

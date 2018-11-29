@@ -164,6 +164,8 @@ LS330Tab::connectSignals() {
     connect(&TStepEdit, SIGNAL(textChanged(const QString)),
             this, SLOT(on_TStepEdit_textChanged(const QString)));
     connect(&MaxTimeToTStartEdit, SIGNAL(textChanged(const QString)),
+            this, SLOT(on_MaxTimeToTStartEdit_textChanged(const QString)));
+    connect(&TimeToSteadyTEdit, SIGNAL(textChanged(const QString)),
             this, SLOT(on_TimeToSteadyTEdit_textChanged(const QString)));
     connect(&ThermostatCheckBox, SIGNAL(stateChanged(int)),
             this, SLOT(on_ThermostatCheckBox_stateChanged(int)));

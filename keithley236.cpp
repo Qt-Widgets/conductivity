@@ -497,7 +497,7 @@ Keithley236::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long
         emit readyForTrigger();
     }
 
-    if((spollByte & READING_DONE) & !isSweeping){// Reading Done
+    if((spollByte & READING_DONE) && !isSweeping){// Reading Done
         sResponse = gpibRead(LocalUd);
         if(sResponse != QString()) {
             QDateTime currentTime = QDateTime::currentDateTime();

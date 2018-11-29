@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
 #include "k236tab.h"
+#include "mainwindow.h"
 
 #include <QLineEdit>
 #include <QLabel>
@@ -28,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 K236Tab::K236Tab(int iConfiguration, QWidget *parent)
     : QWidget(parent)
+    , bSourceI(true)
     , currentMin(-1.0e-2)
     , currentMax(1.0e-2)
     , voltageMin(-110.0)
@@ -49,14 +51,8 @@ K236Tab::K236Tab(int iConfiguration, QWidget *parent)
     // Radio Buttons
     pLayout->addWidget(&SourceIButton, 0, 0, 1, 1);
     pLayout->addWidget(&SourceVButton, 0, 1, 1, 1);
-    bSourceI = true;
     // Labels
-    StartLabel.setText("I Start [A]");
-    StopLabel.setText("I Stop [A]");
-    ComplianceLabel.setText("Compliance [V]");
-    pLayout->addWidget(&StartLabel,                  1, 0, 1, 1);
-    pLayout->addWidget(&ComplianceLabel,             3, 0, 1, 1);
-    if(myConfiguration == 1) {
+    if(myConfiguration == MainWindow::iConfIvsV) {
         pLayout->addWidget(&StopLabel,                   2, 0, 1, 1);
         pLayout->addWidget(new QLabel("Rdgs Intv [ms]"), 4, 0, 1, 1);
         pLayout->addWidget(new QLabel("N°of Points"),    5, 0, 1, 1);
@@ -64,9 +60,11 @@ K236Tab::K236Tab(int iConfiguration, QWidget *parent)
     else {
         pLayout->addWidget(new QLabel("Meas. Intv [s]"), 4, 0, 1, 1);
     }
+    pLayout->addWidget(&StartLabel,      1, 0, 1, 1);
+    pLayout->addWidget(&ComplianceLabel, 3, 0, 1, 1);
     //Line Edits
-    pLayout->addWidget(&StartEdit,       1, 1, 1, 1);
-    pLayout->addWidget(&ComplianceEdit,  3, 1, 1, 1);
+    pLayout->addWidget(&StartEdit,      1, 1, 1, 1);
+    pLayout->addWidget(&ComplianceEdit, 3, 1, 1, 1);
     if(myConfiguration == 1) {
         pLayout->addWidget(&StopEdit,        2, 1, 1, 1);
         pLayout->addWidget(&WaitTimeEdit,    4, 1, 1, 1);
@@ -142,25 +140,43 @@ K236Tab::setToolTips() {
 void
 K236Tab::initUI() {
     // Measurement parameters
-    if(bSourceI) {
-        SourceIButton.setChecked(true);
-        if(!isCurrentValid(dStart))
-            dStart = 0.0;
-        if(!isCurrentValid(dStop))
-            dStop = 0.0;
-        StartLabel.setText("I Start [A]");
-        StopLabel.setText("I Stop [A]");
-        ComplianceLabel.setText("Compliance [V]");
+    if(myConfiguration == MainWindow::iConfIvsV) {
+        if(bSourceI) {
+            SourceIButton.setChecked(true);
+            if(!isCurrentValid(dStart))
+                dStart = 0.0;
+            if(!isCurrentValid(dStop))
+                dStop = 0.0;
+            StartLabel.setText("I Start [A]");
+            StopLabel.setText("I Stop [A]");
+            ComplianceLabel.setText("Compliance [V]");
+        }
+        else {
+            SourceVButton.setChecked(true);
+            if(!isVoltageValid(dStart))
+                dStart = 0.0;
+            if(!isVoltageValid(dStop))
+                dStop = 0.0;
+            StartLabel.setText("V Start [V]");
+            StopLabel.setText("V Stop [V]");
+            ComplianceLabel.setText("Compliance [A]");
+        }
     }
     else {
-        SourceVButton.setChecked(true);
-        if(!isVoltageValid(dStart))
-            dStart = 0.0;
-        if(!isVoltageValid(dStop))
-            dStop = 0.0;
-        StartLabel.setText("V Start [V]");
-        StopLabel.setText("V Stop [V]");
-        ComplianceLabel.setText("Compliance [A]");
+        if(bSourceI) {
+            SourceIButton.setChecked(true);
+            if(!isCurrentValid(dStart))
+                dStart = 0.0;
+            StartLabel.setText("I(constant) [A]");
+            ComplianceLabel.setText("Compliance [V]");
+        }
+        else {
+            SourceVButton.setChecked(true);
+            if(!isVoltageValid(dStart))
+                dStart = 0.0;
+            StartLabel.setText("V(constant) [V]");
+            ComplianceLabel.setText("Compliance [A]");
+        }
     }
     StartEdit.setText(QString("%1").arg(dStart, 0, 'g', 2));
     StopEdit.setText(QString("%1").arg(dStop, 0, 'g', 2));
