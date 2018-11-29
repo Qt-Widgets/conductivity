@@ -504,6 +504,9 @@ MainWindow::on_startRvsTButton_clicked() {
                        .arg(pConfigureDialog->pTabLS330->dTStart)
                        .arg(pConfigureDialog->pTabLS330->dTStop)
                        .arg(pConfigureDialog->pTabLS330->dTRate).toLocal8Bit());
+    pOutputFile->write(QString("# Max_T_Start_Wait=%1[min] T_Stabilize_Time=%2[min]\n")
+                       .arg(pConfigureDialog->pTabLS330->iReachingTStart)
+                       .arg(pConfigureDialog->pTabLS330->iTimeToSteadyT).toLocal8Bit());
     pOutputFile->flush();
     // Init the Plots
     initRvsTPlots();
@@ -637,10 +640,27 @@ MainWindow::on_startIvsVButton_clicked() {
                            .arg(pConfigureDialog->pTabK236->dStop)
                            .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
     }
-    pOutputFile->write(QString("# T_Start=%1[K] T_Stop=%2[K] T_Step=%3[K]\n")
-                       .arg(pConfigureDialog->pTabLS330->dTStart)
-                       .arg(pConfigureDialog->pTabLS330->dTStop)
-                       .arg(pConfigureDialog->pTabLS330->dTStep).toLocal8Bit());
+    if(pConfigureDialog->pTabLS330->bUseThermostat) {
+        pOutputFile->write(QString("# T_Start=%1[K] T_Stop=%2[K] T_Step=%3[K]\n")
+                           .arg(pConfigureDialog->pTabLS330->dTStart)
+                           .arg(pConfigureDialog->pTabLS330->dTStop)
+                           .arg(pConfigureDialog->pTabLS330->dTStep).toLocal8Bit());
+        pOutputFile->write(QString("# Max_T_Start_Wait=%1[min] T_Stabilize_Time=%2[min]\n")
+                           .arg(pConfigureDialog->pTabLS330->iReachingTStart)
+                           .arg(pConfigureDialog->pTabLS330->iTimeToSteadyT).toLocal8Bit());
+    }
+    if(pConfigureDialog->pTabCS130->bPhoto) {
+        pOutputFile->write(QString("# Lamp=On\n").toLocal8Bit());
+        if(bUseMonochromator) {
+            pOutputFile->write(QString("# Grating #= %1 Wavelength = %2 nm\n")
+                                       .arg(pConfigureDialog->pTabCS130->iGratingNumber)
+                                       .arg(pConfigureDialog->pTabCS130->dWavelength).toLocal8Bit());
+        }
+    }
+    else {
+        pOutputFile->write(QString("# Lamp=Off\n").toLocal8Bit());
+    }
+
     pOutputFile->flush();
 
     initIvsVPlots();
