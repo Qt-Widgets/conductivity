@@ -17,6 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
 #include "filetab.h"
+#include "mainwindow.h"
+
 #include <QDir>
 #include <QFileDialog>
 #include <QLabel>
