@@ -21,9 +21,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QtGlobal>
 #include <QObject>
 #include <QTimer>
+#include "gpibdevice.h"
 
 
-class LakeShore330 : public QObject
+class LakeShore330 : public GpibDevice
 {
     Q_OBJECT
 
@@ -48,13 +49,6 @@ protected:
     QTimer pollTimer;
 
 private:
-    int gpibNumber;
-    int ls330Address;
-    int ls330;
-    int iMask;
-    QString sCommand;
-    QString sResponse;
-    char spollByte;
     // Status Byte Register
     const quint8 SRQ;// Service Request
     const quint8 ESB;// Standard Event Status
@@ -69,5 +63,4 @@ private:
     const quint8 DDE;// Device Dependent Error
     const quint8 QYE;// Query Error
     const quint8 OPC;// Operation Complete
-    int pollInterval;
 };

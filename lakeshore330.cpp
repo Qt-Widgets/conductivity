@@ -18,34 +18,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "lakeshore330.h"
 
-#include "utility.h"
+#include <QtGlobal>
 #include <QDebug>
 #include <QThread>
-#if defined(Q_OS_LINUX)
-#include <gpib/ib.h>
-#else
-#include <ni4882.h>
-#endif
 
 
 namespace
 lakeshore330 {
+    static int rearmMask;
 #if !defined(Q_OS_LINUX)
-int rearmMask;
-int __stdcall
-myCallback(int LocalUd, unsigned long LocalIbsta, unsigned long LocalIberr, long LocalIbcntl, void* callbackData) {
-    reinterpret_cast<LakeShore330*>(callbackData)->onGpibCallback(LocalUd, LocalIbsta, LocalIberr, LocalIbcntl);
-    return rearmMask;
-}
+    int __stdcall
+    myCallback(int LocalUd, unsigned long LocalIbsta, unsigned long LocalIberr, long LocalIbcntl, void* callbackData) {
+        reinterpret_cast<LakeShore330*>(callbackData)->onGpibCallback(LocalUd, LocalIbsta, LocalIberr, LocalIbcntl);
+        return rearmMask;
+    }
 #endif
 }
 
 
 LakeShore330::LakeShore330(int gpio, int address, QObject *parent)
-    : QObject(parent)
-    , gpibNumber(gpio)
-    , ls330Address(address)
-    , ls330(-1)
+    : GpibDevice(gpio, address, parent)
     // Status Byte bits
     , SRQ(64)// Service Request
     , ESB(32)// Standard Event Status
@@ -61,38 +53,40 @@ LakeShore330::LakeShore330(int gpio, int address, QObject *parent)
     , QYE(4)  // Query Error
     , OPC(1)  // Operation Complete
 {
+    qDebug() << Q_FUNC_INFO << "gpibNumber=" << gpibNumber;
     pollInterval = 200;
+    Q_UNUSED(lakeshore330::rearmMask);
 }
 
 
 LakeShore330::~LakeShore330() {
     //  qDebug() << "LakeShore330::~LakeShore330()";
-    if(ls330 != -1) {
+    if(gpibId != -1) {
         switchPowerOff();
 #if !defined(Q_OS_LINUX)
-        ibnotify (ls330, 0, NULL, NULL);// disable notification
+        ibnotify (gpibId, 0, NULL, NULL);// disable notification
 #endif
-        ibonl(ls330, 0);// Disable hardware and software.
+        ibonl(gpibId, 0);// Disable hardware and software.
     }
 }
 
 
 int
 LakeShore330::init() {
-    //qDebug() << "LakeShore330::init()";
-    ls330 = ibdev(gpibNumber, ls330Address, 0, T3s, 1, 0);
-    if(ls330 < 0) {
+    qDebug() << Q_FUNC_INFO << "gpibNumber=" << gpibNumber;
+    gpibId = ibdev(gpibNumber, gpibAddress, 0, T3s, 1, 0);
+    if(gpibId < 0) {
         qCritical() << "LakeShore330::init() ibdev() Failed";
         QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
         qCritical() << sError;
         return GPIB_DEVICE_NOT_PRESENT;
     }
     short listen;
-    ibln(gpibNumber, ls330Address, NO_SAD, &listen);
+    ibln(gpibNumber, gpibAddress, NO_SAD, &listen);
     if(isGpibError("LakeShore330::init() LakeShore 330 Not Respondig"))
         return GPIB_DEVICE_NOT_PRESENT;
     if(listen == 0) {
-        ibonl(ls330, 0);
+        ibonl(gpibId, 0);
         qCritical() << "LakeShore330::init() Nolistener at Addr";
         return GPIB_DEVICE_NOT_PRESENT;
     }
@@ -102,31 +96,31 @@ LakeShore330::init() {
     pollTimer.start(pollInterval);
 #else
     // set up the asynchronous event notification routine on RQS
-    ibnotify(ls330,
+    ibnotify(gpibId,
              RQS,
              (GpibNotifyCallback_t) lakeshore330::myCallback,
              this);
     if(isGpibError("LakeShore330::init() ibnotify call failed."))
         return -1;
 #endif
-    ibclr(ls330);
+    ibclr(gpibId);
     QThread::sleep(1);
-    gpibWrite(ls330, "*sre 0\r\n");// Set Service Request Enable
+    gpibWrite(gpibId, "*sre 0\r\n");// Set Service Request Enable
     if(isGpibError("LakeShore330::init(): *sre Failed"))
         return -1;
-    gpibWrite(ls330, "RANG 0\r\n");// Sets heater status: 0 = off
+    gpibWrite(gpibId, "RANG 0\r\n");// Sets heater status: 0 = off
     if(isGpibError("LakeShore330::init(): RANG 0 Failed"))
         return -1;
-    gpibWrite(ls330, "CUNI K\r\n");// Set Units (Kelvin) for the Control Channel
+    gpibWrite(gpibId, "CUNI K\r\n");// Set Units (Kelvin) for the Control Channel
     if(isGpibError("LakeShore330::init(): CUNI Failed"))
         return -1;
-    gpibWrite(ls330, "SUNI K\r\n");// Set Units (Kelvin) for the Sample Channel.
+    gpibWrite(gpibId, "SUNI K\r\n");// Set Units (Kelvin) for the Sample Channel.
     if(isGpibError("LakeShore330::init(): SUNI Failed"))
         return -1;
-    gpibWrite(ls330, "RAMP 0\r\n");// Disables the ramping function
+    gpibWrite(gpibId, "RAMP 0\r\n");// Disables the ramping function
     if(isGpibError("LakeShore330::init(): RAMP 0 Failed"))
         return -1;
-    gpibWrite(ls330, "TUNE 4\r\n");// Sets Autotuning Status to "Zone"
+    gpibWrite(gpibId, "TUNE 4\r\n");// Sets Autotuning Status to "Zone"
     if(isGpibError("LakeShore330::init(): TUNE 4 Failed"))
         return -1;
     return 0;
@@ -141,16 +135,16 @@ LakeShore330::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned lon
     Q_UNUSED(LocalIbcntl)
     //qDebug() << "LakeShore330::onGpibCallback()";
     quint8 spollByte;
-    ibrsp(ls330, reinterpret_cast<char*>(&spollByte));
+    ibrsp(gpibId, reinterpret_cast<char*>(&spollByte));
     if(isGpibError("LakeShore330::onGpibCallback(): ibrsp() Failed"))
         return;
     //qDebug() << "spollByte=" << spollByte;
     if(spollByte & ESB) {
         //qDebug() << "LakeShore330::onGpibCallback(): Standard Event Status";
-        gpibWrite(ls330, "*ESR?\r\n");// Query Std. Event Status Register
+        gpibWrite(gpibId, "*ESR?\r\n");// Query Std. Event Status Register
         if(isGpibError("LakeShore330::onGpibCallback(): *ESR? Failed"))
             return;
-        quint8 esr = quint8(gpibRead(ls330).toInt());
+        quint8 esr = quint8(gpibRead(gpibId).toInt());
         if(isGpibError("LakeShore330::onGpibCallback(): Read of Std. Event Status Register Failed"))
             return;
         if(esr & PON) {
@@ -189,10 +183,10 @@ LakeShore330::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned lon
 
 double
 LakeShore330::getTemperature() {
-    gpibWrite(ls330, "SDAT?\r\n");// Query the Sample Sensor Data.
+    gpibWrite(gpibId, "SDAT?\r\n");// Query the Sample Sensor Data.
     if(isGpibError("LakeShore330::getTemperature(): SDAT? Failed"))
         return 0.0;
-    sResponse = gpibRead(ls330);
+    sResponse = gpibRead(gpibId);
     if(isGpibError("LakeShore330::getTemperature(): ibrd() Failed"))
         return 0.0;
     return sResponse.toDouble();
@@ -204,7 +198,7 @@ LakeShore330::setTemperature(double Temperature) {
     //qDebug() << QString("LakeShore330::setTemperature(%1)").arg(Temperature);
     if(Temperature < 0.0 || Temperature > 900.0) return false;
     sCommand = QString("SETP %1\r\n").arg(Temperature, 0, 'f', 2);
-    gpibWrite(ls330, sCommand);// Sets the Setpoint
+    gpibWrite(gpibId, sCommand);// Sets the Setpoint
     if(isGpibError("LakeShore330::onGpibCallback(): setTemperature(LakeShore): SETP Failed"))
         return false;
     return true;
@@ -214,11 +208,11 @@ LakeShore330::setTemperature(double Temperature) {
 bool
 LakeShore330::switchPowerOn(int iRange) {
     // Sets heater status: 1 = low, 2 = medium, 3 = high.
-    gpibWrite(ls330, QString("RANG %1\r\n").arg(iRange));
+    gpibWrite(gpibId, QString("RANG %1\r\n").arg(iRange));
     if(isGpibError(QString("LakeShore330::switchPowerOn(%1): Failed").arg(iRange)))
         return false;
-    gpibWrite(ls330, "RANG?\r\n");
-    if(iRange != gpibRead(ls330).toInt()) {
+    gpibWrite(gpibId, "RANG?\r\n");
+    if(iRange != gpibRead(gpibId).toInt()) {
         qCritical() << "Error setting Heater Range";
     }
     return true;
@@ -228,9 +222,9 @@ LakeShore330::switchPowerOn(int iRange) {
 bool
 LakeShore330::switchPowerOff() {
     //qDebug() << "LakeShore330::switchPowerOff()";
-    gpibWrite(ls330, "*SRE 0\r\n");// Set Service Request Enable to No SRQ
+    gpibWrite(gpibId, "*SRE 0\r\n");// Set Service Request Enable to No SRQ
     // Sets heater status: 0 = off.
-    gpibWrite(ls330, "RANG 0\r\n");
+    gpibWrite(gpibId, "RANG 0\r\n");
     if(isGpibError(QString("LakeShore330::switchPowerOff(): Failed")) )
         return false;
     return true;
@@ -240,13 +234,13 @@ LakeShore330::switchPowerOff() {
 bool
 LakeShore330::startRamp(double targetT, double rate) {
     sCommand = QString("RAMPR %1\r\n").arg(rate);
-    gpibWrite(ls330, sCommand);
+    gpibWrite(gpibId, sCommand);
     if(isGpibError("Unable to set Ramp Rate"))
         return false;
     if(!setTemperature(targetT))
         return false;
     sCommand = QString("RAMP 1\r\n");
-    gpibWrite(ls330, sCommand);
+    gpibWrite(gpibId, sCommand);
     QThread::sleep(1);
     if(isGpibError("Unable to Start Ramp"))
         return false;
@@ -258,10 +252,10 @@ LakeShore330::startRamp(double targetT, double rate) {
 bool
 LakeShore330::isRamping() {
     sCommand = QString("RAMPS?\r\n");
-    gpibWrite(ls330, sCommand);
+    gpibWrite(gpibId, sCommand);
     if(isGpibError("Unable to query Ramp Status"))
         return false;
-    int iRamping = gpibRead(ls330).toInt();
+    int iRamping = gpibRead(gpibId).toInt();
     if(isGpibError("Unable to get Ramp Status"))
         return false;
     return (iRamping == 1);
@@ -270,10 +264,10 @@ LakeShore330::isRamping() {
 
 void
 LakeShore330::checkNotify() {
-    ibrsp(ls330, &spollByte);
+    ibrsp(gpibId, &spollByte);
     if(isGpibError("Unable to query Ramp Status"))
         return;
     if(!(spollByte & 64))
         return;// SRQ not enabled
-    onGpibCallback(ls330, ulong(ThreadIbsta()), ulong(ThreadIberr()), ThreadIbcnt());
+    onGpibCallback(gpibId, ulong(ThreadIbsta()), ulong(ThreadIberr()), ThreadIbcnt());
 }

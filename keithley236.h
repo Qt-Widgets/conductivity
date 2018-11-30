@@ -23,9 +23,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QObject>
 #include <QDateTime>
 #include <QTimer>
+#include "gpibdevice.h"
 
 
-class Keithley236 : public QObject
+class Keithley236 : public GpibDevice
 {
     Q_OBJECT
 
@@ -51,13 +52,11 @@ signals:
     void     readyForTrigger();
     void     newReading(QDateTime currentTime, QString sReading);
     void     sweepDone(QDateTime currentTime, QString sSweepData);
-    void     sendMessage(QString sMessage);
 
 public slots:
     void checkNotify();
 
 protected:
-    QTimer pollTimer;
 
 public:
     const int ERROR_JUNCTION;
@@ -73,18 +72,8 @@ public:
 
 
 private:
-    int gpibNumber;
-    int k236Address;
-    int k236;
-    char spollByte;
-    bool bStop;
-    int iMask;
-    int iComplianceEvents;
-    QString sCommand;
-    QString sResponse;
+    bool   bStop;
+    int    iComplianceEvents;
     double lastReading;
-#if defined(Q_OS_LINUX)
-    int pollInterval;
-#endif
-    bool isSweeping;
+    bool   isSweeping;
 };

@@ -54,7 +54,7 @@ main(int argc, char *argv[]) {
   QCoreApplication::setOrganizationDomain("Gabriele.Salvato");
   QCoreApplication::setOrganizationName("Gabriele.Salvato");
   QCoreApplication::setApplicationName("Conductivity");
-  QCoreApplication::setApplicationVersion("1.0.0");
+  QCoreApplication::setApplicationVersion("2.0.0");
 
   MainWindow w;
   w.setWindowIcon(QIcon("qrc:/myLogoT.png"));
@@ -62,8 +62,8 @@ main(int argc, char *argv[]) {
   QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
   while(!w.checkInstruments()) {
       if(QMessageBox::critical(Q_NULLPTR,
-                               QString("Error: GPIB Instruments not Found"),
-                               QString("Switch on and retry"),
+                               QString("Error"),
+                               QString("GPIB Instruments not Found\nSwitch on and retry"),
                                QMessageBox::Abort|QMessageBox::Retry,
                                QMessageBox::Retry) == QMessageBox::Abort)
       {

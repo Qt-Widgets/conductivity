@@ -18,9 +18,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
 
+#include "gpibdevice.h"
+
 #include <QObject>
 
-class CornerStone130 : public QObject
+class CornerStone130 : public GpibDevice
 {
     Q_OBJECT
 public:
@@ -37,10 +39,4 @@ signals:
 public slots:
 
 private:
-  int gpibNumber;
-  int cs130Address;
-  int cs130;
-  char spollByte;
-  QString sCommand;
-  QString sResponse;
 };

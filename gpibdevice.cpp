@@ -1,36 +1,21 @@
-/*
- *
-Copyright (C) 2016  Gabriele Salvato
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
-#include "utility.h"
+#include "gpibdevice.h"
 #include <QDebug>
 
-
-namespace gpibUtilities {
-    static char readBuf[2001];
+GpibDevice::GpibDevice(int gpio, int address, QObject *parent)
+    : QObject(parent)
+{
+    gpibNumber  = gpio;
+    gpibAddress = address;
+    gpibId      = -1;
+    qDebug() << Q_FUNC_INFO << "gpibNumber=" << gpibNumber;
 }
 
 
 bool
-isGpibError(QString sErrorString) {
+GpibDevice::isGpibError(QString sErrorString) {
     if(ThreadIbsta() & ERR) {
-        qCritical() << sErrorString;
         QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcnt());
-        qCritical() << sError;
+        emit sendMessage(sErrorString + QString("\n") + sError);
       return true;
     }
     return false;
@@ -38,7 +23,7 @@ isGpibError(QString sErrorString) {
 
 
 QString
-ErrMsg(int sta, int err, long cntl) {
+GpibDevice::ErrMsg(int sta, int err, long cntl) {
     QString sError, sTmp;
 
     sError = QString("status = 0x%1 <").arg(sta, 4, 16, QChar('0'));
@@ -84,7 +69,7 @@ ErrMsg(int sta, int err, long cntl) {
 
 
 uint
-gpibWrite(int ud, QString sCmd) {
+GpibDevice::gpibWrite(int ud, QString sCmd) {
     //qDebug() << QString("Writing %1 bytes of data: Data = %2").arg(sCmd.length()).arg(sCmd.toUtf8().constData());
     ibwrt(ud, sCmd.toUtf8().constData(), sCmd.length());
     isGpibError("GPIB Writing Error Writing");
@@ -93,15 +78,34 @@ gpibWrite(int ud, QString sCmd) {
 
 
 QString
-gpibRead(int ud) {
+GpibDevice::gpibRead(int ud) {
     QString sString;
     do {
-        ibrd(ud, gpibUtilities::readBuf, sizeof(gpibUtilities::readBuf)-1);
+        ibrd(ud, readBuf, sizeof(readBuf)-1);
         if(isGpibError("GPIB Reading Error"))
             return QString();
-        gpibUtilities::readBuf[ThreadIbcnt()] = 0;
-        sString += QString(gpibUtilities::readBuf);
-    } while(ThreadIbcnt() == sizeof(gpibUtilities::readBuf)-1);
+        readBuf[ThreadIbcnt()] = 0;
+        sString += QString(readBuf);
+    } while(ThreadIbcnt() == sizeof(readBuf)-1);
     return sString;
 }
 
+
+int
+GpibDevice::init() {
+    return NO_ERROR;
+}
+
+
+void
+GpibDevice::onGpibCallback(int LocalUd, unsigned long LocalIbsta, unsigned long LocalIberr, long LocalIbcntl) {
+    Q_UNUSED(LocalUd)
+    Q_UNUSED(LocalIbsta)
+    Q_UNUSED(LocalIberr)
+    Q_UNUSED(LocalIbcntl)
+}
+
+
+void
+GpibDevice::checkNotify() {
+}

@@ -34,7 +34,8 @@ SOURCES += main.cpp \
     ls330tab.cpp \
     cs130tab.cpp \
     filetab.cpp \
-    configuredialog.cpp
+    configuredialog.cpp \
+    gpibdevice.cpp
 SOURCES += mainwindow.cpp
 SOURCES += cornerstone130.cpp
 SOURCES += keithley236.cpp
@@ -47,14 +48,15 @@ SOURCES += AxisFrame.cpp
 SOURCES += DataSetProperties.cpp
 SOURCES +=
 SOURCES +=
-SOURCES += utility.cpp
+SOURCES +=
 
 HEADERS += mainwindow.h \
     k236tab.h \
     ls330tab.h \
     cs130tab.h \
     filetab.h \
-    configuredialog.h
+    configuredialog.h \
+    gpibdevice.h
 HEADERS += cornerstone130.h
 HEADERS += keithley236.h
 HEADERS += lakeshore330.h
@@ -66,7 +68,7 @@ HEADERS += AxisFrame.h
 HEADERS += DataSetProperties.h
 HEADERS +=
 HEADERS +=
-HEADERS += utility.h
+HEADERS +=
 
 FORMS   += mainwindow.ui
 FORMS   += configureIvsVdialog.ui

@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include "utility.h"
 #include "keithley236.h"
 #include "k236tab.h"
 #include "ls330tab.h"
@@ -209,27 +208,33 @@ MainWindow::checkInstruments() {
     padlist[30] = NOADDR;
 
     SendIFC(gpibBoardID);
-    if(isGpibError("SendIFC Error. Is the GPIB Interface connected ?"))
+    if(ThreadIbsta() & ERR) {
+        qCritical() << QString("SendIFC Error. Is the GPIB Interface connected ?");
         return false;
+    }
 
     // Enable assertion of REN when System Controller
     // Required by the Keithley 236
     ibconfig(gpibBoardID, IbcSRE, 1);
-    if(isGpibError("ibconfig() Unable to set REN When SC"))
+    if(ThreadIbsta() & ERR) {
+        qCritical() << QString("ibconfig() Unable to set REN When SC");
         return false;
-
+    }
     // If addrlist contains only the constant NOADDR,
     // the Universal Device Clear (DCL) message is sent
     // to all the devices on the bus
     Addr4882_t addrlist;
     addrlist = NOADDR;
     DevClearList(gpibBoardID, &addrlist);
-    if(isGpibError("DevClearList() failed. Are the Instruments Connected and Switched On ?"))
+    if(ThreadIbsta() & ERR) {
+        qCritical() << QString("DevClearList() failed. Are the Instruments Connected and Switched On ?");
         return false;
-
+    }
     FindLstn(gpibBoardID, padlist, resultlist, 30);
-    if(isGpibError("FindLstn() failed. Are the Instruments Connected and Switched On ?"))
+    if(ThreadIbsta() & ERR) {
+        qCritical() << QString("FindLstn() failed. Are the Instruments Connected and Switched On ?");
         return false;
+    }
     int nDevices = ThreadIbcnt();
     //qInfo() << QString("Found %1 Instruments connected to the GPIB Bus").arg(nDevices);
     // Identify the instruments connected to the GPIB Bus
@@ -251,6 +256,8 @@ MainWindow::checkInstruments() {
             cornerstoneId = resultlist[i];
             if(pCornerStone130 == Q_NULLPTR) {
                 pCornerStone130 = new CornerStone130(gpibBoardID, resultlist[i], this);
+                connect(pCornerStone130, SIGNAL(sendMessage(QString)),
+                        this, SLOT(onMessageReceived(QString)));
             }
             break;
         }
@@ -278,6 +285,8 @@ MainWindow::checkInstruments() {
             lakeShoreID = resultlist[i];
             if(pLakeShore == NULL) {
                 pLakeShore = new LakeShore330(gpibBoardID, resultlist[i], this);
+                connect(pLakeShore, SIGNAL(sendMessage(QString)),
+                        this, SLOT(onMessageReceived(QString)));
             }
             break;
         }
@@ -304,6 +313,8 @@ MainWindow::checkInstruments() {
         if(sInstrumentID.contains("236", Qt::CaseInsensitive)) {
             if(pKeithley == Q_NULLPTR) {
                 pKeithley = new Keithley236(gpibBoardID, resultlist[i], this);
+                connect(pKeithley, SIGNAL(sendMessage(QString)),
+                        this, SLOT(onMessageReceived(QString)));
             }
             break;
         }
@@ -334,6 +345,7 @@ MainWindow::checkInstruments() {
     }
 #endif
     switchLampOff();
+
     ui->statusBar->showMessage("GPIB Instruments Found! Ready to Start");
     return true;
 }
@@ -427,7 +439,7 @@ MainWindow::on_startRvsTButton_clicked() {
     if(bUseMonochromator) {
         //Initializing Corner Stone 130
         ui->statusBar->showMessage("Initializing Corner Stone 130...");
-        if(pCornerStone130->init() != NO_ERROR){
+        if(pCornerStone130->init() != pCornerStone130->NO_ERROR){
             ui->statusBar->showMessage("Unable to Initialize Corner Stone 130...");
             QApplication::restoreOverrideCursor();
             return;
@@ -576,7 +588,7 @@ MainWindow::on_startIvsVButton_clicked() {
     //Initializing Corner Stone 130
     if(bUseMonochromator) {
         ui->statusBar->showMessage("Initializing Corner Stone 130...");
-        if(pCornerStone130->init() != NO_ERROR){
+        if(pCornerStone130->init() != pCornerStone130->NO_ERROR){
             ui->statusBar->showMessage("Unable to Initialize Corner Stone 130...");
             QApplication::restoreOverrideCursor();
             return;
@@ -1296,4 +1308,10 @@ MainWindow::on_lampButton_clicked() {
         switchLampOff();
     else
         switchLampOn();
+}
+
+
+void
+MainWindow::onMessageReceived(QString sMessage) {
+    qDebug() << sMessage;
 }
