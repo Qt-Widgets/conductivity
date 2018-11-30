@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QtMath>
 #include <QDateTime>
 #include <QThread>
-#include <QDebug>
+//#include <QDebug>
 
 #define MAX_COMPLIANCE_EVENTS 5
 
@@ -55,7 +55,6 @@ Keithley236::Keithley236(int gpio, int address, QObject *parent)
 {
     iComplianceEvents = 0;
     pollInterval = 500;
-    qDebug() << Q_FUNC_INFO << "gpibNumber=" << gpibNumber;
 }
 
 
@@ -74,7 +73,6 @@ Keithley236::~Keithley236() {
 
 int
 Keithley236::init() {
-    qDebug() << Q_FUNC_INFO << "gpibNumber=" << gpibNumber;
     gpibId = ibdev(gpibNumber, gpibAddress, 0, T10s, 1, 0);
     if(gpibId < 0) {
         QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());

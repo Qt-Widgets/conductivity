@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "cornerstone130.h"
 
-#include <QDebug>
+//#include <QDebug>
 #include <QThread>
 
 
@@ -39,26 +39,25 @@ int
 CornerStone130::init() {
     gpibId = ibdev(gpibNumber, gpibAddress, 0, T30s, 1, REOS|0x000A);
     if(gpibId < 0) {
-        qDebug() << "ibdev() Failed";
-        QString sError = ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
-        qDebug() << sError;
+        QString sError = QString("ibdev() Failed") + ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
+        emit sendMessage(Q_FUNC_INFO + sError);
         return GPIB_DEVICE_NOT_PRESENT;
     }
     ibclr(gpibId);
-    if(isGpibError("CornerStone 130 Not Respondig"))
+    if(isGpibError(QString(Q_FUNC_INFO) + "CornerStone 130 Not Respondig"))
         return GPIB_DEVICE_NOT_PRESENT;
     QThread::sleep(1);
 
     // Abort any operation in progress
     gpibWrite(gpibId, "ABORT\r\n");
-    if(isGpibError("CornerStone 130 ABORT Failed"))
+    if(isGpibError(QString(Q_FUNC_INFO) + "CornerStone 130 ABORT Failed"))
         return GPIB_DEVICE_NOT_PRESENT;
 
     closeShutter();
 
     // We express the Wavelengths in nm
     gpibWrite(gpibId, "UNITS NM\r\n");
-    if(isGpibError("CornerStone 130 UNITS Failed"))
+    if(isGpibError(QString(Q_FUNC_INFO) + "CornerStone 130 UNITS Failed"))
         return GPIB_DEVICE_NOT_PRESENT;
     // Set initial Filter Wavelength
     if(!setGrating(1))
@@ -72,7 +71,7 @@ CornerStone130::init() {
 bool
 CornerStone130::openShutter() {
     gpibWrite(gpibId, "SHUTTER O\r\n");
-    if(isGpibError("CornerStone 130 Open SHUTTER Failed"))
+    if(isGpibError(QString(Q_FUNC_INFO) + "CornerStone 130 Open SHUTTER Failed"))
         return false;
     return true;
 }
@@ -81,7 +80,7 @@ CornerStone130::openShutter() {
 bool
 CornerStone130::closeShutter() {
     gpibWrite(gpibId, "SHUTTER C\r\n");
-    if(isGpibError("CornerStone 130 Close SHUTTER Failed"))
+    if(isGpibError(QString(Q_FUNC_INFO) + "CornerStone 130 Close SHUTTER Failed"))
         return false;
     return true;
 }
@@ -91,16 +90,16 @@ bool
 CornerStone130::setWavelength(double waveLength) {
     sCommand = QString("GOWAVE %1\r\n").arg(waveLength);
     gpibWrite(gpibId, sCommand);
-    if(isGpibError("CornerStone 130 GOWAVE Failed"))
+    if(isGpibError(QString(Q_FUNC_INFO) + "CornerStone 130 GOWAVE Failed"))
         return false;
     QThread::sleep(1);
     gpibWrite(gpibId, "WAVE?\r\n");
-    if(isGpibError("CornerStone 130 WAVE? Failed"))
+    if(isGpibError(QString(Q_FUNC_INFO) + "CornerStone 130 WAVE? Failed"))
         return false;
     sResponse = gpibRead(gpibId);
-    if(isGpibError("CornerStone 130 WAVE? readback Failed"))
+    if(isGpibError(QString(Q_FUNC_INFO) + "CornerStone 130 WAVE? readback Failed"))
         return false;
-    qDebug() << "Present Wavelength =" << sResponse << "nm";
+//    qDebug() << "Present Wavelength =" << sResponse << "nm";
     return true;
 }
 
@@ -111,7 +110,7 @@ CornerStone130::setGrating(int grating) {
         return false;
     sCommand = QString("GRAT %1\r\n").arg(grating);
     gpibWrite(gpibId, sCommand);
-    if(isGpibError("CornerStone 130 GRAT Failed"))
+    if(isGpibError(QString(Q_FUNC_INFO) + "CornerStone 130 GRAT Failed"))
         return false;
     return true;
 }

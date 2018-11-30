@@ -1,13 +1,12 @@
 #include "gpibdevice.h"
-#include <QDebug>
+//#include <QDebug>
 
 GpibDevice::GpibDevice(int gpio, int address, QObject *parent)
     : QObject(parent)
+    , gpibNumber(gpio)
+    , gpibAddress(address)
+    , gpibId(-1)
 {
-    gpibNumber  = gpio;
-    gpibAddress = address;
-    gpibId      = -1;
-    qDebug() << Q_FUNC_INFO << "gpibNumber=" << gpibNumber;
 }
 
 
