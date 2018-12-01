@@ -212,7 +212,15 @@ MainWindow::checkInstruments() {
 
     SendIFC(gpibBoardID);
     if(ThreadIbsta() & ERR) {
-        onLogMessage(QString(Q_FUNC_INFO) + QString("SendIFC Error. Is the GPIB Interface connected ?"));
+        QMessageBox msgBox;
+        msgBox.setWindowTitle(QString(Q_FUNC_INFO));
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText(QString("SendIFC() Error"));
+        msgBox.setInformativeText(QString("Is the GPIB Interface connected ?"));
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        int ret = msgBox.exec();
+        Q_UNUSED(ret)
         return false;
     }
 
@@ -220,7 +228,15 @@ MainWindow::checkInstruments() {
     // Required by the Keithley 236
     ibconfig(gpibBoardID, IbcSRE, 1);
     if(ThreadIbsta() & ERR) {
-        onLogMessage(QString(Q_FUNC_INFO) + QString("ibconfig() Unable to set REN When SC"));
+        QMessageBox msgBox;
+        msgBox.setWindowTitle(QString(Q_FUNC_INFO));
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText(QString("ibconfig() Error"));
+        msgBox.setInformativeText(QString("Unable to set REN When SC"));
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        int ret = msgBox.exec();
+        Q_UNUSED(ret)
         return false;
     }
     // If addrlist contains only the constant NOADDR,
@@ -230,12 +246,28 @@ MainWindow::checkInstruments() {
     addrlist = NOADDR;
     DevClearList(gpibBoardID, &addrlist);
     if(ThreadIbsta() & ERR) {
-        onLogMessage(QString(Q_FUNC_INFO) + QString("DevClearList() failed. Are the Instruments Connected and Switched On ?"));
+        QMessageBox msgBox;
+        msgBox.setWindowTitle(QString(Q_FUNC_INFO));
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText(QString("DevClearList() failed"));
+        msgBox.setInformativeText(QString("Are the Instruments Connected and Switched On ?"));
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        int ret = msgBox.exec();
+        Q_UNUSED(ret)
         return false;
     }
     FindLstn(gpibBoardID, padlist, resultlist, 30);
     if(ThreadIbsta() & ERR) {
-        onLogMessage(QString(Q_FUNC_INFO) + QString("FindLstn() failed. Are the Instruments Connected and Switched On ?"));
+        QMessageBox msgBox;
+        msgBox.setWindowTitle(QString(Q_FUNC_INFO));
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText(QString("FindLstn() failed"));
+        msgBox.setInformativeText(QString("Are the Instruments Connected and Switched On ?"));
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        int ret = msgBox.exec();
+        Q_UNUSED(ret)
         return false;
     }
     int nDevices = ThreadIbcnt();
@@ -266,9 +298,6 @@ MainWindow::checkInstruments() {
         }
     }
     if(pCornerStone130 == Q_NULLPTR) {
-//            QMessageBox::warning(this, "Error", "Cornerstone 130 not Connected",
-//                                 QMessageBox::Abort, QMessageBox::Abort);
-//            return false;
         bUseMonochromator = false;
     }
     // Check for the temperature controller...
@@ -295,8 +324,15 @@ MainWindow::checkInstruments() {
         }
     }
     if(pLakeShore == Q_NULLPTR) {
-        QMessageBox::warning(this, "Error", "Lake Shore 330 not Connected",
-                             QMessageBox::Abort, QMessageBox::Abort);
+        QMessageBox msgBox;
+        msgBox.setWindowTitle(QString(Q_FUNC_INFO));
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText(QString("Error:"));
+        msgBox.setInformativeText(QString("Lake Shore 330 not Connected"));
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        int ret = msgBox.exec();
+        Q_UNUSED(ret)
         return false;
     }
 
@@ -323,8 +359,15 @@ MainWindow::checkInstruments() {
         }
     }
     if(pKeithley == Q_NULLPTR) {
-        QMessageBox::warning(this, "Error", "Source Measure Unit not Connected",
-                             QMessageBox::Abort, QMessageBox::Abort);
+        QMessageBox msgBox;
+        msgBox.setWindowTitle(QString(Q_FUNC_INFO));
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText(QString("Error:"));
+        msgBox.setInformativeText(QString("Source Measure Unit not Connected"));
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        int ret = msgBox.exec();
+        Q_UNUSED(ret)
         return false;
     }
 
@@ -1206,7 +1249,7 @@ MainWindow::onIForwardSweepDone(QDateTime dataTime, QString sData) {
     disconnect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)), this, Q_NULLPTR);
     QStringList sMeasures = QStringList(sData.split(",", QString::SkipEmptyParts));
     if(sMeasures.count() < 2) {
-        onLogMessage(QString(Q_FUNC_INFO) + QString("No Sweep Values "));
+        logMessage(QString(Q_FUNC_INFO) + QString(" No Sweep Values "));
         return;
     }
     double current, voltage;
@@ -1259,7 +1302,7 @@ MainWindow::onVReverseSweepDone(QDateTime dataTime, QString sData) {
     disconnect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)), this, Q_NULLPTR);
     QStringList sMeasures = QStringList(sData.split(",", QString::SkipEmptyParts));
     if(sMeasures.count() < 2) {
-        onLogMessage(QString(Q_FUNC_INFO) + QString("No Sweep Values "));
+        logMessage(QString(Q_FUNC_INFO) + QString(" No Sweep Values "));
         return;
     }
     double current, voltage;
