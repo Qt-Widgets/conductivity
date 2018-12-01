@@ -85,7 +85,7 @@ private slots:
     void onIForwardSweepDone(QDateTime, QString sData);
     void onVReverseSweepDone(QDateTime, QString sData);
     void on_lampButton_clicked();
-    void onMessageReceived(QString sMessage);
+    void onLogMessage(QString sMessage);
 
 private:
     Ui::MainWindow *ui;

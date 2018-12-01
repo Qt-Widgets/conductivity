@@ -35,13 +35,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <qmath.h>
 #include <QMessageBox>
-#include <QDebug>
 #include <QSettings>
 #include <QFile>
 #include <QThread>
 #include <QLayout>
 #include <QFileInfo>
 #include <QDir>
+#include <QStandardPaths>
+#include <QDebug>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -153,6 +154,10 @@ MainWindow::closeEvent(QCloseEvent *event) {
  */
 bool
 MainWindow::PrepareLogFile() {
+    // Logged messages (if enabled) will be written in the following folder
+    QString sLogDir = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    if(!sLogDir.endsWith(QString("/"))) sLogDir+= QString("/");
+    sLogFileName = sLogDir+sLogFileName;
     QFileInfo checkFile(sLogFileName);
     if(checkFile.exists() && checkFile.isFile()) {
         QDir renamed;
@@ -209,7 +214,7 @@ MainWindow::checkInstruments() {
 
     SendIFC(gpibBoardID);
     if(ThreadIbsta() & ERR) {
-        qCritical() << QString("SendIFC Error. Is the GPIB Interface connected ?");
+        onLogMessage(QString(Q_FUNC_INFO) + QString("SendIFC Error. Is the GPIB Interface connected ?"));
         return false;
     }
 
@@ -217,7 +222,7 @@ MainWindow::checkInstruments() {
     // Required by the Keithley 236
     ibconfig(gpibBoardID, IbcSRE, 1);
     if(ThreadIbsta() & ERR) {
-        qCritical() << QString("ibconfig() Unable to set REN When SC");
+        onLogMessage(QString(Q_FUNC_INFO) + QString("ibconfig() Unable to set REN When SC"));
         return false;
     }
     // If addrlist contains only the constant NOADDR,
@@ -227,12 +232,12 @@ MainWindow::checkInstruments() {
     addrlist = NOADDR;
     DevClearList(gpibBoardID, &addrlist);
     if(ThreadIbsta() & ERR) {
-        qCritical() << QString("DevClearList() failed. Are the Instruments Connected and Switched On ?");
+        onLogMessage(QString(Q_FUNC_INFO) + QString("DevClearList() failed. Are the Instruments Connected and Switched On ?"));
         return false;
     }
     FindLstn(gpibBoardID, padlist, resultlist, 30);
     if(ThreadIbsta() & ERR) {
-        qCritical() << QString("FindLstn() failed. Are the Instruments Connected and Switched On ?");
+        onLogMessage(QString(Q_FUNC_INFO) + QString("FindLstn() failed. Are the Instruments Connected and Switched On ?"));
         return false;
     }
     int nDevices = ThreadIbcnt();
@@ -257,7 +262,7 @@ MainWindow::checkInstruments() {
             if(pCornerStone130 == Q_NULLPTR) {
                 pCornerStone130 = new CornerStone130(gpibBoardID, resultlist[i], this);
                 connect(pCornerStone130, SIGNAL(sendMessage(QString)),
-                        this, SLOT(onMessageReceived(QString)));
+                        this, SLOT(onLogMessage(QString)));
             }
             break;
         }
@@ -283,10 +288,10 @@ MainWindow::checkInstruments() {
         //            .arg(sInstrumentID);
         if(sInstrumentID.contains("MODEL330", Qt::CaseInsensitive)) {
             lakeShoreID = resultlist[i];
-            if(pLakeShore == NULL) {
+            if(pLakeShore == Q_NULLPTR) {
                 pLakeShore = new LakeShore330(gpibBoardID, resultlist[i], this);
                 connect(pLakeShore, SIGNAL(sendMessage(QString)),
-                        this, SLOT(onMessageReceived(QString)));
+                        this, SLOT(onLogMessage(QString)));
             }
             break;
         }
@@ -314,7 +319,7 @@ MainWindow::checkInstruments() {
             if(pKeithley == Q_NULLPTR) {
                 pKeithley = new Keithley236(gpibBoardID, resultlist[i], this);
                 connect(pKeithley, SIGNAL(sendMessage(QString)),
-                        this, SLOT(onMessageReceived(QString)));
+                        this, SLOT(onLogMessage(QString)));
             }
             break;
         }
@@ -1203,7 +1208,7 @@ MainWindow::onIForwardSweepDone(QDateTime dataTime, QString sData) {
     disconnect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)), this, Q_NULLPTR);
     QStringList sMeasures = QStringList(sData.split(",", QString::SkipEmptyParts));
     if(sMeasures.count() < 2) {
-        qCritical() << "No Sweep Values ";
+        onLogMessage(QString(Q_FUNC_INFO) + QString("No Sweep Values "));
         return;
     }
     double current, voltage;
@@ -1256,7 +1261,7 @@ MainWindow::onVReverseSweepDone(QDateTime dataTime, QString sData) {
     disconnect(pKeithley, SIGNAL(sweepDone(QDateTime,QString)), this, Q_NULLPTR);
     QStringList sMeasures = QStringList(sData.split(",", QString::SkipEmptyParts));
     if(sMeasures.count() < 2) {
-        qCritical() << "No Sweep Values ";
+        onLogMessage(QString(Q_FUNC_INFO) + QString("No Sweep Values "));
         return;
     }
     double current, voltage;
@@ -1312,6 +1317,6 @@ MainWindow::on_lampButton_clicked() {
 
 
 void
-MainWindow::onMessageReceived(QString sMessage) {
-    qDebug() << sMessage;
+MainWindow::onLogMessage(QString sMessage) {
+    logMessage(QString(), sMessage);
 }

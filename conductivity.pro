@@ -71,8 +71,8 @@ HEADERS +=
 HEADERS +=
 
 FORMS   += mainwindow.ui
-FORMS   += configureIvsVdialog.ui
-FORMS   += configureRvsTdialog.ui
+FORMS   +=
+FORMS   +=
 FORMS   += axesdialog.ui
 
 # For National Instruments GPIB Boards
