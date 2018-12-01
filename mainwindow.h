@@ -65,7 +65,7 @@ protected:
     void switchLampOn();
     void switchLampOff();
     bool PrepareLogFile();
-    void logMessage(QString sFunctionName, QString sMessage);
+    void logMessage(QString sMessage);
 
 private slots:
     void on_startRvsTButton_clicked();

@@ -183,11 +183,9 @@ MainWindow::PrepareLogFile() {
  * \param sMessage The informative message
  */
 void
-MainWindow::logMessage(QString sFunctionName, QString sMessage) {
+MainWindow::logMessage(QString sMessage) {
     QDateTime dateTime;
     QString sDebugMessage = dateTime.currentDateTime().toString() +
-                            QString(" - ") +
-                            sFunctionName +
                             QString(" - ") +
                             sMessage;
     if(pLogFile) {
@@ -1318,5 +1316,5 @@ MainWindow::on_lampButton_clicked() {
 
 void
 MainWindow::onLogMessage(QString sMessage) {
-    logMessage(QString(), sMessage);
+    logMessage(sMessage);
 }
