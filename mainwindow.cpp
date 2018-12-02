@@ -44,6 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QStandardPaths>
 #include <QDebug>
 
+//#define MY_DEBUG
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -216,7 +217,7 @@ MainWindow::checkInstruments() {
         msgBox.setWindowTitle(QString(Q_FUNC_INFO));
         msgBox.setIcon(QMessageBox::Critical);
         msgBox.setText(QString("SendIFC() Error"));
-        msgBox.setInformativeText(QString("Is the GPIB Interface connected ?"));
+        msgBox.setInformativeText(QString("Is the GPIB Interface connected ? "));
         msgBox.setStandardButtons(QMessageBox::Ok);
         msgBox.setDefaultButton(QMessageBox::Ok);
         int ret = msgBox.exec();
@@ -284,9 +285,11 @@ MainWindow::checkInstruments() {
         Receive(gpibBoardID, resultlist[i], readBuf, 256, 0x0A);
         readBuf[ThreadIbcnt()] = '\0';
         sInstrumentID = QString(readBuf);
-//            qDebug() << QString("Address= %1 - InstrumentID= %2")
-//                        .arg(resultlist[i])
-//                        .arg(sInstrumentID);
+#if defined(MY_DEBUG)
+        qDebug() << QString("Address= %1 - InstrumentID= %2")
+                            .arg(resultlist[i])
+                            .arg(sInstrumentID);
+#endif
         if(sInstrumentID.contains("Cornerstone 130", Qt::CaseInsensitive)) {
             cornerstoneId = resultlist[i];
             if(pCornerStone130 == Q_NULLPTR) {
@@ -297,9 +300,9 @@ MainWindow::checkInstruments() {
             break;
         }
     }
-    if(pCornerStone130 == Q_NULLPTR) {
+    if(pCornerStone130 == Q_NULLPTR)
         bUseMonochromator = false;
-    }
+    ui->lambdaScanButton->setEnabled(bUseMonochromator);
     // Check for the temperature controller...
     sCommand = "*IDN?\r\n";
     int lakeShoreID = 0;
@@ -310,9 +313,11 @@ MainWindow::checkInstruments() {
         Receive(gpibBoardID, resultlist[i], readBuf, 256, STOPend);
         readBuf[ThreadIbcnt()] = '\0';
         sInstrumentID = QString(readBuf);
-        //qDebug() << QString("Address= %1 - InstrumentID= %2")
-        //            .arg(resultlist[i])
-        //            .arg(sInstrumentID);
+#if defined(MY_DEBUG)
+        qDebug() << QString("Address= %1 - InstrumentID= %2")
+                    .arg(resultlist[i])
+                    .arg(sInstrumentID);
+#endif
         if(sInstrumentID.contains("MODEL330", Qt::CaseInsensitive)) {
             lakeShoreID = resultlist[i];
             if(pLakeShore == Q_NULLPTR) {
@@ -346,9 +351,11 @@ MainWindow::checkInstruments() {
         Receive(gpibBoardID, resultlist[i], readBuf, 256, STOPend);
         readBuf[ThreadIbcnt()] = '\0';
         sInstrumentID = QString(readBuf);
-        //qDebug() << QString("Address= %1 - InstrumentID= %2")
-        //            .arg(resultlist[i])
-        //            .arg(sInstrumentID);
+#if defined(MY_DEBUG)
+        qDebug() << QString("Address= %1 - InstrumentID= %2")
+                    .arg(resultlist[i])
+                    .arg(sInstrumentID);
+#endif
         if(sInstrumentID.contains("236", Qt::CaseInsensitive)) {
             if(pKeithley == Q_NULLPTR) {
                 pKeithley = new Keithley236(gpibBoardID, resultlist[i], this);
@@ -997,7 +1004,6 @@ MainWindow::onTimeToCheckReachedT() {
         connect(&stabilizingTimer, SIGNAL(timeout()),
                 this, SLOT(onTimerStabilizeT()));
         stabilizingTimer.start(pConfigureDialog->pTabLS330->iTimeToSteadyT*60000);
-        //qDebug() << QString("Starting T Reached: Thermal Stabilization...");
         ui->statusBar->showMessage(QString("Starting T Reached: Thermal Stabilization for %1 min.")
                                    .arg(pConfigureDialog->pTabLS330->iTimeToSteadyT));
         // Compute the new time needed for the measurement:
@@ -1014,15 +1020,16 @@ MainWindow::onTimeToCheckReachedT() {
     else {
         currentTime = QDateTime::currentDateTime();
         qint64 elapsedSec = waitingTStartTime.secsTo(currentTime);
-        //qDebug() << "Elapsed:" << elapsedSec
-        //         << "Maximum:" << quint64(pConfigureDialog->iReachingTime)*60;
+#if defined(MY_DEBUG)
+        qDebug() << "Elapsed:" << elapsedSec
+                 << "Maximum:" << quint64(pConfigureDialog->iReachingTime)*60;
+#endif
         if(elapsedSec >= qint64(pConfigureDialog->pTabLS330->iReachingTStart)*60) {
             waitingTStartTimer.disconnect();
             waitingTStartTimer.stop();
             connect(&stabilizingTimer, SIGNAL(timeout()),
                     this, SLOT(onTimerStabilizeT()));
             stabilizingTimer.start(pConfigureDialog->pTabLS330->iTimeToSteadyT*60000);
-            //qDebug() << QString("Max Reaching Time Exceed...Thermal Stabilization...");
             ui->statusBar->showMessage(QString("Max Time Exceeded: Stabilization for %1 min.")
                                        .arg(pConfigureDialog->pTabLS330->iTimeToSteadyT));
         }
@@ -1045,7 +1052,6 @@ MainWindow::onTimerStabilizeT() {
     pPlotTemperature->SetShowTitle(2, true);
     pPlotTemperature->UpdatePlot();
     iCurrentTPlot = 2;
-    //qDebug() << "Thermal Stabilization Reached: Measure Started";
     ui->statusBar->showMessage(QString("Thermal Stabilization Reached: Measure Started"));
     connect(&measuringTimer, SIGNAL(timeout()),
             this, SLOT(onTimeToGetNewMeasure()));
@@ -1072,7 +1078,6 @@ MainWindow::onTimeToGetNewMeasure() {
     getNewMeasure();
     if(!pLakeShore->isRamping()) {// Ramp is Done
         stopRvsT();
-        //    qDebug() << "End Temperature Reached: Measure is Done";
         ui->statusBar->showMessage(QString("Measurements Completed !"));
         onClearComplianceEvent();
         return;
@@ -1100,7 +1105,7 @@ void
 MainWindow::onComplianceEvent() {
     ui->labelCompliance->setText("Compliance");
     ui->labelCompliance->setStyleSheet(sErrorStyle);
-//    qCritical() << "Compliance Event";
+    logMessage("Compliance Event");
 }
 
 
@@ -1131,7 +1136,7 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
     // Decode readings
     QStringList sMeasures = QStringList(sDataRead.split(",", QString::SkipEmptyParts));
     if(sMeasures.count() < 2) {
-        qDebug() << "Measurement Format Error";
+        logMessage("Measurement Format Error");
         return;
     }
     currentTemperature = pLakeShore->getTemperature();
@@ -1156,7 +1161,6 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
                             .arg(current, 12, 'g', 6, ' ');
     pOutputFile->write(sData.toLocal8Bit());
     pOutputFile->flush();
-//    qDebug() << currentLampStatus << sData;
     if(currentLampStatus == LAMP_OFF) {
         if(voltage != 0.0) {
             pPlotMeasurements->NewPoint(iPlotDark, 1000.0/currentTemperature, current/voltage);
@@ -1183,7 +1187,7 @@ MainWindow::onKeithleySweepDone(QDateTime dataTime, QString sData) {
     QStringList sMeasures = QStringList(sData.split(",", QString::SkipEmptyParts));
     if(sMeasures.count() < 2) {
         stopIvsV();
-        ui->statusBar->showMessage("Error: No Sweep Values");
+        ui->statusBar->showMessage(QString(Q_FUNC_INFO) + QString(" Error: No Sweep Values"));
         onClearComplianceEvent();
         return;
     }

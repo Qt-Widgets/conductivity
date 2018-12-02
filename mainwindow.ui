@@ -18,7 +18,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>30</y>
+      <y>50</y>
       <width>90</width>
       <height>25</height>
      </rect>
@@ -34,7 +34,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>70</y>
+      <y>90</y>
       <width>90</width>
       <height>25</height>
      </rect>
@@ -268,13 +268,26 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>170</y>
+      <y>280</y>
       <width>90</width>
       <height>25</height>
      </rect>
     </property>
     <property name="text">
      <string>Lamp On</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="lambdaScanButton">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>130</y>
+      <width>90</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>λ Scan</string>
     </property>
    </widget>
   </widget>
