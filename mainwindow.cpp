@@ -981,6 +981,12 @@ MainWindow::stopLambdaScan() {
 }
 
 
+void
+MainWindow::goNextLambda() {
+
+}
+
+
 bool
 MainWindow::prepareOutputFile(QString sBaseDir, QString sFileName) {
     if(pOutputFile) {
@@ -1093,6 +1099,50 @@ MainWindow::initIvsVPlots() {
     pPlotTemperature->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
     pPlotTemperature->UpdatePlot();
     pPlotTemperature->show();
+    iCurrentTPlot = 1;
+}
+
+
+void
+MainWindow::initSvsLPlots() {
+    // Remove old plots if any
+    if(pPlotMeasurements) delete pPlotMeasurements;
+    pPlotMeasurements = Q_NULLPTR;
+    if(pPlotTemperature) delete pPlotTemperature;
+    pPlotTemperature = Q_NULLPTR;
+
+    // Plot of Sigma vs Wavelength
+    sMeasurementPlotLabel = QString("S [Ohm^-1] -vs- Lambda [nm]");
+    pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
+    pPlotMeasurements->setMaxPoints(maxPlotPoints);
+    pPlotMeasurements->NewDataSet(1,//Id
+                                  3, //Pen Width
+                                  QColor(255, 255, 0),// Color
+                                  Plot2D::ipoint,// Symbol
+                                  "Grat 1"// Title
+                                  );
+    pPlotMeasurements->SetShowDataSet(1, true);
+    pPlotMeasurements->SetShowTitle(1, true);
+    pPlotMeasurements->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
+    pPlotMeasurements->UpdatePlot();
+    pPlotMeasurements->show();
+
+    // Plot of Temperature vs Time
+    sTemperaturePlotLabel = QString("T [K] -vs- t [s]");
+    pPlotTemperature = new Plot2D(this, sTemperaturePlotLabel);
+    pPlotTemperature->setMaxPoints(maxPlotPoints);
+    pPlotTemperature->NewDataSet(1,//Id
+                                 3, //Pen Width
+                                 QColor(255, 255, 0),// Color
+                                 Plot2D::ipoint,// Symbol
+                                 "T"// Title
+                                 );
+    pPlotTemperature->SetShowDataSet(1, true);
+    pPlotTemperature->SetShowTitle(1, true);
+    pPlotTemperature->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
+    pPlotTemperature->UpdatePlot();
+    pPlotTemperature->show();
+
     iCurrentTPlot = 1;
 }
 
@@ -1343,20 +1393,23 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
                                 .arg(current, 12, 'g', 6, ' ');
         pOutputFile->write(sData.toLocal8Bit());
         if(currentLampStatus == LAMP_OFF) {
-//            if(voltage != 0.0) {
-//                pPlotMeasurements->NewPoint(iPlotDark, 1000.0/currentTemperature, current/voltage);
-//                pPlotMeasurements->UpdatePlot();
-//            }
-//            switchLampOn();
+            if(voltage != 0.0) {
+                sigmaDark = current/voltage;
+                switchLampOn();
+            }
+            else
+                goNextLambda();
         }
         else {
-//            if(voltage != 0.0) {
-//                pPlotMeasurements->NewPoint(iPlotPhoto, 1000.0/currentTemperature, current/voltage);
-//                pPlotMeasurements->UpdatePlot();
-//            }
+            if(voltage != 0.0) {
+                sigmaIll = current/voltage;
+                pPlotMeasurements->NewPoint(iPlotPhoto, lambda, sigmaIll-sigmaDark);
+                pPlotMeasurements->UpdatePlot();
+            }
             pOutputFile->write("\n");
             pOutputFile->flush();
             switchLampOff();
+            goNextLambda();
         }
     }// LambdaScanI || LambdaScanV
 }

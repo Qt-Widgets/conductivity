@@ -61,8 +61,10 @@ protected:
     void stopRvsT();
     void startI_V(bool bSourceI);
     void stopIvsV();
-    void stopLambdaScan();
     void initIvsVPlots();
+    void stopLambdaScan();
+    void goNextLambda();
+    void initSvsLPlots();
     bool prepareOutputFile(QString sBaseDir, QString sFileName);
     void switchLampOn();
     void switchLampOff();
@@ -149,6 +151,8 @@ private:
     bool             bUseMonochromator;
     int              gpioHostHandle;
     int              gpioLEDpin;
+    double           sigmaDark;
+    double           sigmaIll;
 
     QString          sLogFileName;
 };
