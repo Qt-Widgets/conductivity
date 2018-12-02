@@ -783,7 +783,7 @@ MainWindow::on_lambdaScanButton_clicked() {
     }
     // else
     if(pConfigureDialog) delete pConfigureDialog;
-    pConfigureDialog = new ConfigureDialog(iLambdaScan, bUseMonochromator, this);
+    pConfigureDialog = new ConfigureDialog(iConfLScan, bUseMonochromator, this);
     if(pConfigureDialog->exec() == QDialog::Rejected)
         return;
     QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
