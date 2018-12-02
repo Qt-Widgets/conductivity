@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 */
 #include "ls330tab.h"
+#include "mainwindow.h"
 
 #include <QLineEdit>
 #include <QLabel>
@@ -55,19 +56,23 @@ LS330Tab::LS330Tab(int iConfiguration, QWidget *parent)
 
     pLayout->addWidget(new QLabel("T Start [K]"),               0, 1, 1, 1, Qt::AlignRight);
     pLayout->addWidget(new QLabel("T Stop[K]"),                 1, 1, 1, 1, Qt::AlignRight);
-    if(myConfiguration == 1)
+    if(myConfiguration == MainWindow::iConfIvsV)
         pLayout->addWidget(new QLabel("T Step[K]"),             2, 1, 1, 1, Qt::AlignRight);
-    else
+    else if(myConfiguration == MainWindow::iConfRvsT)
         pLayout->addWidget(new QLabel("T Rate[K/min]"),         2, 1, 1, 1, Qt::AlignRight);
+    else if(myConfiguration == MainWindow::iConfLScan)
+        pLayout->addWidget(new QLabel("T Step[K]"),             2, 1, 1, 1, Qt::AlignRight);
     pLayout->addWidget(new QLabel("Max wait for T Start[min]"), 3, 0, 1, 2, Qt::AlignRight);
     pLayout->addWidget(new QLabel("Time to steady Temp.[min]"), 4, 0, 1, 2, Qt::AlignRight);
 
     pLayout->addWidget(&TStartEdit,          0, 2, 1, 1);
     pLayout->addWidget(&TStopEdit,           1, 2, 1, 1);
-    if(myConfiguration == 1)
+    if(myConfiguration == MainWindow::iConfIvsV)
         pLayout->addWidget(&TStepEdit,       2, 2, 1, 1);
-    else
+    else if(myConfiguration == MainWindow::iConfRvsT)
         pLayout->addWidget(&TRateEdit,       2, 2, 1, 1);
+    else if(myConfiguration == MainWindow::iConfLScan)
+        pLayout->addWidget(&TStepEdit,       2, 2, 1, 1);
     pLayout->addWidget(&MaxTimeToTStartEdit, 3, 2, 1, 1);
     pLayout->addWidget(&TimeToSteadyTEdit,   4, 2, 1, 1);
 
