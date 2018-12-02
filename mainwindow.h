@@ -64,7 +64,7 @@ protected:
     bool prepareOutputFile(QString sBaseDir, QString sFileName);
     void switchLampOn();
     void switchLampOff();
-    bool PrepareLogFile();
+    bool prepareLogFile();
     void logMessage(QString sMessage);
 
 private slots:

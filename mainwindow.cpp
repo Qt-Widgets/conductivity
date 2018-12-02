@@ -71,7 +71,7 @@ MainWindow::MainWindow(QWidget *parent)
     , sLogFileName(QString("gpibLog.txt"))
 {
     // Prepare message logging
-    PrepareLogFile();
+    prepareLogFile();
 
     ui->setupUi(this);
     // Remove the resize-handle in the lower right corner
@@ -154,7 +154,7 @@ MainWindow::closeEvent(QCloseEvent *event) {
  * \return true
  */
 bool
-MainWindow::PrepareLogFile() {
+MainWindow::prepareLogFile() {
     // Logged messages (if enabled) will be written in the following folder
     QString sLogDir = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
     if(!sLogDir.endsWith(QString("/"))) sLogDir+= QString("/");
