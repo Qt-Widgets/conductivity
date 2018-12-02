@@ -99,6 +99,7 @@ CornerStone130::setWavelength(double waveLength) {
     sResponse = gpibRead(gpibId);
     if(isGpibError(QString(Q_FUNC_INFO) + "CornerStone 130 WAVE? readback Failed"))
         return false;
+    dPresentWavelength = sResponse.toDouble();
 //    qDebug() << "Present Wavelength =" << sResponse << "nm";
     return true;
 }

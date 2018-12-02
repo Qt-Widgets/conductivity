@@ -39,7 +39,7 @@ CS130Tab::CS130Tab(int iConfiguration, bool enableMonochromator, QWidget *parent
     QGridLayout* pLayout = new QGridLayout();
     pLayout->addWidget(&radioButtonGrating1, 0, 0, 1, 1);
     pLayout->addWidget(&radioButtonGrating2, 1, 0, 1, 1);
-    pLayout->addWidget(&darkPhotoCheck, 0, 1, 1, 1);
+    pLayout->addWidget(&darkPhotoCheck,      0, 1, 1, 1);
     if(iConfiguration==MainWindow::iConfLScan) {
         pLayout->addWidget(new QLabel("Start Wavelength [nm]"), 2, 0, 1, 1);
         pLayout->addWidget(&StartWlEdit,                        2, 1, 1, 1);
@@ -49,10 +49,10 @@ CS130Tab::CS130Tab(int iConfiguration, bool enableMonochromator, QWidget *parent
     else {
         pLayout->addWidget(new QLabel("Wavelength [nm]"), 2, 0, 1, 1);
         pLayout->addWidget(&WavelengthEdit, 2, 1, 1, 1);
-        radioButtonGrating1.setEnabled(bUseMonochromator);
-        radioButtonGrating2.setEnabled(bUseMonochromator);
         WavelengthEdit.setEnabled(bUseMonochromator);
     }
+    radioButtonGrating1.setEnabled(bUseMonochromator);
+    radioButtonGrating2.setEnabled(bUseMonochromator);
     setLayout(pLayout);
 
     sNormalStyle = WavelengthEdit.styleSheet();

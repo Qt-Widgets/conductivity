@@ -33,6 +33,7 @@ public:
     bool     closeShutter();
     bool     setWavelength(double waveLength);
     bool     setGrating(int grating);
+    double   dPresentWavelength;
 
 signals:
 
