@@ -150,7 +150,7 @@ MainWindow::closeEvent(QCloseEvent *event) {
 
 
 /*!
- * \brief MyApplication::PrepareLogFile Prepare a log file for the session log
+ * \brief MyApplication::prepareLogFile Prepare a log file for the session log
  * \return true
  */
 bool
