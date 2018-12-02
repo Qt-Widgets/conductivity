@@ -37,16 +37,18 @@ signals:
 
 public slots:
     void on_WavelengthEdit_textChanged(const QString &arg1);
+    void on_StartWlEdit_textChanged(const QString &arg1);
+    void on_StopWlEdit_textChanged(const QString &arg1);
     void on_darkPhotoCheck_Clicked(int newState);
     void on_grating1_Selected();
     void on_grating2_Selected();
 
 public:
-
     double dWavelength;
+    double dStartWavelength;
+    double dStopWavelength;
     int    iGratingNumber;
     bool   bPhoto;
-    bool   bDummy[3];
 
 protected:
     void initUI();
@@ -59,7 +61,10 @@ private:
     // QLineEdit styles
     QString sNormalStyle;
     QString sErrorStyle;
+    // UI Elements
     QLineEdit WavelengthEdit;
+    QLineEdit StartWlEdit;
+    QLineEdit StopWlEdit;
     QRadioButton radioButtonGrating1;
     QRadioButton radioButtonGrating2;
     QCheckBox darkPhotoCheck;

@@ -40,13 +40,20 @@ CS130Tab::CS130Tab(int iConfiguration, bool enableMonochromator, QWidget *parent
     pLayout->addWidget(&radioButtonGrating1, 0, 0, 1, 1);
     pLayout->addWidget(&radioButtonGrating2, 1, 0, 1, 1);
     pLayout->addWidget(&darkPhotoCheck, 0, 1, 1, 1);
-    pLayout->addWidget(new QLabel("Wavelength [nm]"), 2, 0, 1, 1);
-    pLayout->addWidget(&WavelengthEdit, 2, 1, 1, 1);
+    if(iConfiguration==MainWindow::iConfLScan) {
+        pLayout->addWidget(new QLabel("Start Wavelength [nm]"), 2, 0, 1, 1);
+        pLayout->addWidget(&StartWlEdit,                        2, 1, 1, 1);
+        pLayout->addWidget(new QLabel("Stop Wavelength [nm]"),   3, 0, 1, 1);
+        pLayout->addWidget(&StopWlEdit,                         3, 1, 1, 1);
+    }
+    else {
+        pLayout->addWidget(new QLabel("Wavelength [nm]"), 2, 0, 1, 1);
+        pLayout->addWidget(&WavelengthEdit, 2, 1, 1, 1);
+        radioButtonGrating1.setEnabled(bUseMonochromator);
+        radioButtonGrating2.setEnabled(bUseMonochromator);
+        WavelengthEdit.setEnabled(bUseMonochromator);
+    }
     setLayout(pLayout);
-
-    radioButtonGrating1.setEnabled(bUseMonochromator);
-    radioButtonGrating2.setEnabled(bUseMonochromator);
-    WavelengthEdit.setEnabled(bUseMonochromator);
 
     sNormalStyle = WavelengthEdit.styleSheet();
 
@@ -65,9 +72,11 @@ CS130Tab::CS130Tab(int iConfiguration, bool enableMonochromator, QWidget *parent
 void
 CS130Tab::restoreSettings() {
     QSettings settings;
-    dWavelength    = settings.value("CS130TabWavelength", wavelengthMax).toDouble();
-    iGratingNumber = settings.value("CS130TabGrating", 1).toInt();
-    bPhoto         = settings.value("CS130TabPhoto", false).toBool();
+    dWavelength      = settings.value("CS130TabWavelength", wavelengthMax).toDouble();
+    dStartWavelength = settings.value("CS130TabStartWavelength", wavelengthMax).toDouble();
+    dStopWavelength  = settings.value("CS130TabStopWavelength", wavelengthMax).toDouble();
+    iGratingNumber   = settings.value("CS130TabGrating", 1).toInt();
+    bPhoto           = settings.value("CS130TabPhoto", false).toBool();
     enableMonochromator(bPhoto);
 }
 
@@ -76,6 +85,8 @@ void
 CS130Tab::saveSettings() {
     QSettings settings;
     settings.setValue("CS130TabWavelength", dWavelength);
+    settings.setValue("CS130TabStartWavelength", dStartWavelength);
+    settings.setValue("CS130TabStopWavelength", dStopWavelength);
     settings.setValue("CS130TabGrating", iGratingNumber);
     settings.setValue("CS130TabPhoto", bPhoto);
 }
@@ -85,6 +96,8 @@ void
 CS130Tab::setToolTips() {
     QString sHeader = QString("Enter values in range [%1 : %2]");
     WavelengthEdit.setToolTip(sHeader.arg(wavelengthMin).arg(wavelengthMax));
+    StartWlEdit.setToolTip(sHeader.arg(wavelengthMin).arg(wavelengthMax));
+    StopWlEdit.setToolTip(sHeader.arg(wavelengthMin).arg(wavelengthMax));
     darkPhotoCheck.setToolTip("Choose a Photo or Dark Measurement");
 }
 
@@ -104,6 +117,12 @@ CS130Tab::initUI() {
     if(!isWavelengthValid(dWavelength))
         dWavelength = wavelengthMax;
     WavelengthEdit.setText(QString("%1").arg(dWavelength, 0, 'f', 2));
+    if(!isWavelengthValid(dStartWavelength))
+        dStartWavelength = wavelengthMax;
+    StartWlEdit.setText(QString("%1").arg(dStartWavelength, 0, 'f', 2));
+    if(!isWavelengthValid(dStopWavelength))
+        dStopWavelength = wavelengthMax;
+    StopWlEdit.setText(QString("%1").arg(dStopWavelength, 0, 'f', 2));
 }
 
 
@@ -111,6 +130,10 @@ void
 CS130Tab::connectSignals() {
     connect(&WavelengthEdit, SIGNAL(textChanged(const QString)),
             this, SLOT(on_WavelengthEdit_textChanged(const QString)));
+    connect(&StartWlEdit, SIGNAL(textChanged(const QString)),
+            this, SLOT(on_StartWlEdit_textChanged(const QString)));
+    connect(&StopWlEdit, SIGNAL(textChanged(const QString)),
+            this, SLOT(on_StopWlEdit_textChanged(const QString)));
     connect(&radioButtonGrating1, SIGNAL(clicked()),
             this, SLOT(on_grating1_Selected()));
     connect(&radioButtonGrating2, SIGNAL(clicked()),
@@ -128,6 +151,30 @@ CS130Tab::on_WavelengthEdit_textChanged(const QString &arg1) {
     }
     else {
         WavelengthEdit.setStyleSheet(sErrorStyle);
+    }
+}
+
+
+void
+CS130Tab::on_StartWlEdit_textChanged(const QString &arg1) {
+    if(isWavelengthValid(arg1.toDouble())) {
+        dStartWavelength = arg1.toDouble();
+        StartWlEdit.setStyleSheet(sNormalStyle);
+    }
+    else {
+        StartWlEdit.setStyleSheet(sErrorStyle);
+    }
+}
+
+
+void
+CS130Tab::on_StopWlEdit_textChanged(const QString &arg1) {
+    if(isWavelengthValid(arg1.toDouble())) {
+        dStopWavelength = arg1.toDouble();
+        StopWlEdit.setStyleSheet(sNormalStyle);
+    }
+    else {
+        StopWlEdit.setStyleSheet(sErrorStyle);
     }
 }
 
