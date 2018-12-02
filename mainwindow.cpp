@@ -775,6 +775,152 @@ MainWindow::on_startIvsVButton_clicked() {
 
 
 void
+MainWindow::on_lambdaScanButton_clicked() {
+    if(ui->lambdaScanButton->text().contains("Stop")) {
+        stopLambdaScan();
+        ui->statusBar->showMessage("Measure (Lambda Scan) Halted");
+        return;
+    }
+    // else
+    if(pConfigureDialog) delete pConfigureDialog;
+    pConfigureDialog = new ConfigureDialog(iLambdaScan, bUseMonochromator, this);
+    if(pConfigureDialog->exec() == QDialog::Rejected)
+        return;
+    QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
+    //Initializing Corner Stone 130
+    ui->statusBar->showMessage("Initializing Corner Stone 130...");
+    if(pCornerStone130->init() != pCornerStone130->NO_ERROR){
+        ui->statusBar->showMessage("Unable to Initialize Corner Stone 130...");
+        QApplication::restoreOverrideCursor();
+        return;
+    }
+// TODO
+//    pCornerStone130->setGrating(pConfigureDialog->pTabCS130->iGratingNumber);
+//    pCornerStone130->setWavelength(pConfigureDialog->pTabCS130->dWavelength);
+//    switchLampOff();
+//    // Initializing Keithley 236
+//    ui->statusBar->showMessage("Initializing Keithley 236...");
+//    if(pKeithley->init()) {
+//        ui->statusBar->showMessage("Unable to Initialize Keithley 236...");
+//        QApplication::restoreOverrideCursor();
+//        return;
+//    }
+//    isK236ReadyForTrigger = false;
+//    connect(pKeithley, SIGNAL(complianceEvent()),
+//            this, SLOT(onComplianceEvent()));
+//    connect(pKeithley, SIGNAL(clearCompliance()),
+//            this, SLOT(onClearComplianceEvent()));
+//    connect(pKeithley, SIGNAL(readyForTrigger()),
+//            this, SLOT(onKeithleyReadyForTrigger()));
+//    connect(pKeithley, SIGNAL(newReading(QDateTime, QString)),
+//            this, SLOT(onNewKeithleyReading(QDateTime, QString)));
+    // Initializing LakeShore 330
+//    ui->statusBar->showMessage("Initializing LakeShore 330...");
+//    if(pLakeShore->init()) {
+//        ui->statusBar->showMessage("Unable to Initialize LakeShore 330...");
+//        QApplication::restoreOverrideCursor();
+//        return;
+//    }
+    // Open the Output file
+//    ui->statusBar->showMessage("Opening Output file...");
+//    if(!prepareOutputFile(pConfigureDialog->pTabFile->sBaseDir,
+//                          pConfigureDialog->pTabFile->sOutFileName))
+//    {
+//        ui->statusBar->showMessage("Unable to Open the Output file...");
+//        QApplication::restoreOverrideCursor();
+//        return;
+//    }
+//    // Write the header
+//    // To cope with the GnuPlot way to handle the comment lines
+//    // we need a # as a first chraracter in each row.
+//    pOutputFile->write(QString("#%1 %2 %3 %4 %5 %6")
+//                       .arg("T-Dark[K]", 12)
+//                       .arg("V-Dark[V]", 12)
+//                       .arg("I-Dark[A]", 12)
+//                       .arg("T-Photo[K]", 12)
+//                       .arg("V-Photo[V]", 12)
+//                       .arg("I-Photo[A]\n", 12)
+//                       .toLocal8Bit());
+//    QStringList HeaderLines = pConfigureDialog->pTabFile->sSampleInfo.split("\n");
+//    for(int i=0; i<HeaderLines.count(); i++) {
+//        pOutputFile->write("# ");
+//        pOutputFile->write(HeaderLines.at(i).toLocal8Bit());
+//        pOutputFile->write("\n");
+//    }
+//    pOutputFile->write(QString("# Grating #= %1 Wavelength = %2 nm\n")
+//                               .arg(pConfigureDialog->pTabCS130->iGratingNumber)
+//                               .arg(pConfigureDialog->pTabCS130->dWavelength).toLocal8Bit());
+//    if(pConfigureDialog->pTabK236->bSourceI) {
+//        pOutputFile->write(QString("# Current=%1[A] Compliance=%2[V]\n")
+//                           .arg(pConfigureDialog->pTabK236->dStart)
+//                           .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
+//    }
+//    else {
+//        pOutputFile->write(QString("# Voltage=%1[V] Compliance=%2[A]\n")
+//                           .arg(pConfigureDialog->pTabK236->dStart)
+//                           .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
+//    }
+//    pOutputFile->write(QString("# T_Start=%1[K] T_Stop=%2[K] T_Rate=%3[K/min]\n")
+//                       .arg(pConfigureDialog->pTabLS330->dTStart)
+//                       .arg(pConfigureDialog->pTabLS330->dTStop)
+//                       .arg(pConfigureDialog->pTabLS330->dTRate).toLocal8Bit());
+//    pOutputFile->write(QString("# Max_T_Start_Wait=%1[min] T_Stabilize_Time=%2[min]\n")
+//                       .arg(pConfigureDialog->pTabLS330->iReachingTStart)
+//                       .arg(pConfigureDialog->pTabLS330->iTimeToSteadyT).toLocal8Bit());
+//    pOutputFile->flush();
+    // Init the Plots
+//    initLambdaPlots();
+    // Configure Thermostat
+//    pLakeShore->setTemperature(pConfigureDialog->pTabLS330->dTStart);
+//    pLakeShore->switchPowerOn(3);
+    // Configure Source-Measure Unit
+//    double dCompliance = pConfigureDialog->pTabK236->dCompliance;
+//    if(pConfigureDialog->pTabK236->bSourceI) {
+//        presentMeasure = RvsTSourceI;
+//        double dAppliedCurrent = pConfigureDialog->pTabK236->dStart;
+//        pKeithley->initVvsTSourceI(dAppliedCurrent, dCompliance);
+//    }
+//    else {
+//        presentMeasure = RvsTSourceV;
+//        double dAppliedVoltage = pConfigureDialog->pTabK236->dStart;
+//        pKeithley->initVvsTSourceV(dAppliedVoltage, dCompliance);
+//    }
+//    // Configure the needed timers
+//    connect(&waitingTStartTimer, SIGNAL(timeout()),
+//            this, SLOT(onTimeToCheckReachedT()));
+//    connect(&readingTTimer, SIGNAL(timeout()),
+//            this, SLOT(onTimeToReadT()));
+//    waitingTStartTime = QDateTime::currentDateTime();
+    // Read and plot initial value of Temperature
+//    startReadingTTime = waitingTStartTime;
+//    onTimeToReadT();
+//    readingTTimer.start(30000);
+
+    // All done... compute the time needed for the measurement:
+//    startMeasuringTime = QDateTime::currentDateTime();
+//    double deltaT, expectedMinutes;
+//    deltaT = pConfigureDialog->pTabLS330->dTStop -
+//             pConfigureDialog->pTabLS330->dTStart;
+//    expectedMinutes = deltaT / pConfigureDialog->pTabLS330->dTRate +
+//                      pConfigureDialog->pTabLS330->iReachingTStart +
+//                      pConfigureDialog->pTabLS330->iTimeToSteadyT;
+//    endMeasureTime = startMeasuringTime.addSecs(qint64(expectedMinutes*60.0));
+//    QString sString = endMeasureTime.toString("hh:mm dd-MM-yyyy");
+//    ui->endTimeEdit->setText(sString);
+
+    // now we are waiting for reaching the initial temperature
+//    ui->startIvsVButton->setDisabled(true);
+//    ui->startRvsTButton->setText("Stop R vs T");
+//    ui->lampButton->setDisabled(true);
+//    ui->statusBar->showMessage(QString("%1 Waiting Initial T [%2K]")
+//                               .arg(waitingTStartTime.toString())
+//                               .arg(pConfigureDialog->pTabLS330->dTStart));
+    // Start the reaching of the Initial Temperature
+//    waitingTStartTimer.start(5000);
+}
+
+
+void
 MainWindow::startI_V(bool bSourceI) {
     ui->statusBar->showMessage("Sweeping...Please Wait");
     double dStart = pConfigureDialog->pTabK236->dStart;
@@ -826,6 +972,12 @@ MainWindow::stopIvsV() {
     ui->startRvsTButton->setEnabled(true);
     ui->lampButton->setEnabled(true);
     QApplication::restoreOverrideCursor();
+}
+
+
+void
+MainWindow::stopLambdaScan() {
+// TODO
 }
 
 

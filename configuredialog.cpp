@@ -53,10 +53,21 @@ ConfigureDialog::ConfigureDialog(int iConfiguration, bool enableMonochromator, Q
     mainLayout->addWidget(pTabWidget);
     mainLayout->addWidget(pButtonBox);
     setLayout(mainLayout);
-    if(configurationType==MainWindow::iConfIvsV)
+
+    switch(configurationType) {
+    case MainWindow::iConfIvsV:
         setWindowTitle("I versus V");
-    else
-        setWindowTitle("R versus T");
+        break;
+    case MainWindow::iConfRvsT:
+        setWindowTitle("I versus V");
+        break;
+    case MainWindow::iConfLScan:
+        setWindowTitle("Lambda Scan");
+        break;
+    default:
+        setWindowTitle("Unknown Measurement");
+        reject();
+    }
     connectSignals();
     setToolTips();
 }
@@ -65,9 +76,9 @@ ConfigureDialog::ConfigureDialog(int iConfiguration, bool enableMonochromator, Q
 void
 ConfigureDialog::setToolTips() {
     pTabWidget->setTabToolTip(iSourceIndex, QString("Source-Measure Unit configuration"));
-    pTabWidget->setTabToolTip(iThermIndex, QString("Thermostat configuration"));
-    pTabWidget->setTabToolTip(iMonoIndex, QString("Monochromator configuration"));
-    pTabWidget->setTabToolTip(iFileIndex, QString("Output File configuration"));
+    pTabWidget->setTabToolTip(iThermIndex,  QString("Thermostat configuration"));
+    pTabWidget->setTabToolTip(iMonoIndex,   QString("Monochromator configuration"));
+    pTabWidget->setTabToolTip(iFileIndex,   QString("Output File configuration"));
 }
 
 
@@ -88,7 +99,6 @@ ConfigureDialog::onCancel() {
     pTabFile->restoreSettings();
     reject();
 }
-
 
 
 void

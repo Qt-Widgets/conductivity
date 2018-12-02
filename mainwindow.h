@@ -50,6 +50,7 @@ public:
 public:
     static const int iConfIvsV  = 1;
     static const int iConfRvsT  = 2;
+    static const int iConfLScan = 3;
 
 signals:
 
@@ -60,6 +61,7 @@ protected:
     void stopRvsT();
     void startI_V(bool bSourceI);
     void stopIvsV();
+    void stopLambdaScan();
     void initIvsVPlots();
     bool prepareOutputFile(QString sBaseDir, QString sFileName);
     void switchLampOn();
@@ -86,6 +88,7 @@ private slots:
     void onVReverseSweepDone(QDateTime, QString sData);
     void on_lampButton_clicked();
     void onLogMessage(QString sMessage);
+    void on_lambdaScanButton_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -96,7 +99,9 @@ private:
         RvsTSourceV = 2,
         IvsVSourceI = 3,
         IvsVSourceV = 4,
-        IvsV        = 5
+        IvsV        = 5,
+        LambdaScanI = 6,
+        LambdaScanV = 7
     };
     measure          presentMeasure;
 
