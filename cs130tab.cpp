@@ -65,6 +65,7 @@ CS130Tab::CS130Tab(int iConfiguration, bool enableMonochromator, QWidget *parent
 
     connectSignals();
     restoreSettings();
+    setToolTips();
     initUI();
 }
 

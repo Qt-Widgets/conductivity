@@ -44,7 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QStandardPaths>
 #include <QDebug>
 
-//#define MY_DEBUG
+#define MY_DEBUG
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -84,9 +84,6 @@ MainWindow::MainWindow(QWidget *parent)
     sErrorStyle  = "QLabel { color: rgb(255, 255, 255); background: rgb(255, 0, 0); selection-background-color: rgb(128, 128, 255); }";
     sDarkStyle   = "QLabel { color: rgb(255, 255, 255); background: rgb(0, 0, 0); selection-background-color: rgb(128, 128, 255); }";
     sPhotoStyle  = "QLabel { color: rgb(0, 0, 0); background: rgb(255, 255, 0); selection-background-color: rgb(128, 128, 255); }";
-
-    ui->startRvsTButton->show();
-    ui->startIvsVButton->show();
 
     gpibBoardID           = 0;
     presentMeasure        = NoMeasure;
@@ -272,7 +269,9 @@ MainWindow::checkInstruments() {
         return false;
     }
     int nDevices = ThreadIbcnt();
-    //qInfo() << QString("Found %1 Instruments connected to the GPIB Bus").arg(nDevices);
+#if defined(MY_DEBUG)
+    logMessage(QString("Found %1 Instruments connected to the GPIB Bus").arg(nDevices));
+#endif
     // Identify the instruments connected to the GPIB Bus
     QString sCommand, sInstrumentID;
     // Identify the instruments connected to the GPIB Bus
@@ -286,9 +285,9 @@ MainWindow::checkInstruments() {
         readBuf[ThreadIbcnt()] = '\0';
         sInstrumentID = QString(readBuf);
 #if defined(MY_DEBUG)
-        qDebug() << QString("Address= %1 - InstrumentID= %2")
+        logMessage(QString("Address= %1 - InstrumentID= %2")
                             .arg(resultlist[i])
-                            .arg(sInstrumentID);
+                            .arg(sInstrumentID));
 #endif
         if(sInstrumentID.contains("Cornerstone 130", Qt::CaseInsensitive)) {
             cornerstoneId = resultlist[i];
@@ -300,9 +299,13 @@ MainWindow::checkInstruments() {
             break;
         }
     }
-    if(pCornerStone130 == Q_NULLPTR)
-        bUseMonochromator = false;
-    ui->lambdaScanButton->setEnabled(bUseMonochromator);
+    bUseMonochromator = pCornerStone130 != Q_NULLPTR;
+    if(!bUseMonochromator) {
+        ui->lambdaScanButton->hide();
+        ui->labelLambda->hide();
+        ui->labelWavelength->hide();
+        ui->wavelengthEdit->hide();
+    }
     // Check for the temperature controller...
     sCommand = "*IDN?\r\n";
     int lakeShoreID = 0;
@@ -314,9 +317,9 @@ MainWindow::checkInstruments() {
         readBuf[ThreadIbcnt()] = '\0';
         sInstrumentID = QString(readBuf);
 #if defined(MY_DEBUG)
-        qDebug() << QString("Address= %1 - InstrumentID= %2")
+        logMessage(QString("Address= %1 - InstrumentID= %2")
                     .arg(resultlist[i])
-                    .arg(sInstrumentID);
+                    .arg(sInstrumentID));
 #endif
         if(sInstrumentID.contains("MODEL330", Qt::CaseInsensitive)) {
             lakeShoreID = resultlist[i];
@@ -352,9 +355,9 @@ MainWindow::checkInstruments() {
         readBuf[ThreadIbcnt()] = '\0';
         sInstrumentID = QString(readBuf);
 #if defined(MY_DEBUG)
-        qDebug() << QString("Address= %1 - InstrumentID= %2")
-                    .arg(resultlist[i])
-                    .arg(sInstrumentID);
+        logMessage(QString("Address= %1 - InstrumentID= %2")
+                   .arg(resultlist[i])
+                   .arg(sInstrumentID));
 #endif
         if(sInstrumentID.contains("236", Qt::CaseInsensitive)) {
             if(pKeithley == Q_NULLPTR) {
@@ -408,8 +411,9 @@ void
 MainWindow::switchLampOn() {
     ui->labelPhoto->setStyleSheet(sPhotoStyle);
     ui->labelPhoto->setText("Photo");
-    if(bUseMonochromator)
-        pCornerStone130->openShutter();
+// For the moment don't use the internal shutter
+//    if(bUseMonochromator)
+//        pCornerStone130->openShutter();
 #if defined(Q_PROCESSOR_ARM)
     if(gpioHostHandle >= 0)
         gpio_write(gpioHostHandle, gpioLEDpin, 1);
@@ -426,8 +430,9 @@ void
 MainWindow::switchLampOff() {
     ui->labelPhoto->setStyleSheet(sDarkStyle);
     ui->labelPhoto->setText("Dark");
-    if(bUseMonochromator)
-        pCornerStone130->closeShutter();
+// For the moment don't use the internal shutter
+//    if(bUseMonochromator)
+//        pCornerStone130->closeShutter();
 #if defined(Q_PROCESSOR_ARM)
     if(gpioHostHandle >= 0)
         gpio_write(gpioHostHandle, gpioLEDpin, 0);
@@ -470,6 +475,7 @@ MainWindow::stopRvsT() {
     ui->endTimeEdit->clear();
     ui->startRvsTButton->setText("Start R vs T");
     ui->startIvsVButton->setEnabled(true);
+    ui->lambdaScanButton->setEnabled(true);
     ui->lampButton->setEnabled(true);
     QApplication::restoreOverrideCursor();
 }
@@ -499,6 +505,8 @@ MainWindow::on_startRvsTButton_clicked() {
         }
         pCornerStone130->setGrating(pConfigureDialog->pTabCS130->iGratingNumber);
         pCornerStone130->setWavelength(pConfigureDialog->pTabCS130->dWavelength);
+        ui->wavelengthEdit->setText(QString("%1")
+                                    .arg(pConfigureDialog->pTabCS130->dWavelength));
     }
     switchLampOff();
     // Initializing Keithley 236
@@ -616,6 +624,7 @@ MainWindow::on_startRvsTButton_clicked() {
     // now we are waiting for reaching the initial temperature
     ui->startIvsVButton->setDisabled(true);
     ui->startRvsTButton->setText("Stop R vs T");
+    ui->lambdaScanButton->setDisabled(true);
     ui->lampButton->setDisabled(true);
     ui->statusBar->showMessage(QString("%1 Waiting Initial T [%2K]")
                                .arg(waitingTStartTime.toString())
@@ -648,6 +657,8 @@ MainWindow::on_startIvsVButton_clicked() {
         }
         pCornerStone130->setGrating(pConfigureDialog->pTabCS130->iGratingNumber);
         pCornerStone130->setWavelength(pConfigureDialog->pTabCS130->dWavelength);
+        ui->wavelengthEdit->setText(QString("%1")
+                                    .arg(pConfigureDialog->pTabCS130->dWavelength));
     }
     if(pConfigureDialog->pTabCS130->bPhoto)
         switchLampOn();
@@ -770,6 +781,7 @@ MainWindow::on_startIvsVButton_clicked() {
     ui->endTimeEdit->setText(sString);
     ui->startRvsTButton->setDisabled(true);
     ui->startIvsVButton->setText("Stop I vs V");
+    ui->lambdaScanButton->setDisabled(true);
     ui->lampButton->setDisabled(true);
 }
 
@@ -794,9 +806,10 @@ MainWindow::on_lambdaScanButton_clicked() {
         QApplication::restoreOverrideCursor();
         return;
     }
-// TODO
     pCornerStone130->setGrating(pConfigureDialog->pTabCS130->iGratingNumber);
     pCornerStone130->setWavelength(pConfigureDialog->pTabCS130->dStartWavelength);
+    ui->wavelengthEdit->setText(QString("%1")
+                                .arg(pConfigureDialog->pTabCS130->dStartWavelength));
     switchLampOff();
     // Initializing Keithley 236
     ui->statusBar->showMessage("Initializing Keithley 236...");
@@ -812,90 +825,96 @@ MainWindow::on_lambdaScanButton_clicked() {
             this, SLOT(onClearComplianceEvent()));
     connect(pKeithley, SIGNAL(readyForTrigger()),
             this, SLOT(onKeithleyReadyForTrigger()));
-//    connect(pKeithley, SIGNAL(newReading(QDateTime, QString)),
-//            this, SLOT(onNewKeithleyReading(QDateTime, QString)));
+    connect(pKeithley, SIGNAL(newReading(QDateTime, QString)),
+            this, SLOT(onNewKeithleyReading(QDateTime, QString)));
     // Initializing LakeShore 330
-//    ui->statusBar->showMessage("Initializing LakeShore 330...");
-//    if(pLakeShore->init()) {
-//        ui->statusBar->showMessage("Unable to Initialize LakeShore 330...");
-//        QApplication::restoreOverrideCursor();
-//        return;
-//    }
+    ui->statusBar->showMessage("Initializing LakeShore 330...");
+    if(pLakeShore->init()) {
+        ui->statusBar->showMessage("Unable to Initialize LakeShore 330...");
+        QApplication::restoreOverrideCursor();
+        return;
+    }
     // Open the Output file
-//    ui->statusBar->showMessage("Opening Output file...");
-//    if(!prepareOutputFile(pConfigureDialog->pTabFile->sBaseDir,
-//                          pConfigureDialog->pTabFile->sOutFileName))
-//    {
-//        ui->statusBar->showMessage("Unable to Open the Output file...");
-//        QApplication::restoreOverrideCursor();
-//        return;
-//    }
-//    // Write the header
-//    // To cope with the GnuPlot way to handle the comment lines
-//    // we need a # as a first chraracter in each row.
-//    pOutputFile->write(QString("#%1 %2 %3 %4 %5 %6")
-//                       .arg("T-Dark[K]", 12)
-//                       .arg("V-Dark[V]", 12)
-//                       .arg("I-Dark[A]", 12)
-//                       .arg("T-Photo[K]", 12)
-//                       .arg("V-Photo[V]", 12)
-//                       .arg("I-Photo[A]\n", 12)
-//                       .toLocal8Bit());
-//    QStringList HeaderLines = pConfigureDialog->pTabFile->sSampleInfo.split("\n");
-//    for(int i=0; i<HeaderLines.count(); i++) {
-//        pOutputFile->write("# ");
-//        pOutputFile->write(HeaderLines.at(i).toLocal8Bit());
-//        pOutputFile->write("\n");
-//    }
-//    pOutputFile->write(QString("# Grating #= %1 Wavelength = %2 nm\n")
-//                               .arg(pConfigureDialog->pTabCS130->iGratingNumber)
-//                               .arg(pConfigureDialog->pTabCS130->dWavelength).toLocal8Bit());
-//    if(pConfigureDialog->pTabK236->bSourceI) {
-//        pOutputFile->write(QString("# Current=%1[A] Compliance=%2[V]\n")
-//                           .arg(pConfigureDialog->pTabK236->dStart)
-//                           .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
-//    }
-//    else {
-//        pOutputFile->write(QString("# Voltage=%1[V] Compliance=%2[A]\n")
-//                           .arg(pConfigureDialog->pTabK236->dStart)
-//                           .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
-//    }
-//    pOutputFile->write(QString("# T_Start=%1[K] T_Stop=%2[K] T_Rate=%3[K/min]\n")
-//                       .arg(pConfigureDialog->pTabLS330->dTStart)
-//                       .arg(pConfigureDialog->pTabLS330->dTStop)
-//                       .arg(pConfigureDialog->pTabLS330->dTRate).toLocal8Bit());
-//    pOutputFile->write(QString("# Max_T_Start_Wait=%1[min] T_Stabilize_Time=%2[min]\n")
-//                       .arg(pConfigureDialog->pTabLS330->iReachingTStart)
-//                       .arg(pConfigureDialog->pTabLS330->iTimeToSteadyT).toLocal8Bit());
-//    pOutputFile->flush();
+    ui->statusBar->showMessage("Opening Output file...");
+    if(!prepareOutputFile(pConfigureDialog->pTabFile->sBaseDir,
+                          pConfigureDialog->pTabFile->sOutFileName))
+    {
+        ui->statusBar->showMessage("Unable to Open the Output file...");
+        QApplication::restoreOverrideCursor();
+        return;
+    }
+    // Write the header
+    // To cope with the GnuPlot way to handle the comment lines
+    // we need a # as a first chraracter in each row.
+    pOutputFile->write(QString("#%1 %2 %3 %4 %5 %6 %7")
+                       .arg("Wavelen[nm]", 12)
+                       .arg("T-Dark[K]", 12)
+                       .arg("V-Dark[V]", 12)
+                       .arg("I-Dark[A]", 12)
+                       .arg("T-Photo[K]", 12)
+                       .arg("V-Photo[V]", 12)
+                       .arg("I-Photo[A]\n", 12)
+                       .toLocal8Bit());
+    QStringList HeaderLines = pConfigureDialog->pTabFile->sSampleInfo.split("\n");
+    for(int i=0; i<HeaderLines.count(); i++) {
+        pOutputFile->write("# ");
+        pOutputFile->write(HeaderLines.at(i).toLocal8Bit());
+        pOutputFile->write("\n");
+    }
+    pOutputFile->write(QString("# Grating #= %1 Start Wavelen = %2 [nm] Stop Wavelen = %3 [nm]\n")
+                               .arg(pConfigureDialog->pTabCS130->iGratingNumber)
+                               .arg(pConfigureDialog->pTabCS130->dStartWavelength)
+                               .arg(pConfigureDialog->pTabCS130->dStopWavelength).toLocal8Bit());
+    if(pConfigureDialog->pTabK236->bSourceI) {
+        pOutputFile->write(QString("# Current=%1[A] Compliance=%2[V]\n")
+                           .arg(pConfigureDialog->pTabK236->dStart)
+                           .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
+    }
+    else {
+        pOutputFile->write(QString("# Voltage=%1[V] Compliance=%2[A]\n")
+                           .arg(pConfigureDialog->pTabK236->dStart)
+                           .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
+    }
+    pOutputFile->write(QString("# T_Start=%1[K] T_Stop=%2[K] T_Steo=%3[K/min]\n")
+                       .arg(pConfigureDialog->pTabLS330->dTStart)
+                       .arg(pConfigureDialog->pTabLS330->dTStop)
+                       .arg(pConfigureDialog->pTabLS330->dTStep).toLocal8Bit());
+    pOutputFile->write(QString("# Max_T_Start_Wait=%1[min] T_Stabilize_Time=%2[min]\n")
+                       .arg(pConfigureDialog->pTabLS330->iReachingTStart)
+                       .arg(pConfigureDialog->pTabLS330->iTimeToSteadyT).toLocal8Bit());
+    pOutputFile->flush();
     // Init the Plots
-//    initLambdaPlots();
-    // Configure Thermostat
-//    pLakeShore->setTemperature(pConfigureDialog->pTabLS330->dTStart);
-//    pLakeShore->switchPowerOn(3);
+    initSvsLPlots();
+    // Configure Thermostat (if used)
+    if(pConfigureDialog->pTabLS330->bUseThermostat) {
+        pLakeShore->setTemperature(pConfigureDialog->pTabLS330->dTStart);
+        pLakeShore->switchPowerOn(3);
+    }
     // Configure Source-Measure Unit
-//    double dCompliance = pConfigureDialog->pTabK236->dCompliance;
-//    if(pConfigureDialog->pTabK236->bSourceI) {
-//        presentMeasure = RvsTSourceI;
-//        double dAppliedCurrent = pConfigureDialog->pTabK236->dStart;
-//        pKeithley->initVvsTSourceI(dAppliedCurrent, dCompliance);
-//    }
-//    else {
-//        presentMeasure = RvsTSourceV;
-//        double dAppliedVoltage = pConfigureDialog->pTabK236->dStart;
-//        pKeithley->initVvsTSourceV(dAppliedVoltage, dCompliance);
-//    }
-//    // Configure the needed timers
-//    connect(&waitingTStartTimer, SIGNAL(timeout()),
-//            this, SLOT(onTimeToCheckReachedT()));
-//    connect(&readingTTimer, SIGNAL(timeout()),
-//            this, SLOT(onTimeToReadT()));
-//    waitingTStartTime = QDateTime::currentDateTime();
+    double dCompliance = pConfigureDialog->pTabK236->dCompliance;
+    if(pConfigureDialog->pTabK236->bSourceI) {
+        presentMeasure = LambdaScanI;
+        double dAppliedCurrent = pConfigureDialog->pTabK236->dStart;
+        pKeithley->initVvsTSourceI(dAppliedCurrent, dCompliance);
+    }
+    else {
+        presentMeasure = LambdaScanV;
+        double dAppliedVoltage = pConfigureDialog->pTabK236->dStart;
+        pKeithley->initVvsTSourceV(dAppliedVoltage, dCompliance);
+    }
+    // Configure the needed timers
+    if(pConfigureDialog->pTabLS330->bUseThermostat) {
+        connect(&waitingTStartTimer, SIGNAL(timeout()),
+                this, SLOT(onTimeToCheckReachedT()));
+    }
+    connect(&readingTTimer, SIGNAL(timeout()),
+            this, SLOT(onTimeToReadT()));
+    waitingTStartTime = QDateTime::currentDateTime();
     // Read and plot initial value of Temperature
-//    startReadingTTime = waitingTStartTime;
-//    onTimeToReadT();
-//    readingTTimer.start(30000);
-
+    startReadingTTime = waitingTStartTime;
+    onTimeToReadT();
+    readingTTimer.start(30000);
+//TODO:
     // All done... compute the time needed for the measurement:
 //    startMeasuringTime = QDateTime::currentDateTime();
 //    double deltaT, expectedMinutes;
@@ -908,7 +927,7 @@ MainWindow::on_lambdaScanButton_clicked() {
 //    QString sString = endMeasureTime.toString("hh:mm dd-MM-yyyy");
 //    ui->endTimeEdit->setText(sString);
 
-    // now we are waiting for reaching the initial temperature
+    // now we must wait reaching the initial temperature
 //    ui->startIvsVButton->setDisabled(true);
 //    ui->startRvsTButton->setText("Stop R vs T");
 //    ui->lampButton->setDisabled(true);
@@ -917,6 +936,17 @@ MainWindow::on_lambdaScanButton_clicked() {
 //                               .arg(pConfigureDialog->pTabLS330->dTStart));
     // Start the reaching of the Initial Temperature
 //    waitingTStartTimer.start(5000);
+
+    double timeBetweenMeasurements = pConfigureDialog->pTabK236->dInterval*1000.0;
+    connect(&measuringTimer, SIGNAL(timeout()),
+            this, SLOT(onTimeToGetNewMeasure()));
+    measuringTimer.start(int(timeBetweenMeasurements));
+    ui->lambdaScanButton->setText("Stop");
+    ui->startRvsTButton->setDisabled(true);
+    ui->startIvsVButton->setDisabled(true);
+    ui->lampButton->setDisabled(true);
+    ui->statusBar->showMessage(QString("λ Scan Started: Please wait"));
+    bRunning = true;
 }
 
 
@@ -970,6 +1000,7 @@ MainWindow::stopIvsV() {
     ui->endTimeEdit->clear();
     ui->startIvsVButton->setText("Start I vs V");
     ui->startRvsTButton->setEnabled(true);
+    ui->lambdaScanButton->setEnabled(true);
     ui->lampButton->setEnabled(true);
     QApplication::restoreOverrideCursor();
 }
@@ -977,13 +1008,49 @@ MainWindow::stopIvsV() {
 
 void
 MainWindow::stopLambdaScan() {
-// TODO
-}
+    bRunning = false;
+    presentMeasure = NoMeasure;
+    if(pOutputFile) {
+        pOutputFile->close();
+        pOutputFile->deleteLater();
+        pOutputFile = Q_NULLPTR;
+    }
+    readingTTimer.stop();
+    waitingTStartTimer.stop();
+    stabilizingTimer.stop();
+    readingTTimer.disconnect();
+    waitingTStartTimer.disconnect();
+    stabilizingTimer.disconnect();
+    if(pKeithley != Q_NULLPTR) {
+        pKeithley->disconnect();
+    }
+    if(pLakeShore != Q_NULLPTR) {
+        pLakeShore->disconnect();
+        pLakeShore->switchPowerOff();
+    }
+    switchLampOff();
+    ui->endTimeEdit->clear();
+    ui->lambdaScanButton->setText("λ Scan");
+    ui->startIvsVButton->setEnabled(true);
+    ui->startRvsTButton->setEnabled(true);
+    ui->lampButton->setEnabled(true);
+    ui->statusBar->showMessage(QString("λ Scan Terminated"));
+    QApplication::restoreOverrideCursor();}
 
 
 void
 MainWindow::goNextLambda() {
-
+    double wlResoution = 10;// <<<<<<<<<<<<<<<<<<<<< To Be Changed
+    double nextWavelength = pCornerStone130->dPresentWavelength + wlResoution;
+#if defined(MY_DEBUG)
+    logMessage(QString("new Wavelength= %1").arg(nextWavelength));
+#endif
+    if(nextWavelength > pConfigureDialog->pTabCS130->dStopWavelength)
+        stopLambdaScan();
+    else {
+        pCornerStone130->setWavelength(nextWavelength);
+        ui->wavelengthEdit->setText(QString("%1").arg(nextWavelength));
+    }
 }
 
 
@@ -1222,10 +1289,6 @@ MainWindow::onTimeToCheckReachedT() {
     else {
         currentTime = QDateTime::currentDateTime();
         qint64 elapsedSec = waitingTStartTime.secsTo(currentTime);
-#if defined(MY_DEBUG)
-        qDebug() << "Elapsed:" << elapsedSec
-                 << "Maximum:" << quint64(pConfigureDialog->iReachingTime)*60;
-#endif
         if(elapsedSec >= qint64(pConfigureDialog->pTabLS330->iReachingTStart)*60) {
             waitingTStartTimer.disconnect();
             waitingTStartTimer.stop();
@@ -1278,11 +1341,15 @@ MainWindow::onTimerStabilizeT() {
 void
 MainWindow::onTimeToGetNewMeasure() {
     getNewMeasure();
-    if(!pLakeShore->isRamping()) {// Ramp is Done
-        stopRvsT();
-        ui->statusBar->showMessage(QString("Measurements Completed !"));
-        onClearComplianceEvent();
-        return;
+    if((presentMeasure==RvsTSourceI) ||
+       (presentMeasure==RvsTSourceV))
+    {
+        if(!pLakeShore->isRamping()) {// Ramp is Done
+            stopRvsT();
+            ui->statusBar->showMessage(QString("Measurements Completed !"));
+            onClearComplianceEvent();
+            return;
+        }
     }
 }
 
@@ -1403,7 +1470,7 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
         else {
             if(voltage != 0.0) {
                 sigmaIll = current/voltage;
-                pPlotMeasurements->NewPoint(iPlotPhoto, lambda, sigmaIll-sigmaDark);
+                pPlotMeasurements->NewPoint(1, lambda, sigmaIll-sigmaDark);
                 pPlotMeasurements->UpdatePlot();
             }
             pOutputFile->write("\n");
