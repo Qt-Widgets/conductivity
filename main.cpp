@@ -19,73 +19,99 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "mainwindow.h"
 #include <QApplication>
 #include <QMessageBox>
+#include <QSharedMemory>
+#include <QFileInfo>
 
 
 void
 myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
-  QByteArray localMsg = msg.toLocal8Bit();
-  switch (type) {
-  case QtDebugMsg:
-    fprintf(stderr, "Debug: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
-    break;
-  case QtInfoMsg:
-    fprintf(stderr, "Info: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
-    break;
-  case QtWarningMsg:
-    fprintf(stderr, "Warning: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
-    break;
-  case QtCriticalMsg:
-    fprintf(stderr, "Critical: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
-    break;
-  case QtFatalMsg:
-    fprintf(stderr, "Fatal: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
-    abort();
-  }
-  fflush(stderr);
+    QByteArray localMsg = msg.toLocal8Bit();
+    switch (type) {
+    case QtDebugMsg:
+        fprintf(stderr, "Debug: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+        break;
+    case QtInfoMsg:
+        fprintf(stderr, "Info: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+        break;
+    case QtWarningMsg:
+        fprintf(stderr, "Warning: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+        break;
+    case QtCriticalMsg:
+        fprintf(stderr, "Critical: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+        break;
+    case QtFatalMsg:
+        fprintf(stderr, "Fatal: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+        abort();
+    }
+    fflush(stderr);
 }
 
 
 int
 main(int argc, char *argv[]) {
-  qInstallMessageHandler(myMessageOutput); // Install the handler
 
-  QApplication a(argc, argv);
+    // Install the message handler
+    qInstallMessageHandler(myMessageOutput);
 
-  QCoreApplication::setOrganizationDomain("Gabriele.Salvato");
-  QCoreApplication::setOrganizationName("Gabriele.Salvato");
-  QCoreApplication::setApplicationName("Conductivity");
-  QCoreApplication::setApplicationVersion("2.0.0");
+    QApplication a(argc, argv);
+    QMessageBox msgBox;
 
-  MainWindow w;
-  w.setWindowIcon(QIcon("qrc:/myLogoT.png"));
-  w.show();
-  QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
+    int gpibBoardID = 0;
 
-  //    QString sGpibInterface = QString("/dev/gpib%1").arg(gpibBoardID);
-  //    QFileInfo checkFile(sGpibInterface);
-  //    if(!checkFile.exists() || !checkFile.isFile()) {
-  //        QMessageBox msgBox;
-  //        msgBox.setWindowTitle(QString(Q_FUNC_INFO));
-  //        msgBox.setIcon(QMessageBox::Critical);
-  //        msgBox.setText(QString("SendIFC() Error"));
-  //        msgBox.setInformativeText(QString("Is the GPIB Interface connected ? "));
-  //        msgBox.setStandardButtons(QMessageBox::Ok);
-  //        msgBox.setDefaultButton(QMessageBox::Ok);
-  //        int ret = msgBox.exec();
-  //        Q_UNUSED(ret)
-  //        return false;
-  //    }
+    QCoreApplication::setOrganizationDomain("Gabriele.Salvato");
+    QCoreApplication::setOrganizationName("Gabriele.Salvato");
+    QCoreApplication::setApplicationName("Conductivity");
+    QCoreApplication::setApplicationVersion("2.0.0");
 
-  while(!w.checkInstruments()) {
-      if(QMessageBox::critical(Q_NULLPTR,
-                               QString("Error"),
-                               QString("GPIB Instruments not Found\nSwitch on and retry"),
-                               QMessageBox::Abort|QMessageBox::Retry,
-                               QMessageBox::Retry) == QMessageBox::Abort)
-      {
-          return 0;
-      }
-  }
-  QApplication::restoreOverrideCursor();
-  return a.exec();
+    //For the key it is possible to use a GUID generated once for your application.
+    //You could get one GUID here: http://www.guidgenerator.com/online-guid-generator.aspx
+    QString sKey = QString("%1-%2-%3-%4")
+                           .arg(QCoreApplication::organizationDomain())
+                           .arg(QCoreApplication::organizationName())
+                           .arg(QCoreApplication::applicationName())
+                           .arg(QCoreApplication::applicationVersion());
+    QSharedMemory shared(sKey);
+
+    if(!shared.create(512, QSharedMemory::ReadWrite)) {
+        msgBox.setWindowTitle(QCoreApplication::applicationName());
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText(QString("Another Program Instance Detected"));
+        msgBox.setInformativeText(QString("Only a single instance is allowed"));
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        msgBox.exec();
+        return 0;
+     }
+
+    QString sGpibInterface = QString("/dev/gpib%1").arg(gpibBoardID);
+    QFileInfo checkFile(sGpibInterface);
+    while(!checkFile.exists()) {
+        msgBox.setWindowTitle(QCoreApplication::applicationName());
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText(QString("No %1 device file").arg(sGpibInterface));
+        msgBox.setInformativeText(QString("Is the GPIB Interface connected ? "));
+        msgBox.setStandardButtons(QMessageBox::Abort|QMessageBox::Retry);
+        msgBox.setDefaultButton(QMessageBox::Retry);
+        if(msgBox.exec() == QMessageBox::Abort)
+            return 0;
+    }
+
+    MainWindow w(gpibBoardID);
+    w.setWindowIcon(QIcon("qrc:/myLogoT.png"));
+    w.show();
+    QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
+
+    while(!w.checkInstruments()) {
+        if(QMessageBox::critical(Q_NULLPTR,
+                                 QString("Error"),
+                                 QString("GPIB Instruments not Found\nSwitch on and retry"),
+                                 QMessageBox::Abort|QMessageBox::Retry,
+                                 QMessageBox::Retry) == QMessageBox::Abort)
+        {
+            return 0;
+        }
+    }
+
+    QApplication::restoreOverrideCursor();
+    return a.exec();
 }

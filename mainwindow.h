@@ -43,7 +43,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = Q_NULLPTR);
+    explicit MainWindow(int iBoard, QWidget *parent = Q_NULLPTR);
     ~MainWindow() Q_DECL_OVERRIDE;
     bool checkInstruments();
 
@@ -57,6 +57,7 @@ signals:
 protected:
     void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
     bool getNewMeasure();
+    void initTemperaturePlot();
     void initRvsTPlots();
     void stopRvsT();
     void startI_V(bool bSourceI);

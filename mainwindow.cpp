@@ -46,7 +46,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define MY_DEBUG
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(int iBoard, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , pOutputFile(Q_NULLPTR)
@@ -85,7 +85,7 @@ MainWindow::MainWindow(QWidget *parent)
     sDarkStyle   = "QLabel { color: rgb(255, 255, 255); background: rgb(0, 0, 0); selection-background-color: rgb(128, 128, 255); }";
     sPhotoStyle  = "QLabel { color: rgb(0, 0, 0); background: rgb(255, 255, 0); selection-background-color: rgb(128, 128, 255); }";
 
-    gpibBoardID           = 0;
+    gpibBoardID           = iBoard;
     presentMeasure        = NoMeasure;
     bRunning              = false;
     isK236ReadyForTrigger = false;
@@ -1081,12 +1081,12 @@ MainWindow::initRvsTPlots() {
     pPlotMeasurements = Q_NULLPTR;
     if(pPlotTemperature) delete pPlotTemperature;
     pPlotTemperature = Q_NULLPTR;
-    // Plot of Condicibility vs Temperature
+    // Plot of Conductivity vs Temperature
     sMeasurementPlotLabel = QString("log(S) [Ohm^-1] -vs- 1000/T [K^-1]");
     pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
     pPlotMeasurements->setMaxPoints(maxPlotPoints);
     pPlotMeasurements->SetLimits(0.0, 1.0, 0.1, 1.0, true, true, false, true);
-
+    // Dataset for Dark measurements
     pPlotMeasurements->NewDataSet(iPlotDark,//Id
                                   3, //Pen Width
                                   QColor(255, 0, 0),// Color
@@ -1095,7 +1095,7 @@ MainWindow::initRvsTPlots() {
                                   );
     pPlotMeasurements->SetShowDataSet(iPlotDark, true);
     pPlotMeasurements->SetShowTitle(iPlotDark, true);
-
+    // Dataset for Illuminated measurements
     pPlotMeasurements->NewDataSet(iPlotPhoto,//Id
                                   3, //Pen Width
                                   QColor(255, 255, 0),// Color
@@ -1104,28 +1104,10 @@ MainWindow::initRvsTPlots() {
                                   );
     pPlotMeasurements->SetShowDataSet(iPlotPhoto, true);
     pPlotMeasurements->SetShowTitle(iPlotPhoto, true);
-
     pPlotMeasurements->UpdatePlot();
     pPlotMeasurements->show();
 
-    // Plot of Temperature vs Time
-    sTemperaturePlotLabel = QString("T [K] vs t [s]");
-    pPlotTemperature = new Plot2D(this, sTemperaturePlotLabel);
-    pPlotTemperature->setMaxPoints(maxPlotPoints);
-    pPlotTemperature->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
-
-    pPlotTemperature->NewDataSet(1,//Id
-                                 3, //Pen Width
-                                 QColor(255, 0, 0),// Color
-                                 Plot2D::ipoint,// Symbol
-                                 "T"// Title
-                                 );
-    pPlotTemperature->SetShowDataSet(1, true);
-    pPlotTemperature->SetShowTitle(1, true);
-
-    pPlotTemperature->UpdatePlot();
-    pPlotTemperature->show();
-    iCurrentTPlot = 1;
+    initTemperaturePlot();
 }
 
 
@@ -1137,7 +1119,6 @@ MainWindow::initIvsVPlots() {
     pPlotTemperature = Q_NULLPTR;
     // Plot of Current vs Voltage
     sMeasurementPlotLabel = QString("I [A] vs V [V]");
-
     pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
     pPlotMeasurements->setMaxPoints(maxPlotPoints);
     pPlotMeasurements->NewDataSet(1,//Id
@@ -1152,21 +1133,7 @@ MainWindow::initIvsVPlots() {
     pPlotMeasurements->UpdatePlot();
     pPlotMeasurements->show();
     // Plot of Temperature vs Time
-    sTemperaturePlotLabel = QString("T [K] vs t [s]");
-    pPlotTemperature = new Plot2D(this, sTemperaturePlotLabel);
-    pPlotTemperature->setMaxPoints(maxPlotPoints);
-    pPlotTemperature->NewDataSet(1,//Id
-                                 3, //Pen Width
-                                 QColor(255, 255, 0),// Color
-                                 Plot2D::ipoint,// Symbol
-                                 "T"// Title
-                                 );
-    pPlotTemperature->SetShowDataSet(1, true);
-    pPlotTemperature->SetShowTitle(1, true);
-    pPlotTemperature->SetLimits(0.0, 1.0, 0.0, 1.0, true, true, false, false);
-    pPlotTemperature->UpdatePlot();
-    pPlotTemperature->show();
-    iCurrentTPlot = 1;
+    initTemperaturePlot();
 }
 
 
@@ -1194,7 +1161,12 @@ MainWindow::initSvsLPlots() {
     pPlotMeasurements->UpdatePlot();
     pPlotMeasurements->show();
 
-    // Plot of Temperature vs Time
+    initTemperaturePlot();
+}
+
+
+void
+MainWindow::initTemperaturePlot() {
     sTemperaturePlotLabel = QString("T [K] -vs- t [s]");
     pPlotTemperature = new Plot2D(this, sTemperaturePlotLabel);
     pPlotTemperature->setMaxPoints(maxPlotPoints);
@@ -1454,12 +1426,13 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
             (presentMeasure==LambdaScanV))
     {
         double lambda = pCornerStone130->dPresentWavelength;
-        QString sData = QString("%1 %2 %3")
-                                .arg(lambda,  12, 'g', 6, ' ')
-                                .arg(voltage, 12, 'g', 6, ' ')
-                                .arg(current, 12, 'g', 6, ' ');
-        pOutputFile->write(sData.toLocal8Bit());
         if(currentLampStatus == LAMP_OFF) {
+            QString sData = QString("%1 %2 %3 %4")
+                                    .arg(lambda,  12, 'g', 6, ' ')
+                                    .arg(currentTemperature, 12, 'g', 6, ' ')
+                                    .arg(voltage, 12, 'g', 6, ' ')
+                                    .arg(current, 12, 'g', 6, ' ');
+            pOutputFile->write(sData.toLocal8Bit());
             if(voltage != 0.0) {
                 sigmaDark = current/voltage;
                 switchLampOn();
@@ -1473,7 +1446,11 @@ MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
                 pPlotMeasurements->NewPoint(1, lambda, sigmaIll-sigmaDark);
                 pPlotMeasurements->UpdatePlot();
             }
-            pOutputFile->write("\n");
+            QString sData = QString("%1 %2 %3\n")
+                                    .arg(currentTemperature, 12, 'g', 6, ' ')
+                                    .arg(voltage, 12, 'g', 6, ' ')
+                                    .arg(current, 12, 'g', 6, ' ');
+            pOutputFile->write(sData.toLocal8Bit());
             pOutputFile->flush();
             switchLampOff();
             goNextLambda();
