@@ -64,8 +64,9 @@ protected:
     void stopIvsV();
     void initIvsVPlots();
     void stopLambdaScan();
-    void goNextLambda();
+    void writeLambdaScanHeader();
     void initSvsLPlots();
+    void goNextLambda();
     bool prepareOutputFile(QString sBaseDir, QString sFileName);
     void switchLampOn();
     void switchLampOff();

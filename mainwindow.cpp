@@ -810,6 +810,7 @@ MainWindow::on_lambdaScanButton_clicked() {
     pCornerStone130->setWavelength(pConfigureDialog->pTabCS130->dStartWavelength);
     ui->wavelengthEdit->setText(QString("%1")
                                 .arg(pConfigureDialog->pTabCS130->dStartWavelength));
+    // Switch Off the Lamp
     switchLampOff();
     // Initializing Keithley 236
     ui->statusBar->showMessage("Initializing Keithley 236...");
@@ -843,46 +844,8 @@ MainWindow::on_lambdaScanButton_clicked() {
         QApplication::restoreOverrideCursor();
         return;
     }
-    // Write the header
-    // To cope with the GnuPlot way to handle the comment lines
-    // we need a # as a first chraracter in each row.
-    pOutputFile->write(QString("#%1 %2 %3 %4 %5 %6 %7")
-                       .arg("Wavelen[nm]", 12)
-                       .arg("T-Dark[K]", 12)
-                       .arg("V-Dark[V]", 12)
-                       .arg("I-Dark[A]", 12)
-                       .arg("T-Photo[K]", 12)
-                       .arg("V-Photo[V]", 12)
-                       .arg("I-Photo[A]\n", 12)
-                       .toLocal8Bit());
-    QStringList HeaderLines = pConfigureDialog->pTabFile->sSampleInfo.split("\n");
-    for(int i=0; i<HeaderLines.count(); i++) {
-        pOutputFile->write("# ");
-        pOutputFile->write(HeaderLines.at(i).toLocal8Bit());
-        pOutputFile->write("\n");
-    }
-    pOutputFile->write(QString("# Grating #= %1 Start Wavelen = %2 [nm] Stop Wavelen = %3 [nm]\n")
-                               .arg(pConfigureDialog->pTabCS130->iGratingNumber)
-                               .arg(pConfigureDialog->pTabCS130->dStartWavelength)
-                               .arg(pConfigureDialog->pTabCS130->dStopWavelength).toLocal8Bit());
-    if(pConfigureDialog->pTabK236->bSourceI) {
-        pOutputFile->write(QString("# Current=%1[A] Compliance=%2[V]\n")
-                           .arg(pConfigureDialog->pTabK236->dStart)
-                           .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
-    }
-    else {
-        pOutputFile->write(QString("# Voltage=%1[V] Compliance=%2[A]\n")
-                           .arg(pConfigureDialog->pTabK236->dStart)
-                           .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
-    }
-    pOutputFile->write(QString("# T_Start=%1[K] T_Stop=%2[K] T_Steo=%3[K/min]\n")
-                       .arg(pConfigureDialog->pTabLS330->dTStart)
-                       .arg(pConfigureDialog->pTabLS330->dTStop)
-                       .arg(pConfigureDialog->pTabLS330->dTStep).toLocal8Bit());
-    pOutputFile->write(QString("# Max_T_Start_Wait=%1[min] T_Stabilize_Time=%2[min]\n")
-                       .arg(pConfigureDialog->pTabLS330->iReachingTStart)
-                       .arg(pConfigureDialog->pTabLS330->iTimeToSteadyT).toLocal8Bit());
-    pOutputFile->flush();
+    // Write the File Header
+    writeLambdaScanHeader();
     // Init the Plots
     initSvsLPlots();
     // Configure Thermostat (if used)
@@ -947,6 +910,51 @@ MainWindow::on_lambdaScanButton_clicked() {
     ui->lampButton->setDisabled(true);
     ui->statusBar->showMessage(QString("λ Scan Started: Please wait"));
     bRunning = true;
+}
+
+
+void
+MainWindow::writeLambdaScanHeader() {
+    // Write the header
+    // To cope with the GnuPlot way to handle the comment lines
+    // we need a # as a first chraracter in each row.
+    pOutputFile->write(QString("#%1 %2 %3 %4 %5 %6 %7")
+                       .arg("Wavelen[nm]", 12)
+                       .arg("T-Dark[K]", 12)
+                       .arg("V-Dark[V]", 12)
+                       .arg("I-Dark[A]", 12)
+                       .arg("T-Photo[K]", 12)
+                       .arg("V-Photo[V]", 12)
+                       .arg("I-Photo[A]\n", 12)
+                       .toLocal8Bit());
+    QStringList HeaderLines = pConfigureDialog->pTabFile->sSampleInfo.split("\n");
+    for(int i=0; i<HeaderLines.count(); i++) {
+        pOutputFile->write("# ");
+        pOutputFile->write(HeaderLines.at(i).toLocal8Bit());
+        pOutputFile->write("\n");
+    }
+    pOutputFile->write(QString("# Grating #= %1 Start Wavelen = %2 [nm] Stop Wavelen = %3 [nm]\n")
+                               .arg(pConfigureDialog->pTabCS130->iGratingNumber)
+                               .arg(pConfigureDialog->pTabCS130->dStartWavelength)
+                               .arg(pConfigureDialog->pTabCS130->dStopWavelength).toLocal8Bit());
+    if(pConfigureDialog->pTabK236->bSourceI) {
+        pOutputFile->write(QString("# Current=%1[A] Compliance=%2[V]\n")
+                           .arg(pConfigureDialog->pTabK236->dStart)
+                           .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
+    }
+    else {
+        pOutputFile->write(QString("# Voltage=%1[V] Compliance=%2[A]\n")
+                           .arg(pConfigureDialog->pTabK236->dStart)
+                           .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
+    }
+    pOutputFile->write(QString("# T_Start=%1[K] T_Stop=%2[K] T_Steo=%3[K/min]\n")
+                       .arg(pConfigureDialog->pTabLS330->dTStart)
+                       .arg(pConfigureDialog->pTabLS330->dTStop)
+                       .arg(pConfigureDialog->pTabLS330->dTStep).toLocal8Bit());
+    pOutputFile->write(QString("# Max_T_Start_Wait=%1[min] T_Stabilize_Time=%2[min]\n")
+                       .arg(pConfigureDialog->pTabLS330->iReachingTStart)
+                       .arg(pConfigureDialog->pTabLS330->iTimeToSteadyT).toLocal8Bit());
+    pOutputFile->flush();
 }
 
 
