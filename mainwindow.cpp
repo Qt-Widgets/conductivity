@@ -541,46 +541,7 @@ MainWindow::on_startRvsTButton_clicked() {
         QApplication::restoreOverrideCursor();
         return;
     }
-    // Write the header
-    // To cope with the GnuPlot way to handle the comment lines
-    // we need a # as a first chraracter in each row.
-    pOutputFile->write(QString("#%1 %2 %3 %4 %5 %6")
-                       .arg("T-Dark[K]", 12)
-                       .arg("V-Dark[V]", 12)
-                       .arg("I-Dark[A]", 12)
-                       .arg("T-Photo[K]", 12)
-                       .arg("V-Photo[V]", 12)
-                       .arg("I-Photo[A]\n", 12)
-                       .toLocal8Bit());
-    QStringList HeaderLines = pConfigureDialog->pTabFile->sSampleInfo.split("\n");
-    for(int i=0; i<HeaderLines.count(); i++) {
-        pOutputFile->write("# ");
-        pOutputFile->write(HeaderLines.at(i).toLocal8Bit());
-        pOutputFile->write("\n");
-    }
-    if(bUseMonochromator) {
-        pOutputFile->write(QString("# Grating #= %1 Wavelength = %2 nm\n")
-                                   .arg(pConfigureDialog->pTabCS130->iGratingNumber)
-                                   .arg(pConfigureDialog->pTabCS130->dWavelength).toLocal8Bit());
-    }
-    if(pConfigureDialog->pTabK236->bSourceI) {
-        pOutputFile->write(QString("# Current=%1[A] Compliance=%2[V]\n")
-                           .arg(pConfigureDialog->pTabK236->dStart)
-                           .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
-    }
-    else {
-        pOutputFile->write(QString("# Voltage=%1[V] Compliance=%2[A]\n")
-                           .arg(pConfigureDialog->pTabK236->dStart)
-                           .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
-    }
-    pOutputFile->write(QString("# T_Start=%1[K] T_Stop=%2[K] T_Rate=%3[K/min]\n")
-                       .arg(pConfigureDialog->pTabLS330->dTStart)
-                       .arg(pConfigureDialog->pTabLS330->dTStop)
-                       .arg(pConfigureDialog->pTabLS330->dTRate).toLocal8Bit());
-    pOutputFile->write(QString("# Max_T_Start_Wait=%1[min] T_Stabilize_Time=%2[min]\n")
-                       .arg(pConfigureDialog->pTabLS330->iReachingTStart)
-                       .arg(pConfigureDialog->pTabLS330->iTimeToSteadyT).toLocal8Bit());
-    pOutputFile->flush();
+    writeRvsTHeader();
     // Init the Plots
     initRvsTPlots();
     // Configure Thermostat
@@ -631,6 +592,51 @@ MainWindow::on_startRvsTButton_clicked() {
                                .arg(pConfigureDialog->pTabLS330->dTStart));
     // Start the reaching of the Initial Temperature
     waitingTStartTimer.start(5000);
+}
+
+
+void
+MainWindow::writeRvsTHeader() {
+    // Write the header
+    // To cope with the GnuPlot way to handle the comment lines
+    // we need a # as a first chraracter in each row.
+    pOutputFile->write(QString("#%1 %2 %3 %4 %5 %6")
+                       .arg("T-Dark[K]", 12)
+                       .arg("V-Dark[V]", 12)
+                       .arg("I-Dark[A]", 12)
+                       .arg("T-Photo[K]", 12)
+                       .arg("V-Photo[V]", 12)
+                       .arg("I-Photo[A]\n", 12)
+                       .toLocal8Bit());
+    QStringList HeaderLines = pConfigureDialog->pTabFile->sSampleInfo.split("\n");
+    for(int i=0; i<HeaderLines.count(); i++) {
+        pOutputFile->write("# ");
+        pOutputFile->write(HeaderLines.at(i).toLocal8Bit());
+        pOutputFile->write("\n");
+    }
+    if(bUseMonochromator) {
+        pOutputFile->write(QString("# Grating #= %1 Wavelength = %2 nm\n")
+                                   .arg(pConfigureDialog->pTabCS130->iGratingNumber)
+                                   .arg(pConfigureDialog->pTabCS130->dWavelength).toLocal8Bit());
+    }
+    if(pConfigureDialog->pTabK236->bSourceI) {
+        pOutputFile->write(QString("# Current=%1[A] Compliance=%2[V]\n")
+                           .arg(pConfigureDialog->pTabK236->dStart)
+                           .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
+    }
+    else {
+        pOutputFile->write(QString("# Voltage=%1[V] Compliance=%2[A]\n")
+                           .arg(pConfigureDialog->pTabK236->dStart)
+                           .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
+    }
+    pOutputFile->write(QString("# T_Start=%1[K] T_Stop=%2[K] T_Rate=%3[K/min]\n")
+                       .arg(pConfigureDialog->pTabLS330->dTStart)
+                       .arg(pConfigureDialog->pTabLS330->dTStop)
+                       .arg(pConfigureDialog->pTabLS330->dTRate).toLocal8Bit());
+    pOutputFile->write(QString("# Max_T_Start_Wait=%1[min] T_Stabilize_Time=%2[min]\n")
+                       .arg(pConfigureDialog->pTabLS330->iReachingTStart)
+                       .arg(pConfigureDialog->pTabLS330->iTimeToSteadyT).toLocal8Bit());
+    pOutputFile->flush();
 }
 
 
@@ -693,52 +699,9 @@ MainWindow::on_startIvsVButton_clicked() {
         stopIvsV();
         return;
     }
-    // To cope with GnuPlot way to handle the comment lines
-    pOutputFile->write(QString("#%1 %2 %3\n")
-                       .arg("Voltage[V]", 12)
-                       .arg("Current[A]", 12)
-                       .arg("Temp.[K]", 12).toLocal8Bit());
-    QStringList HeaderLines = pConfigureDialog->pTabFile->sSampleInfo.split("\n");
-    for(int i=0; i<HeaderLines.count(); i++) {
-        pOutputFile->write("# ");
-        pOutputFile->write(HeaderLines.at(i).toLocal8Bit());
-        pOutputFile->write("\n");
-    }
-    if(pConfigureDialog->pTabK236->bSourceI) {
-        pOutputFile->write(QString("# I_Start=%1[A] I_Stop=%2[A] Compliance=%3[V]\n")
-                           .arg(pConfigureDialog->pTabK236->dStart)
-                           .arg(pConfigureDialog->pTabK236->dStop)
-                           .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
-    }
-    else {
-        pOutputFile->write(QString("# V_Start=%1[A] V_Stop=%2[V] Compliance=%3[A]\n")
-                           .arg(pConfigureDialog->pTabK236->dStart)
-                           .arg(pConfigureDialog->pTabK236->dStop)
-                           .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
-    }
-    if(pConfigureDialog->pTabLS330->bUseThermostat) {
-        pOutputFile->write(QString("# T_Start=%1[K] T_Stop=%2[K] T_Step=%3[K]\n")
-                           .arg(pConfigureDialog->pTabLS330->dTStart)
-                           .arg(pConfigureDialog->pTabLS330->dTStop)
-                           .arg(pConfigureDialog->pTabLS330->dTStep).toLocal8Bit());
-        pOutputFile->write(QString("# Max_T_Start_Wait=%1[min] T_Stabilize_Time=%2[min]\n")
-                           .arg(pConfigureDialog->pTabLS330->iReachingTStart)
-                           .arg(pConfigureDialog->pTabLS330->iTimeToSteadyT).toLocal8Bit());
-    }
-    if(pConfigureDialog->pTabCS130->bPhoto) {
-        pOutputFile->write(QString("# Lamp=On\n").toLocal8Bit());
-        if(bUseMonochromator) {
-            pOutputFile->write(QString("# Grating #= %1 Wavelength = %2 nm\n")
-                                       .arg(pConfigureDialog->pTabCS130->iGratingNumber)
-                                       .arg(pConfigureDialog->pTabCS130->dWavelength).toLocal8Bit());
-        }
-    }
-    else {
-        pOutputFile->write(QString("# Lamp=Off\n").toLocal8Bit());
-    }
-
-    pOutputFile->flush();
-
+    // Write IvsV  File Header
+    writeIvsVHeader();
+    // Initi the Plots
     initIvsVPlots();
     isK236ReadyForTrigger = false;
     presentMeasure = IvsV;
@@ -783,6 +746,55 @@ MainWindow::on_startIvsVButton_clicked() {
     ui->startIvsVButton->setText("Stop I vs V");
     ui->lambdaScanButton->setDisabled(true);
     ui->lampButton->setDisabled(true);
+}
+
+
+void
+MainWindow::writeIvsVHeader() {
+    // To cope with GnuPlot way to handle the comment lines
+    pOutputFile->write(QString("#%1 %2 %3\n")
+                       .arg("Voltage[V]", 12)
+                       .arg("Current[A]", 12)
+                       .arg("Temp.[K]", 12).toLocal8Bit());
+    QStringList HeaderLines = pConfigureDialog->pTabFile->sSampleInfo.split("\n");
+    for(int i=0; i<HeaderLines.count(); i++) {
+        pOutputFile->write("# ");
+        pOutputFile->write(HeaderLines.at(i).toLocal8Bit());
+        pOutputFile->write("\n");
+    }
+    if(pConfigureDialog->pTabK236->bSourceI) {
+        pOutputFile->write(QString("# I_Start=%1[A] I_Stop=%2[A] Compliance=%3[V]\n")
+                           .arg(pConfigureDialog->pTabK236->dStart)
+                           .arg(pConfigureDialog->pTabK236->dStop)
+                           .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
+    }
+    else {
+        pOutputFile->write(QString("# V_Start=%1[A] V_Stop=%2[V] Compliance=%3[A]\n")
+                           .arg(pConfigureDialog->pTabK236->dStart)
+                           .arg(pConfigureDialog->pTabK236->dStop)
+                           .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
+    }
+    if(pConfigureDialog->pTabLS330->bUseThermostat) {
+        pOutputFile->write(QString("# T_Start=%1[K] T_Stop=%2[K] T_Step=%3[K]\n")
+                           .arg(pConfigureDialog->pTabLS330->dTStart)
+                           .arg(pConfigureDialog->pTabLS330->dTStop)
+                           .arg(pConfigureDialog->pTabLS330->dTStep).toLocal8Bit());
+        pOutputFile->write(QString("# Max_T_Start_Wait=%1[min] T_Stabilize_Time=%2[min]\n")
+                           .arg(pConfigureDialog->pTabLS330->iReachingTStart)
+                           .arg(pConfigureDialog->pTabLS330->iTimeToSteadyT).toLocal8Bit());
+    }
+    if(pConfigureDialog->pTabCS130->bPhoto) {
+        pOutputFile->write(QString("# Lamp=On\n").toLocal8Bit());
+        if(bUseMonochromator) {
+            pOutputFile->write(QString("# Grating #= %1 Wavelength = %2 nm\n")
+                                       .arg(pConfigureDialog->pTabCS130->iGratingNumber)
+                                       .arg(pConfigureDialog->pTabCS130->dWavelength).toLocal8Bit());
+        }
+    }
+    else {
+        pOutputFile->write(QString("# Lamp=Off\n").toLocal8Bit());
+    }
+    pOutputFile->flush();
 }
 
 
