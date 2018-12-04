@@ -60,6 +60,22 @@ main(int argc, char *argv[]) {
   w.setWindowIcon(QIcon("qrc:/myLogoT.png"));
   w.show();
   QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
+
+  //    QString sGpibInterface = QString("/dev/gpib%1").arg(gpibBoardID);
+  //    QFileInfo checkFile(sGpibInterface);
+  //    if(!checkFile.exists() || !checkFile.isFile()) {
+  //        QMessageBox msgBox;
+  //        msgBox.setWindowTitle(QString(Q_FUNC_INFO));
+  //        msgBox.setIcon(QMessageBox::Critical);
+  //        msgBox.setText(QString("SendIFC() Error"));
+  //        msgBox.setInformativeText(QString("Is the GPIB Interface connected ? "));
+  //        msgBox.setStandardButtons(QMessageBox::Ok);
+  //        msgBox.setDefaultButton(QMessageBox::Ok);
+  //        int ret = msgBox.exec();
+  //        Q_UNUSED(ret)
+  //        return false;
+  //    }
+
   while(!w.checkInstruments()) {
       if(QMessageBox::critical(Q_NULLPTR,
                                QString("Error"),
