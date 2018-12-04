@@ -68,29 +68,29 @@ MainWindow::MainWindow(int iBoard, QWidget *parent)
     // +5V on pins 2 or 4 in the 40 pin GPIO connector.
     // GND on pins 6, 9, 14, 20, 25, 30, 34 or 39
     // in the 40 pin GPIO connector.
-    , sLogFileName(QString("gpibLog.txt"))
 {
+    gpibBoardID = iBoard;
     // Prepare message logging
+    sLogFileName = QString("gpibLog.txt");
     prepareLogFile();
-
+    // Setup User Interface
     ui->setupUi(this);
     // Remove the resize-handle in the lower right corner
     ui->statusBar->setSizeGripEnabled(false);
     // Make the size of the window fixed
     setFixedSize(size());
     setWindowIcon(QIcon("qrc:/myLogoT.png"));
-
+    // Setup the QLineEdit styles
     sNormalStyle = ui->labelCompliance->styleSheet();
     sErrorStyle  = "QLabel { color: rgb(255, 255, 255); background: rgb(255, 0, 0); selection-background-color: rgb(128, 128, 255); }";
     sDarkStyle   = "QLabel { color: rgb(255, 255, 255); background: rgb(0, 0, 0); selection-background-color: rgb(128, 128, 255); }";
     sPhotoStyle  = "QLabel { color: rgb(0, 0, 0); background: rgb(255, 255, 0); selection-background-color: rgb(128, 128, 255); }";
-
-    gpibBoardID           = iBoard;
+    // Init internal variables
     presentMeasure        = NoMeasure;
     bRunning              = false;
     isK236ReadyForTrigger = false;
     maxPlotPoints         = 3000;
-
+    // Restore Geometry and State of the window
     QSettings settings;
     restoreGeometry(settings.value("mainWindowGeometry").toByteArray());
     restoreState(settings.value("mainWindowState").toByteArray());
@@ -131,6 +131,7 @@ MainWindow::closeEvent(QCloseEvent *event) {
             pOutputFile->deleteLater();
             pOutputFile = Q_NULLPTR;
         }
+// TODO: improve !
         if(pKeithley) pKeithley->endVvsT();
         if(pLakeShore) pLakeShore->switchPowerOff();
     }
@@ -207,7 +208,7 @@ MainWindow::checkInstruments() {
     Addr4882_t resultlist[31];
     for(uint16_t i=0; i<30; i++) padlist[i] = i+1;
     padlist[30] = NOADDR;
-
+    // Resets the GPIB bus by asserting the 'interface clear' bus line
     SendIFC(gpibBoardID);
     if(ThreadIbsta() & ERR) {
         QMessageBox msgBox;
@@ -221,7 +222,6 @@ MainWindow::checkInstruments() {
         Q_UNUSED(ret)
         return false;
     }
-
     // Enable assertion of REN when System Controller
     // Required by the Keithley 236
     ibconfig(gpibBoardID, IbcSRE, 1);
@@ -255,6 +255,7 @@ MainWindow::checkInstruments() {
         Q_UNUSED(ret)
         return false;
     }
+    // Find all the instruments connected to the GPIB Bus
     FindLstn(gpibBoardID, padlist, resultlist, 30);
     if(ThreadIbsta() & ERR) {
         QMessageBox msgBox;
@@ -343,7 +344,6 @@ MainWindow::checkInstruments() {
         Q_UNUSED(ret)
         return false;
     }
-
     // Check for the Keithley 236
     sCommand = "U0X";
     for(int i=0; i<nDevices; i++) {
@@ -380,7 +380,7 @@ MainWindow::checkInstruments() {
         Q_UNUSED(ret)
         return false;
     }
-
+    // Initialize the GPIO handler
 #if defined(Q_PROCESSOR_ARM)
     gpioHostHandle = pigpio_start((char*)"localhost", (char*)"8888");
     if(gpioHostHandle < 0) {
@@ -401,7 +401,6 @@ MainWindow::checkInstruments() {
     }
 #endif
     switchLampOff();
-
     ui->statusBar->showMessage("GPIB Instruments Found! Ready to Start");
     return true;
 }
@@ -493,7 +492,6 @@ MainWindow::on_startRvsTButton_clicked() {
     pConfigureDialog = new ConfigureDialog(iConfRvsT, bUseMonochromator, this);
     if(pConfigureDialog->exec() == QDialog::Rejected)
         return;
-
     QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
     if(bUseMonochromator) {
         //Initializing Corner Stone 130
@@ -569,7 +567,6 @@ MainWindow::on_startRvsTButton_clicked() {
     startReadingTTime = waitingTStartTime;
     onTimeToReadT();
     readingTTimer.start(30000);
-
     // All done... compute the time needed for the measurement:
     startMeasuringTime = QDateTime::currentDateTime();
     double deltaT, expectedMinutes;
@@ -581,7 +578,6 @@ MainWindow::on_startRvsTButton_clicked() {
     endMeasureTime = startMeasuringTime.addSecs(qint64(expectedMinutes*60.0));
     QString sString = endMeasureTime.toString("hh:mm dd-MM-yyyy");
     ui->endTimeEdit->setText(sString);
-
     // now we are waiting for reaching the initial temperature
     ui->startIvsVButton->setDisabled(true);
     ui->startRvsTButton->setText("Stop R vs T");
