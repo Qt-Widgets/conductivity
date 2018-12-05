@@ -74,6 +74,7 @@ protected:
     void switchLampOff();
     bool prepareLogFile();
     void logMessage(QString sMessage);
+    bool DecodeReadings(QString sDataRead, double *current, double *voltage);
 
 private slots:
     void on_startRvsTButton_clicked();
@@ -87,7 +88,8 @@ private slots:
     void onComplianceEvent();
     void onClearComplianceEvent();
     void onKeithleyReadyForTrigger();
-    void onNewKeithleyReading(QDateTime dataTime, QString sDataRead);
+    void onNewRvsTKeithleyReading(QDateTime dataTime, QString sDataRead);
+    void onNewLambdaScanKeithleyReading(QDateTime dataTime, QString sDataRead);
     bool onKeithleyReadyForSweepTrigger();
     void onKeithleySweepDone(QDateTime dataTime, QString sData);
     void onIForwardSweepDone(QDateTime, QString sData);

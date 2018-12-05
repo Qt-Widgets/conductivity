@@ -523,7 +523,7 @@ MainWindow::on_startRvsTButton_clicked() {
     connect(pKeithley, SIGNAL(readyForTrigger()),
             this, SLOT(onKeithleyReadyForTrigger()));
     connect(pKeithley, SIGNAL(newReading(QDateTime, QString)),
-            this, SLOT(onNewKeithleyReading(QDateTime, QString)));
+            this, SLOT(onNewRvsTKeithleyReading(QDateTime, QString)));
     // Initializing LakeShore 330
     ui->statusBar->showMessage("Initializing LakeShore 330...");
     if(pLakeShore->init()) {
@@ -836,7 +836,7 @@ MainWindow::on_lambdaScanButton_clicked() {
     connect(pKeithley, SIGNAL(readyForTrigger()),
             this, SLOT(onKeithleyReadyForTrigger()));
     connect(pKeithley, SIGNAL(newReading(QDateTime, QString)),
-            this, SLOT(onNewKeithleyReading(QDateTime, QString)));
+            this, SLOT(onNewLambdaScanKeithleyReading(QDateTime, QString)));
     // Initializing LakeShore 330
     ui->statusBar->showMessage("Initializing LakeShore 330...");
     if(pLakeShore->init()) {
@@ -1389,90 +1389,109 @@ MainWindow::onKeithleyReadyForSweepTrigger() {
 
 
 void
-MainWindow::onNewKeithleyReading(QDateTime dataTime, QString sDataRead) {
+MainWindow::onNewRvsTKeithleyReading(QDateTime dataTime, QString sDataRead) {
     Q_UNUSED(dataTime)
-    // Decode readings
-    QStringList sMeasures = QStringList(sDataRead.split(",", QString::SkipEmptyParts));
-    if(sMeasures.count() < 2) {
-        logMessage("Measurement Format Error");
-        return;
-    }
-    currentTemperature = pLakeShore->getTemperature();
     double current, voltage;
-    if(pConfigureDialog->pTabK236->bSourceI) {
-        current = sMeasures.at(0).toDouble();
-        voltage = sMeasures.at(1).toDouble();
-    }
-    else {
-        current = sMeasures.at(1).toDouble();
-        voltage = sMeasures.at(0).toDouble();
-    }
+    if(!DecodeReadings(sDataRead, &current, &voltage))
+        return;
+    currentTemperature = pLakeShore->getTemperature();
     ui->temperatureEdit->setText(QString("%1").arg(currentTemperature));
     ui->currentEdit->setText(QString("%1").arg(current, 10, 'g', 4, ' '));
     ui->voltageEdit->setText(QString("%1").arg(voltage, 10, 'g', 4, ' '));
+    if(bUseMonochromator) {
+        double lambda = pCornerStone130->dPresentWavelength;
+        ui->wavelengthEdit->setText(QString("%1").arg(lambda, 10, 'f', 2, ' '));
+    }
 
     if(!bRunning) return;
 
-    if((presentMeasure==RvsTSourceI) ||
-       (presentMeasure==RvsTSourceV))
-    {
-        QString sData = QString("%1 %2 %3")
+    QString sData = QString("%1 %2 %3")
+                            .arg(currentTemperature, 12, 'g', 6, ' ')
+                            .arg(voltage, 12, 'g', 6, ' ')
+                            .arg(current, 12, 'g', 6, ' ');
+    pOutputFile->write(sData.toLocal8Bit());
+    if(currentLampStatus == LAMP_OFF) {
+        if(voltage != 0.0) {
+            pPlotMeasurements->NewPoint(iPlotDark, 1000.0/currentTemperature, current/voltage);
+            pPlotMeasurements->UpdatePlot();
+        }
+        switchLampOn();
+    }
+    else {
+        if(voltage != 0.0) {
+            pPlotMeasurements->NewPoint(iPlotPhoto, 1000.0/currentTemperature, current/voltage);
+            pPlotMeasurements->UpdatePlot();
+        }
+        pOutputFile->write("\n");
+        pOutputFile->flush();
+        switchLampOff();
+    }
+}
+
+
+bool
+MainWindow::DecodeReadings(QString sDataRead, double *current, double *voltage) {    // Decode readings
+    QStringList sMeasures = QStringList(sDataRead.split(",", QString::SkipEmptyParts));
+    if(sMeasures.count() < 2) {
+        logMessage("Measurement Format Error");
+        return false;
+    }
+    currentTemperature = pLakeShore->getTemperature();
+    if(pConfigureDialog->pTabK236->bSourceI) {
+        *current = sMeasures.at(0).toDouble();
+        *voltage = sMeasures.at(1).toDouble();
+    }
+    else {
+        *current = sMeasures.at(1).toDouble();
+        *voltage = sMeasures.at(0).toDouble();
+    }
+    return true;
+}
+
+
+void
+MainWindow::onNewLambdaScanKeithleyReading(QDateTime dataTime, QString sDataRead) {
+    Q_UNUSED(dataTime)
+    double current, voltage;
+    if(!DecodeReadings(sDataRead, &current, &voltage))
+        return;
+    double lambda = pCornerStone130->dPresentWavelength;
+    ui->temperatureEdit->setText(QString("%1").arg(currentTemperature));
+    ui->currentEdit->setText(QString("%1").arg(current, 10, 'g', 4, ' '));
+    ui->voltageEdit->setText(QString("%1").arg(voltage, 10, 'g', 4, ' '));
+    ui->wavelengthEdit->setText(QString("%1").arg(lambda, 10, 'f', 2, ' '));
+
+    if(!bRunning) return;
+
+    if(currentLampStatus == LAMP_OFF) {
+        QString sData = QString("%1 %2 %3 %4")
+                                .arg(lambda,  12, 'g', 6, ' ')
                                 .arg(currentTemperature, 12, 'g', 6, ' ')
                                 .arg(voltage, 12, 'g', 6, ' ')
                                 .arg(current, 12, 'g', 6, ' ');
         pOutputFile->write(sData.toLocal8Bit());
-        if(currentLampStatus == LAMP_OFF) {
-            if(voltage != 0.0) {
-                pPlotMeasurements->NewPoint(iPlotDark, 1000.0/currentTemperature, current/voltage);
-                pPlotMeasurements->UpdatePlot();
-            }
+        if(voltage != 0.0) {
+            sigmaDark = current/voltage;
             switchLampOn();
         }
-        else {
-            if(voltage != 0.0) {
-                pPlotMeasurements->NewPoint(iPlotPhoto, 1000.0/currentTemperature, current/voltage);
-                pPlotMeasurements->UpdatePlot();
-            }
-            pOutputFile->write("\n");
-            pOutputFile->flush();
-            switchLampOff();
-        }
-    }// RvsTSourceI || RvsTSourceV
-
-    else if((presentMeasure==LambdaScanI) ||
-            (presentMeasure==LambdaScanV))
-    {
-        double lambda = pCornerStone130->dPresentWavelength;
-        if(currentLampStatus == LAMP_OFF) {
-            QString sData = QString("%1 %2 %3 %4")
-                                    .arg(lambda,  12, 'g', 6, ' ')
-                                    .arg(currentTemperature, 12, 'g', 6, ' ')
-                                    .arg(voltage, 12, 'g', 6, ' ')
-                                    .arg(current, 12, 'g', 6, ' ');
-            pOutputFile->write(sData.toLocal8Bit());
-            if(voltage != 0.0) {
-                sigmaDark = current/voltage;
-                switchLampOn();
-            }
-            else
-                goNextLambda();
-        }
-        else {
-            if(voltage != 0.0) {
-                sigmaIll = current/voltage;
-                pPlotMeasurements->NewPoint(1, lambda, sigmaIll-sigmaDark);
-                pPlotMeasurements->UpdatePlot();
-            }
-            QString sData = QString("%1 %2 %3\n")
-                                    .arg(currentTemperature, 12, 'g', 6, ' ')
-                                    .arg(voltage, 12, 'g', 6, ' ')
-                                    .arg(current, 12, 'g', 6, ' ');
-            pOutputFile->write(sData.toLocal8Bit());
-            pOutputFile->flush();
-            switchLampOff();
+        else
             goNextLambda();
+    }
+    else {
+        if(voltage != 0.0) {
+            sigmaIll = current/voltage;
+            pPlotMeasurements->NewPoint(1, lambda, sigmaIll-sigmaDark);
+            pPlotMeasurements->UpdatePlot();
         }
-    }// LambdaScanI || LambdaScanV
+        QString sData = QString("%1 %2 %3\n")
+                                .arg(currentTemperature, 12, 'g', 6, ' ')
+                                .arg(voltage, 12, 'g', 6, ' ')
+                                .arg(current, 12, 'g', 6, ' ');
+        pOutputFile->write(sData.toLocal8Bit());
+        pOutputFile->flush();
+        switchLampOff();
+        goNextLambda();
+    }
 }
 
 
