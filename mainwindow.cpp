@@ -44,7 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QStandardPaths>
 #include <QDebug>
 
-#define MY_DEBUG
+//#define MY_DEBUG
 
 MainWindow::MainWindow(int iBoard, QWidget *parent)
     : QMainWindow(parent)
