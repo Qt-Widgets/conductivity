@@ -57,8 +57,6 @@ MainWindow::MainWindow(int iBoard, QWidget *parent)
     , pPlotMeasurements(Q_NULLPTR)
     , pPlotTemperature(Q_NULLPTR)
     , pConfigureDialog(Q_NULLPTR)
-    , bUseMonochromator(false)
-    , gpioHostHandle(-1)
     // BCM 23: pin 16 in the 40 pins GPIO connector
     , gpioLEDpin(23)
     // GPIO Numbers are Broadcom (BCM) numbers
@@ -69,9 +67,20 @@ MainWindow::MainWindow(int iBoard, QWidget *parent)
     // GND on pins 6, 9, 14, 20, 25, 30, 34 or 39
     // in the 40 pin GPIO connector.
 {
-    gpibBoardID = iBoard;
+    // Init internal variables
+    gpibBoardID           = iBoard;
+    bUseMonochromator     = false;
+    gpioHostHandle        = -1;
+    presentMeasure        = NoMeasure;
+    bRunning              = false;
+    isK236ReadyForTrigger = false;
+    maxPlotPoints         = 3000;
+    wlResolution          = 10;// To be changed
     // Prepare message logging
     sLogFileName = QString("gpibLog.txt");
+    sLogDir = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    if(!sLogDir.endsWith(QString("/"))) sLogDir+= QString("/");
+    sLogFileName = sLogDir+sLogFileName;
     prepareLogFile();
     // Setup User Interface
     ui->setupUi(this);
@@ -85,12 +94,6 @@ MainWindow::MainWindow(int iBoard, QWidget *parent)
     sErrorStyle  = "QLabel { color: rgb(255, 255, 255); background: rgb(255, 0, 0); selection-background-color: rgb(128, 128, 255); }";
     sDarkStyle   = "QLabel { color: rgb(255, 255, 255); background: rgb(0, 0, 0); selection-background-color: rgb(128, 128, 255); }";
     sPhotoStyle  = "QLabel { color: rgb(0, 0, 0); background: rgb(255, 255, 0); selection-background-color: rgb(128, 128, 255); }";
-    // Init internal variables
-    presentMeasure        = NoMeasure;
-    bRunning              = false;
-    isK236ReadyForTrigger = false;
-    maxPlotPoints         = 3000;
-    wlResoution           = 10;// To be changed
     // Restore Geometry and State of the window
     QSettings settings;
     restoreGeometry(settings.value("mainWindowGeometry").toByteArray());
@@ -133,7 +136,6 @@ MainWindow::closeEvent(QCloseEvent *event) {
             pOutputFile->deleteLater();
             pOutputFile = Q_NULLPTR;
         }
-// TODO: improve !
         if(pKeithley)
             pKeithley->endVvsT();
         if(pLakeShore) {
@@ -161,9 +163,6 @@ MainWindow::closeEvent(QCloseEvent *event) {
 bool
 MainWindow::prepareLogFile() {
     // Logged messages (if enabled) will be written in the following folder
-    QString sLogDir = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
-    if(!sLogDir.endsWith(QString("/"))) sLogDir+= QString("/");
-    sLogFileName = sLogDir+sLogFileName;
     QFileInfo checkFile(sLogFileName);
     if(checkFile.exists() && checkFile.isFile()) {
         QDir renamed;
@@ -417,7 +416,7 @@ void
 MainWindow::switchLampOn() {
     ui->labelPhoto->setStyleSheet(sPhotoStyle);
     ui->labelPhoto->setText("Photo");
-// For the moment don't use the internal shutter
+// For the moment don't use the Monochromator internal shutter
 //    if(bUseMonochromator)
 //        pCornerStone130->openShutter();
 #if defined(Q_PROCESSOR_ARM)
@@ -436,7 +435,7 @@ void
 MainWindow::switchLampOff() {
     ui->labelPhoto->setStyleSheet(sDarkStyle);
     ui->labelPhoto->setText("Dark");
-// For the moment don't use the internal shutter
+// For the moment don't use the Monochromator internal shutter
 //    if(bUseMonochromator)
 //        pCornerStone130->closeShutter();
 #if defined(Q_PROCESSOR_ARM)
@@ -536,6 +535,7 @@ MainWindow::on_startRvsTButton_clicked() {
     ui->statusBar->showMessage("Initializing LakeShore 330...");
     if(pLakeShore->init()) {
         ui->statusBar->showMessage("Unable to Initialize LakeShore 330...");
+        pKeithley->disconnect();
         QApplication::restoreOverrideCursor();
         return;
     }
@@ -545,6 +545,7 @@ MainWindow::on_startRvsTButton_clicked() {
                           pConfigureDialog->pTabFile->sOutFileName))
     {
         ui->statusBar->showMessage("Unable to Open the Output file...");
+        pKeithley->disconnect();
         QApplication::restoreOverrideCursor();
         return;
     }
@@ -661,7 +662,7 @@ MainWindow::on_startIvsVButton_clicked() {
     //Initializing Corner Stone 130
     if(bUseMonochromator) {
         ui->statusBar->showMessage("Initializing Corner Stone 130...");
-        if(pCornerStone130->init() != pCornerStone130->NO_ERROR){
+        if(pCornerStone130->init() != pCornerStone130->NO_ERROR) {
             ui->statusBar->showMessage("Unable to Initialize Corner Stone 130...");
             QApplication::restoreOverrideCursor();
             return;
@@ -693,6 +694,7 @@ MainWindow::on_startIvsVButton_clicked() {
     ui->statusBar->showMessage("Initializing LakeShore 330...");
     if(pLakeShore->init()) {
         ui->statusBar->showMessage("Unable to Initialize LakeShore 330...");
+        pKeithley->disconnect();
         stopIvsV();
         return;
     }
@@ -849,6 +851,7 @@ MainWindow::on_lambdaScanButton_clicked() {
     ui->statusBar->showMessage("Initializing LakeShore 330...");
     if(pLakeShore->init()) {
         ui->statusBar->showMessage("Unable to Initialize LakeShore 330...");
+        pKeithley->disconnect();
         QApplication::restoreOverrideCursor();
         return;
     }
@@ -896,7 +899,10 @@ MainWindow::on_lambdaScanButton_clicked() {
     readingTTimer.start(30000);
     // All done... compute the time needed for the measurement:
     startMeasuringTime = QDateTime::currentDateTime();
-    double expectedMinutes = 1.0;// <<<<<<<<<<<<<<<<<<<<<To be changed !!!!!
+    double expectedMinutes = fabs(pConfigureDialog->pTabCS130->dStartWavelength -
+                                  pConfigureDialog->pTabCS130->dStopWavelength) /
+                                  wlResolution;
+    expectedMinutes *= pConfigureDialog->pTabK236->dInterval;
     if(pConfigureDialog->pTabLS330->bUseThermostat)
         expectedMinutes += pConfigureDialog->pTabLS330->iReachingTStart +
                            pConfigureDialog->pTabLS330->iTimeToSteadyT;
@@ -1062,7 +1068,7 @@ MainWindow::stopLambdaScan() {
 
 void
 MainWindow::goNextLambda() {
-    double nextWavelength = pCornerStone130->dPresentWavelength + wlResoution;
+    double nextWavelength = pCornerStone130->dPresentWavelength + wlResolution;
 #if defined(MY_DEBUG)
     logMessage(QString("new Wavelength= %1").arg(nextWavelength));
 #endif

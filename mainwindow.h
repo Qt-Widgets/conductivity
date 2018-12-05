@@ -159,8 +159,9 @@ private:
     int              gpioLEDpin;
     double           sigmaDark;
     double           sigmaIll;
-    double           wlResoution;
+    double           wlResolution;
 
     QString          sLogFileName;
+    QString          sLogDir;
 };
 
