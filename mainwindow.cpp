@@ -90,6 +90,7 @@ MainWindow::MainWindow(int iBoard, QWidget *parent)
     bRunning              = false;
     isK236ReadyForTrigger = false;
     maxPlotPoints         = 3000;
+    wlResoution           = 10;// To be changed
     // Restore Geometry and State of the window
     QSettings settings;
     restoreGeometry(settings.value("mainWindowGeometry").toByteArray());
@@ -133,8 +134,13 @@ MainWindow::closeEvent(QCloseEvent *event) {
             pOutputFile = Q_NULLPTR;
         }
 // TODO: improve !
-        if(pKeithley) pKeithley->endVvsT();
-        if(pLakeShore) pLakeShore->switchPowerOff();
+        if(pKeithley)
+            pKeithley->endVvsT();
+        if(pLakeShore) {
+            if(pLakeShore->isRamping())
+                pLakeShore->stopRamp();
+            pLakeShore->switchPowerOff();
+        }
     }
 #if defined(Q_PROCESSOR_ARM)
     if(gpioHostHandle >= 0)
@@ -467,6 +473,8 @@ MainWindow::stopRvsT() {
         pKeithley->endVvsT();
     }
     if(pLakeShore != Q_NULLPTR) {
+        if(pLakeShore->isRamping())
+            pLakeShore->stopRamp();
         pLakeShore->disconnect();
         pLakeShore->switchPowerOff();
     }
@@ -734,7 +742,7 @@ MainWindow::on_startIvsVButton_clicked() {
         expectedSeconds *= int(deltaT / pConfigureDialog->pTabLS330->dTStep);
     }
     else {
-        startI_V(pConfigureDialog->pTabK236->bSourceI);
+        startI_Vscan(pConfigureDialog->pTabK236->bSourceI);
     }
     endMeasureTime = startMeasuringTime.addSecs(qint64(expectedSeconds));
     QString sString = endMeasureTime.toString("hh:mm:ss dd-MM-yyyy");
@@ -886,38 +894,35 @@ MainWindow::on_lambdaScanButton_clicked() {
     startReadingTTime = waitingTStartTime;
     onTimeToReadT();
     readingTTimer.start(30000);
-//TODO:
     // All done... compute the time needed for the measurement:
-//    startMeasuringTime = QDateTime::currentDateTime();
-//    double deltaT, expectedMinutes;
-//    deltaT = pConfigureDialog->pTabLS330->dTStop -
-//             pConfigureDialog->pTabLS330->dTStart;
-//    expectedMinutes = deltaT / pConfigureDialog->pTabLS330->dTRate +
-//                      pConfigureDialog->pTabLS330->iReachingTStart +
-//                      pConfigureDialog->pTabLS330->iTimeToSteadyT;
-//    endMeasureTime = startMeasuringTime.addSecs(qint64(expectedMinutes*60.0));
-//    QString sString = endMeasureTime.toString("hh:mm dd-MM-yyyy");
-//    ui->endTimeEdit->setText(sString);
+    startMeasuringTime = QDateTime::currentDateTime();
+    double expectedMinutes = 1.0;// <<<<<<<<<<<<<<<<<<<<<To be changed !!!!!
+    if(pConfigureDialog->pTabLS330->bUseThermostat)
+        expectedMinutes += pConfigureDialog->pTabLS330->iReachingTStart +
+                           pConfigureDialog->pTabLS330->iTimeToSteadyT;
+    endMeasureTime = startMeasuringTime.addSecs(qint64(expectedMinutes*60.0));
+    QString sString = endMeasureTime.toString("hh:mm dd-MM-yyyy");
+    ui->endTimeEdit->setText(sString);
 
-    // now we must wait reaching the initial temperature
-//    ui->startIvsVButton->setDisabled(true);
-//    ui->startRvsTButton->setText("Stop R vs T");
-//    ui->lampButton->setDisabled(true);
-//    ui->statusBar->showMessage(QString("%1 Waiting Initial T [%2K]")
-//                               .arg(waitingTStartTime.toString())
-//                               .arg(pConfigureDialog->pTabLS330->dTStart));
-    // Start the reaching of the Initial Temperature
-//    waitingTStartTimer.start(5000);
-
-    double timeBetweenMeasurements = pConfigureDialog->pTabK236->dInterval*1000.0;
-    connect(&measuringTimer, SIGNAL(timeout()),
-            this, SLOT(onTimeToGetNewMeasure()));
-    measuringTimer.start(int(timeBetweenMeasurements));
     ui->lambdaScanButton->setText("Stop");
     ui->startRvsTButton->setDisabled(true);
     ui->startIvsVButton->setDisabled(true);
     ui->lampButton->setDisabled(true);
-    ui->statusBar->showMessage(QString("λ Scan Started: Please wait"));
+    if(pConfigureDialog->pTabLS330->bUseThermostat) {
+        // now we must wait reaching the initial temperature
+        ui->statusBar->showMessage(QString("%1 Waiting Initial T [%2K]")
+                                   .arg(waitingTStartTime.toString())
+                                   .arg(pConfigureDialog->pTabLS330->dTStart));
+        // Start the reaching of the Initial Temperature
+        waitingTStartTimer.start(5000);
+    }
+    else {
+        double timeBetweenMeasurements = pConfigureDialog->pTabK236->dInterval*1000.0;
+        connect(&measuringTimer, SIGNAL(timeout()),
+                this, SLOT(onTimeToGetNewMeasure()));
+        measuringTimer.start(int(timeBetweenMeasurements));
+        ui->statusBar->showMessage(QString("λ Scan Started: Please wait"));
+    }
     bRunning = true;
 }
 
@@ -956,7 +961,7 @@ MainWindow::writeLambdaScanHeader() {
                            .arg(pConfigureDialog->pTabK236->dStart)
                            .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
     }
-    pOutputFile->write(QString("# T_Start=%1[K] T_Stop=%2[K] T_Steo=%3[K/min]\n")
+    pOutputFile->write(QString("# T_Start=%1[K] T_Stop=%2[K] T_Step=%3[K/min]\n")
                        .arg(pConfigureDialog->pTabLS330->dTStart)
                        .arg(pConfigureDialog->pTabLS330->dTStop)
                        .arg(pConfigureDialog->pTabLS330->dTStep).toLocal8Bit());
@@ -968,7 +973,7 @@ MainWindow::writeLambdaScanHeader() {
 
 
 void
-MainWindow::startI_V(bool bSourceI) {
+MainWindow::startI_Vscan(bool bSourceI) {
     ui->statusBar->showMessage("Sweeping...Please Wait");
     double dStart = pConfigureDialog->pTabK236->dStart;
     double dStop = pConfigureDialog->pTabK236->dStop;
@@ -1057,7 +1062,6 @@ MainWindow::stopLambdaScan() {
 
 void
 MainWindow::goNextLambda() {
-    double wlResoution = 10;// <<<<<<<<<<<<<<<<<<<<< To Be Changed
     double nextWavelength = pCornerStone130->dPresentWavelength + wlResoution;
 #if defined(MY_DEBUG)
     logMessage(QString("new Wavelength= %1").arg(nextWavelength));
@@ -1247,12 +1251,12 @@ MainWindow::onSteadyTReached() {
     endMeasureTime = QDateTime::currentDateTime().addSecs(qint64(expectedMinutes*60.0));
     QString sString = endMeasureTime.toString("hh:mm dd-MM-yyyy");
     ui->endTimeEdit->setText(sString);
-    startI_V(pConfigureDialog->pTabK236->bSourceI);
+    startI_Vscan(pConfigureDialog->pTabK236->bSourceI);
 }
 
 
-// Invoked to check the reaching of the initial temperature
-// Set Point during R vs T measurements
+// Invoked to check the reaching of the initial
+// temperature Set Point
 void
 MainWindow::onTimeToCheckReachedT() {
     double T = pLakeShore->getTemperature();
@@ -1267,10 +1271,14 @@ MainWindow::onTimeToCheckReachedT() {
         // Compute the new time needed for the measurement:
         startMeasuringTime = QDateTime::currentDateTime();
         double deltaT, expectedMinutes;
-        deltaT = pConfigureDialog->pTabLS330->dTStop -
-                 pConfigureDialog->pTabLS330->dTStart;
-        expectedMinutes = deltaT / pConfigureDialog->pTabLS330->dTRate +
-                          pConfigureDialog->pTabLS330->iTimeToSteadyT;
+        expectedMinutes = pConfigureDialog->pTabLS330->iTimeToSteadyT;
+        if((presentMeasure==RvsTSourceI)||
+           (presentMeasure==RvsTSourceV))
+        {
+            deltaT = pConfigureDialog->pTabLS330->dTStop -
+                     pConfigureDialog->pTabLS330->dTStart;
+            expectedMinutes += deltaT / pConfigureDialog->pTabLS330->dTRate;
+        }
         endMeasureTime = startMeasuringTime.addSecs(qint64(expectedMinutes*60.0));
         QString sString = endMeasureTime.toString("hh:mm dd-MM-yyyy");
         ui->endTimeEdit->setText(sString);
@@ -1309,9 +1317,12 @@ MainWindow::onTimerStabilizeT() {
     ui->statusBar->showMessage(QString("Thermal Stabilization Reached: Measure Started"));
     connect(&measuringTimer, SIGNAL(timeout()),
             this, SLOT(onTimeToGetNewMeasure()));
-    if(!pLakeShore->startRamp(pConfigureDialog->pTabLS330->dTStop, pConfigureDialog->pTabLS330->dTRate)) {
-        ui->statusBar->showMessage(QString("Error Starting the Measure"));
-        return;
+    if((presentMeasure==RvsTSourceI)||
+        (presentMeasure==RvsTSourceV)) {
+        if(!pLakeShore->startRamp(pConfigureDialog->pTabLS330->dTStop, pConfigureDialog->pTabLS330->dTRate)) {
+            ui->statusBar->showMessage(QString("Error Starting the Measure"));
+            return;
+        }
     }
     double timeBetweenMeasurements = pConfigureDialog->pTabK236->dInterval*1000.0;
     measuringTimer.start(int(timeBetweenMeasurements));

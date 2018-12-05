@@ -247,6 +247,17 @@ LakeShore330::startRamp(double targetT, double rate) {
 
 
 bool
+LakeShore330::stopRamp() {
+    sCommand = QString("RAMP 0\r\n");
+    gpibWrite(gpibId, sCommand);
+    QThread::sleep(1);
+    if(isGpibError(QString(Q_FUNC_INFO) + "Unable to Stop Ramp"))
+        return false;
+    return true;
+}
+
+
+bool
 LakeShore330::isRamping() {
     sCommand = QString("RAMPS?\r\n");
     gpibWrite(gpibId, sCommand);

@@ -38,6 +38,7 @@ public:
     bool     switchPowerOn(int iRange);
     bool     switchPowerOff();
     bool     startRamp(double targetT, double rate);
+    bool     stopRamp();
     bool     isRamping();
 
 signals:

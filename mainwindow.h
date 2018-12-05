@@ -62,7 +62,7 @@ protected:
     void initRvsTPlots();
     void stopRvsT();
     void writeIvsVHeader();
-    void startI_V(bool bSourceI);
+    void startI_Vscan(bool bSourceI);
     void initIvsVPlots();
     void stopIvsV();
     void writeLambdaScanHeader();
@@ -159,6 +159,7 @@ private:
     int              gpioLEDpin;
     double           sigmaDark;
     double           sigmaIll;
+    double           wlResoution;
 
     QString          sLogFileName;
 };
