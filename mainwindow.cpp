@@ -899,14 +899,14 @@ MainWindow::on_lambdaScanButton_clicked() {
     readingTTimer.start(30000);
     // All done... compute the time needed for the measurement:
     startMeasuringTime = QDateTime::currentDateTime();
-    double expectedMinutes = fabs(pConfigureDialog->pTabCS130->dStartWavelength -
-                                  pConfigureDialog->pTabCS130->dStopWavelength) /
-                                  wlResolution;
-    expectedMinutes *= pConfigureDialog->pTabK236->dInterval;
+    int lambdaSteps = int(fabs(pConfigureDialog->pTabCS130->dStartWavelength -
+                               pConfigureDialog->pTabCS130->dStopWavelength) /
+                          wlResolution+0.5);
+    double expectedSeconds = lambdaSteps * (pConfigureDialog->pTabK236->dInterval + 3.0);
     if(pConfigureDialog->pTabLS330->bUseThermostat)
-        expectedMinutes += pConfigureDialog->pTabLS330->iReachingTStart +
-                           pConfigureDialog->pTabLS330->iTimeToSteadyT;
-    endMeasureTime = startMeasuringTime.addSecs(qint64(expectedMinutes*60.0));
+        expectedSeconds += 60.0*(pConfigureDialog->pTabLS330->iReachingTStart +
+                                 pConfigureDialog->pTabLS330->iTimeToSteadyT);
+    endMeasureTime = startMeasuringTime.addSecs(qint64(expectedSeconds));
     QString sString = endMeasureTime.toString("hh:mm dd-MM-yyyy");
     ui->endTimeEdit->setText(sString);
 
@@ -928,6 +928,7 @@ MainWindow::on_lambdaScanButton_clicked() {
                 this, SLOT(onTimeToGetNewMeasure()));
         measuringTimer.start(int(timeBetweenMeasurements));
         ui->statusBar->showMessage(QString("λ Scan Started: Please wait"));
+
     }
     bRunning = true;
 }
@@ -1072,8 +1073,9 @@ MainWindow::goNextLambda() {
 #if defined(MY_DEBUG)
     logMessage(QString("new Wavelength= %1").arg(nextWavelength));
 #endif
-    if(nextWavelength > pConfigureDialog->pTabCS130->dStopWavelength)
+    if(nextWavelength > pConfigureDialog->pTabCS130->dStopWavelength) {
         stopLambdaScan();
+    }
     else {
         pCornerStone130->setWavelength(nextWavelength);
         ui->wavelengthEdit->setText(QString("%1").arg(nextWavelength));
