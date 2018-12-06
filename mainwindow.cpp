@@ -75,7 +75,7 @@ MainWindow::MainWindow(int iBoard, QWidget *parent)
     bRunning              = false;
     isK236ReadyForTrigger = false;
     maxPlotPoints         = 3000;
-    wlResolution          = 10;// To be changed
+    wlResolution          = 5;// To be changed
     // Prepare message logging
     sLogFileName = QString("gpibLog.txt");
     sLogDir = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
@@ -512,7 +512,7 @@ MainWindow::on_startRvsTButton_clicked() {
         pCornerStone130->setGrating(pConfigureDialog->pTabCS130->iGratingNumber);
         pCornerStone130->setWavelength(pConfigureDialog->pTabCS130->dWavelength);
         ui->wavelengthEdit->setText(QString("%1")
-                                    .arg(pConfigureDialog->pTabCS130->dWavelength));
+                                    .arg(pConfigureDialog->pTabCS130->dWavelength, 10, 'f', 1, ' '));
     }
     switchLampOff();
     // Initializing Keithley 236
@@ -670,7 +670,7 @@ MainWindow::on_startIvsVButton_clicked() {
         pCornerStone130->setGrating(pConfigureDialog->pTabCS130->iGratingNumber);
         pCornerStone130->setWavelength(pConfigureDialog->pTabCS130->dWavelength);
         ui->wavelengthEdit->setText(QString("%1")
-                                    .arg(pConfigureDialog->pTabCS130->dWavelength));
+                                    .arg(pConfigureDialog->pTabCS130->dWavelength, 10, 'f', 1, ' '));
     }
     if(pConfigureDialog->pTabCS130->bPhoto)
         switchLampOn();
@@ -828,7 +828,7 @@ MainWindow::on_lambdaScanButton_clicked() {
     pCornerStone130->setGrating(pConfigureDialog->pTabCS130->iGratingNumber);
     pCornerStone130->setWavelength(pConfigureDialog->pTabCS130->dStartWavelength);
     ui->wavelengthEdit->setText(QString("%1")
-                                .arg(pConfigureDialog->pTabCS130->dStartWavelength));
+                                .arg(pConfigureDialog->pTabCS130->dStartWavelength, 10, 'f', 1, ' '));
     // Switch Off the Lamp
     switchLampOff();
     // Initializing Keithley 236
@@ -1077,8 +1077,7 @@ MainWindow::goNextLambda() {
         stopLambdaScan();
     }
     else {
-        pCornerStone130->setWavelength(nextWavelength);
-        ui->wavelengthEdit->setText(QString("%1").arg(nextWavelength));
+        pCornerStone130->setWavelength(nextWavelength);     
     }
 }
 
@@ -1419,7 +1418,7 @@ MainWindow::onNewRvsTKeithleyReading(QDateTime dataTime, QString sDataRead) {
     ui->voltageEdit->setText(QString("%1").arg(voltage, 10, 'g', 4, ' '));
     if(bUseMonochromator) {
         double lambda = pCornerStone130->dPresentWavelength;
-        ui->wavelengthEdit->setText(QString("%1").arg(lambda, 10, 'f', 2, ' '));
+        ui->wavelengthEdit->setText(QString("%1").arg(lambda, 10, 'f', 1, ' '));
     }
 
     if(!bRunning) return;
@@ -1478,7 +1477,7 @@ MainWindow::onNewLambdaScanKeithleyReading(QDateTime dataTime, QString sDataRead
     ui->temperatureEdit->setText(QString("%1").arg(currentTemperature));
     ui->currentEdit->setText(QString("%1").arg(current, 10, 'g', 4, ' '));
     ui->voltageEdit->setText(QString("%1").arg(voltage, 10, 'g', 4, ' '));
-    ui->wavelengthEdit->setText(QString("%1").arg(lambda, 10, 'f', 2, ' '));
+    ui->wavelengthEdit->setText(QString("%1").arg(lambda, 10, 'f', 1, ' '));
 
     if(!bRunning) return;
 
