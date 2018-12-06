@@ -29,13 +29,13 @@ TARGET = conductivity
 TEMPLATE = app
 
 
-SOURCES += main.cpp \
-    k236tab.cpp \
-    ls330tab.cpp \
-    cs130tab.cpp \
-    filetab.cpp \
-    configuredialog.cpp \
-    gpibdevice.cpp
+SOURCES += main.cpp
+SOURCES += k236tab.cpp
+SOURCES += ls330tab.cpp
+SOURCES += cs130tab.cpp
+SOURCES += filetab.cpp
+SOURCES += configuredialog.cpp
+SOURCES += gpibdevice.cpp
 SOURCES += mainwindow.cpp
 SOURCES += cornerstone130.cpp
 SOURCES += keithley236.cpp
@@ -46,17 +46,14 @@ SOURCES += axesdialog.cpp
 SOURCES += AxisLimits.cpp
 SOURCES += AxisFrame.cpp
 SOURCES += DataSetProperties.cpp
-SOURCES +=
-SOURCES +=
-SOURCES +=
 
-HEADERS += mainwindow.h \
-    k236tab.h \
-    ls330tab.h \
-    cs130tab.h \
-    filetab.h \
-    configuredialog.h \
-    gpibdevice.h
+HEADERS += mainwindow.h
+HEADERS += k236tab.h
+HEADERS += ls330tab.h
+HEADERS += cs130tab.h
+HEADERS += filetab.h
+HEADERS += configuredialog.h
+HEADERS += gpibdevice.h
 HEADERS += cornerstone130.h
 HEADERS += keithley236.h
 HEADERS += lakeshore330.h
@@ -66,13 +63,9 @@ HEADERS += axesdialog.h
 HEADERS += AxisLimits.h
 HEADERS += AxisFrame.h
 HEADERS += DataSetProperties.h
-HEADERS +=
-HEADERS +=
-HEADERS +=
+
 
 FORMS   += mainwindow.ui
-FORMS   +=
-FORMS   +=
 FORMS   += axesdialog.ui
 
 # For National Instruments GPIB Boards
