@@ -19,18 +19,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 #include <QColor>
 
-class CDataSetProperties {
+class DataSetProperties {
 
 public:
-  CDataSetProperties(void);
-  CDataSetProperties(int myId, int myPenWidth, QColor myColor, int mySymbol, QString myTitle);
-	virtual ~CDataSetProperties(void);
+    DataSetProperties(void);
+    DataSetProperties(int myId, int myPenWidth, QColor myColor, int mySymbol, QString myTitle);
+    virtual ~DataSetProperties(void);
 	void SetId(int Id);
 	int GetId();
-  QString Title;
+    QString Title;
 	int PenWidth;
 	int Symbol;
-  QColor Color;
+    QColor Color;
 
 private:
 	int Id;

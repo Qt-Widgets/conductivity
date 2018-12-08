@@ -29,8 +29,8 @@ TARGET = conductivity
 TEMPLATE = app
 
 
-SOURCES += main.cpp \
-    datastream2d.cpp
+SOURCES += main.cpp
+SOURCES += datastream2d.cpp
 SOURCES += k236tab.cpp
 SOURCES += ls330tab.cpp
 SOURCES += cs130tab.cpp
@@ -41,15 +41,14 @@ SOURCES += mainwindow.cpp
 SOURCES += cornerstone130.cpp
 SOURCES += keithley236.cpp
 SOURCES += lakeshore330.cpp
-SOURCES +=
 SOURCES += plot2d.cpp
 SOURCES += axesdialog.cpp
 SOURCES += AxisLimits.cpp
 SOURCES += AxisFrame.cpp
 SOURCES += DataSetProperties.cpp
 
-HEADERS += mainwindow.h \
-    datastream2d.h
+HEADERS += mainwindow.h
+HEADERS += datastream2d.h
 HEADERS += k236tab.h
 HEADERS += ls330tab.h
 HEADERS += cs130tab.h
@@ -59,7 +58,6 @@ HEADERS += gpibdevice.h
 HEADERS += cornerstone130.h
 HEADERS += keithley236.h
 HEADERS += lakeshore330.h
-HEADERS +=
 HEADERS += plot2d.h
 HEADERS += axesdialog.h
 HEADERS += AxisLimits.h
@@ -69,6 +67,7 @@ HEADERS += DataSetProperties.h
 
 FORMS   += mainwindow.ui
 FORMS   += axesdialog.ui
+
 
 # For National Instruments GPIB Boards
 windows {

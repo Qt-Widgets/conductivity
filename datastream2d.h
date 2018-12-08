@@ -27,7 +27,7 @@ class DataStream2D
 {
 public:
     DataStream2D(int Id, int PenWidth, QColor Color, int Symbol, QString Title);
-    DataStream2D(CDataSetProperties Properties);
+    DataStream2D(DataSetProperties Properties);
     virtual ~DataStream2D();
     // Operations
     void setMaxPoints(int nPoints);
@@ -36,8 +36,8 @@ public:
     void RemoveAllPoints();
     int  GetId();
     QString GetTitle();
-    CDataSetProperties GetProperties();
-    void SetProperties(CDataSetProperties newProperties);
+    DataSetProperties GetProperties();
+    void SetProperties(DataSetProperties newProperties);
     void SetColor(QColor Color);
     void SetShowTitle(bool show);
     void SetTitle(QString myTitle);
@@ -55,6 +55,6 @@ public:
     bool isShown;
 
  protected:
-    CDataSetProperties Properties;
+    DataSetProperties Properties;
     int maxPoints;
 };

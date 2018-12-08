@@ -20,11 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "DataSetProperties.h"
 
 
-CDataSetProperties::CDataSetProperties() {
+DataSetProperties::DataSetProperties() {
 }
 
 
-CDataSetProperties::CDataSetProperties(int myId, int myPenWidth, QColor myColor, int mySymbol, QString myTitle) {
+DataSetProperties::DataSetProperties(int myId, int myPenWidth, QColor myColor, int mySymbol, QString myTitle) {
 	Id       = myId;
 	PenWidth = myPenWidth;
 	Color    = myColor;
@@ -33,16 +33,17 @@ CDataSetProperties::CDataSetProperties(int myId, int myPenWidth, QColor myColor,
 }
 
 
-CDataSetProperties::~CDataSetProperties() {
+DataSetProperties::~DataSetProperties() {
 }
 
 
 int 
-CDataSetProperties::GetId() {
+DataSetProperties::GetId() {
   return Id;
 }
 
+
 void 
-CDataSetProperties::SetId(int myId) {
+DataSetProperties::SetId(int myId) {
   Id = myId;
 }

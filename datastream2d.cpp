@@ -35,7 +35,7 @@ DataStream2D::DataStream2D(int Id, int PenWidth, QColor Color, int Symbol, QStri
 }
 
 
-DataStream2D::DataStream2D(CDataSetProperties myProperties) {
+DataStream2D::DataStream2D(DataSetProperties myProperties) {
     Properties = myProperties;
     if(myProperties.Title == QString())
         Properties.Title.sprintf("Data Set %d", Properties.GetId());
@@ -119,14 +119,14 @@ DataStream2D::SetShowTitle(bool show) {
 }
 
 
-CDataSetProperties
+DataSetProperties
 DataStream2D::GetProperties() {
     return Properties;
 }
 
 
 void
-DataStream2D::SetProperties(CDataSetProperties newProperties) {
+DataStream2D::SetProperties(DataSetProperties newProperties) {
     Properties = newProperties;
 }
 
