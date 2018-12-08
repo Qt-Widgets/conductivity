@@ -66,7 +66,6 @@ HEADERS += DataSetProperties.h
 
 
 FORMS   += mainwindow.ui
-FORMS   += axesdialog.ui
 
 
 # For National Instruments GPIB Boards
