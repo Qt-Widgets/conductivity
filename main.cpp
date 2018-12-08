@@ -63,6 +63,9 @@ main(int argc, char *argv[]) {
     QCoreApplication::setApplicationName("Conductivity");
     QCoreApplication::setApplicationVersion("2.0.0");
 
+//=========================================================================
+// Not working ! if the application crashes the system must be rebooted !!
+//=========================================================================
 //    //For the key it is possible to use a GUID generated once for your application.
 //    //You could get one GUID here: http://www.guidgenerator.com/online-guid-generator.aspx
 //    QString sKey = QString("%1-%2-%3-%4")
@@ -71,7 +74,6 @@ main(int argc, char *argv[]) {
 //                           .arg(QCoreApplication::applicationName())
 //                           .arg(QCoreApplication::applicationVersion());
 //    QSharedMemory shared(sKey);
-
 //    if(!shared.create(512, QSharedMemory::ReadWrite)) {
 //        msgBox.setWindowTitle(QCoreApplication::applicationName());
 //        msgBox.setIcon(QMessageBox::Critical);
@@ -83,6 +85,7 @@ main(int argc, char *argv[]) {
 //        return 0;
 //     }
 
+#ifdef Q_OS_LINUX
     QString sGpibInterface = QString("/dev/gpib%1").arg(gpibBoardID);
     QFileInfo checkFile(sGpibInterface);
     while(!checkFile.exists()) {
@@ -95,6 +98,7 @@ main(int argc, char *argv[]) {
         if(msgBox.exec() == QMessageBox::Abort)
             return 0;
     }
+#endif
 
     MainWindow w(gpibBoardID);
     w.setWindowIcon(QIcon("qrc:/myLogoT.png"));
