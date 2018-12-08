@@ -106,14 +106,15 @@ main(int argc, char *argv[]) {
     QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
 
     while(!w.checkInstruments()) {
-        if(QMessageBox::critical(Q_NULLPTR,
-                                 QString("Error"),
-                                 QString("GPIB Instruments not Found\nSwitch on and retry"),
-                                 QMessageBox::Abort|QMessageBox::Retry,
-                                 QMessageBox::Retry) == QMessageBox::Abort)
-        {
+        QMessageBox msgBox;
+        msgBox.setWindowTitle(QCoreApplication::applicationName());
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText(QString("GPIB Instruments Not Found"));
+        msgBox.setInformativeText(QString("Switch on and retry"));
+        msgBox.setStandardButtons(QMessageBox::Abort|QMessageBox::Retry);
+        msgBox.setDefaultButton(QMessageBox::Retry);
+        if(msgBox.exec()==QMessageBox::Abort)
             return 0;
-        }
     }
 
     QApplication::restoreOverrideCursor();
