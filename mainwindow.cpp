@@ -162,13 +162,19 @@ MainWindow::closeEvent(QCloseEvent *event) {
  */
 bool
 MainWindow::prepareLogFile() {
-    // Logged messages (if enabled) will be written in the following folder
+    // Rotate 5 previous logs, removing the oldest, to avoid data loss
     QFileInfo checkFile(sLogFileName);
     if(checkFile.exists() && checkFile.isFile()) {
         QDir renamed;
-        renamed.remove(sLogFileName+QString(".bkp"));
-        renamed.rename(sLogFileName, sLogFileName+QString(".bkp"));
+        renamed.remove(sLogFileName+QString("_4.txt"));
+        for(int i=4; i>0; i--) {
+            renamed.rename(sLogFileName+QString("_%1.txt").arg(i-1),
+                           sLogFileName+QString("_%1.txt").arg(i));
+        }
+        renamed.rename(sLogFileName,
+                       sLogFileName+QString("_0.txt"));
     }
+    // Open the new log file
     pLogFile = new QFile(sLogFileName);
     if (!pLogFile->open(QIODevice::WriteOnly)) {
         QMessageBox::information(Q_NULLPTR, "Conductivity",
