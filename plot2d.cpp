@@ -313,14 +313,14 @@ Plot2D::XTicLin(QPainter* painter, QFontMetrics fontMetrics) {
     dx = xmax - xmin;
     b = log10(dx);
     ic = qRound(b) - 2;
-    dx = (double)qRound(pow(10.0, (b-ic-1.0)));
+    dx = double(qRound(pow(10.0, (b-ic-1.0))));
 
     if(dx < 11.0) dx = 10.0;
     else if(dx < 28.0) dx = 20.0;
     else if(dx < 70.0) dx = 50.0;
     else dx = 100.0;
 
-    dx = dx * pow(10.0, (double)ic);
+    dx = dx * pow(10.0, double(ic));
     xfact = (Pf.right-Pf.left) / (xmax-xmin);
     dxx = (xmax+dx) / dx;
     dxx = floor(dxx) * dx;
@@ -346,10 +346,10 @@ Plot2D::XTicLin(QPainter* painter, QFontMetrics fontMetrics) {
             fmant = floor(fmant)/10000.0;
             fmant = isig * fmant;
         }
-        if((double)isx*fmant <= -10.0)
-            Label.sprintf("% 6.2f", (double)isx*fmant);
+        if(double(isx*fmant) <= -10.0)
+            Label.sprintf("% 6.2f", double(isx*fmant));
         else
-            Label.sprintf("% 6.3f", (double)isx*fmant);
+            Label.sprintf("% 6.3f", double(isx*fmant));
         ix0 = ix - fontMetrics.width(Label)/2;
         painter->setPen(labelPen);
         painter->drawText(QPoint(ix0, iy0), Label);
@@ -379,14 +379,14 @@ Plot2D::YTicLin(QPainter* painter, QFontMetrics fontMetrics) {
     dy = ymax - ymin;
     b = log10(dy);
     icc = qRound(b) - 2;
-    dy = (double)qRound(pow(10.0, (b-icc-1.0)));
+    dy = double(qRound(pow(10.0, (b-icc-1.0))));
 
     if(dy < 11.0) dy = 10.0;
     else if(dy < 28.0) dy = 20.0;
     else if(dy < 70.0) dy = 50.0;
     else dy = 100.0;
 
-    dy = dy * pow(10.0, (double)icc);
+    dy = dy * pow(10.0, double(icc));
     yfact = (Pf.top-Pf.bottom) / (ymax-ymin);
     dyy = (ymax+dy) / dy;
     dyy = floor(dyy) * dy;
@@ -411,10 +411,10 @@ Plot2D::YTicLin(QPainter* painter, QFontMetrics fontMetrics) {
             fmant = floor(fmant)/10000.0;
             fmant = isig * fmant;
         }
-        if((double)isy*fmant <= -10.0)
-            Label.sprintf("% 7.3f", (double)isy*fmant);
+        if(double(isy*fmant) <= -10.0)
+            Label.sprintf("% 7.3f", double(isy*fmant));
         else
-            Label.sprintf("% 7.4f", (double)isy*fmant);
+            Label.sprintf("% 7.4f", double(isy*fmant));
         ix0 = int(Pf.left - fontMetrics.width(Label) - 5);
         iy0 = iy + fontMetrics.height()/2;
         painter->setPen(labelPen);

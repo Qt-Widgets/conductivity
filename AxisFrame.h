@@ -18,9 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
 
-class CAxisFrame {
+class AxisFrame {
 public:
-  CAxisFrame(void);
-  virtual ~CAxisFrame(void);
-  double left, right, top, bottom;
+    AxisFrame(void);
+    virtual ~AxisFrame(void);
+    double left, right, top, bottom;
 };

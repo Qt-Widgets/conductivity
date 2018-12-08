@@ -35,7 +35,7 @@ public:
     QSize minimumSizeHint() const;
     QSize sizeHint() const;
     void SetLimits (double XMin, double XMax, double YMin, double YMax,
-                  bool AutoX, bool AutoY, bool LogX, bool LogY);
+                    bool AutoX, bool AutoY, bool LogX, bool LogY);
     DataStream2D* NewDataSet(int Id, int PenWidth, QColor Color, int Symbol, QString Title);
     bool DelDataSet(int Id);
     void NewPoint(int Id, double x, double y);
@@ -92,8 +92,8 @@ protected:
     bool bZooming;
     bool bShowMarker;
     double xMarker, yMarker;
-    CAxisLimits Ax;
-    CAxisFrame Pf;
+    AxisLimits Ax;
+    AxisFrame Pf;
     QString sTitle;
     QString sXCoord, sYCoord;
     double xfact, yfact;

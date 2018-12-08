@@ -18,12 +18,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
 
-class CAxisLimits {
+class AxisLimits {
 public:
-  CAxisLimits(void);
-  virtual ~CAxisLimits(void);
+    AxisLimits(void);
+    virtual ~AxisLimits(void);
 
 	double XMin, XMax, YMin, YMax;
-  bool AutoX, AutoY;
-  bool LogX, LogY;
+    bool AutoX, AutoY;
+    bool LogX, LogY;
 };
