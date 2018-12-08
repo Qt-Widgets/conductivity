@@ -34,7 +34,7 @@ Plot2D::Plot2D(QWidget *parent, QString Title)
 {
   setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
   setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
-  setWindowFlags(windowFlags() | Qt::WindowMinMaxButtonsHint);
+  setWindowFlags(windowFlags() |  Qt::WindowMinMaxButtonsHint);
 //  setAttribute(Qt::WA_AlwaysShowToolTips);
   setWindowIcon(QIcon("qrc:/plot.png"));
   QSettings settings;
@@ -134,23 +134,23 @@ Plot2D::SetLimits (double XMin, double XMax, double YMin, double YMax,
       bool EmptyData = true;
       if(Ax.AutoX) {
         if(Ax.LogX) {
-          XMin = FLT_MAX;
-          XMax = FLT_MIN;
+          XMin = DBL_MAX;
+          XMax = DBL_MIN;
         } else {
-          XMin = FLT_MAX;
-          XMax =-FLT_MAX;
+          XMin = DBL_MAX;
+          XMax =-DBL_MAX;
         }
       }
       if(Ax.AutoY) {
         if(Ax.LogY) {
-          YMin = FLT_MAX;
-          YMax = FLT_MIN;
+          YMin = DBL_MAX;
+          YMax = DBL_MIN;
         } else {
-          YMin = FLT_MAX;
-          YMax =-FLT_MAX;
+          YMin = DBL_MAX;
+          YMax =-DBL_MAX;
         }
       }
-      CDataStream2D* pData;
+      DataStream2D* pData;
       for(int pos=0; pos<dataSetList.count(); pos++) {
         pData = dataSetList.at(pos);
         if(pData->isShown) {
@@ -184,12 +184,12 @@ Plot2D::SetLimits (double XMin, double XMax, double YMin, double YMax,
     }
   }
   if(XMin == XMax) {
-    XMin  -= 0.05*(XMax+XMin)+FLT_MIN;
-    XMax  += 0.05*(XMax+XMin)+FLT_MIN;
+    XMin  -= 0.05*(XMax+XMin)+DBL_MIN;
+    XMax  += 0.05*(XMax+XMin)+DBL_MIN;
   }
   if(YMin == YMax) {
-    YMin  -= 0.05*(YMax+YMin)+FLT_MIN;
-    YMax  += 0.05*(YMax+YMin)+FLT_MIN;
+    YMin  -= 0.05*(YMax+YMin)+DBL_MIN;
+    YMax  += 0.05*(YMax+YMin)+DBL_MIN;
   }
   if(XMin > XMax) {
     double tmp = XMin;
@@ -202,12 +202,12 @@ Plot2D::SetLimits (double XMin, double XMax, double YMin, double YMax,
     YMax = tmp;
   }
   if(LogX) {
-    if(XMin <= 0.0) XMin = FLT_MIN;
-    if(XMax <= 0.0) XMax = 2.0*FLT_MIN;
+    if(XMin <= 0.0) XMin = DBL_MIN;
+    if(XMax <= 0.0) XMax = 2.0*DBL_MIN;
   }
   if(LogY) {
-    if(YMin <= 0.0) YMin = FLT_MIN;
-    if(YMax <= 0.0) YMax = 2.0*FLT_MIN;
+    if(YMin <= 0.0) YMin = DBL_MIN;
+    if(YMax <= 0.0) YMax = 2.0*DBL_MIN;
   }
   Ax.XMin  = XMin;
   Ax.XMax  = XMax;
@@ -216,9 +216,9 @@ Plot2D::SetLimits (double XMin, double XMax, double YMin, double YMax,
 }
 
 
-CDataStream2D*
+DataStream2D*
 Plot2D::NewDataSet(int Id, int PenWidth, QColor Color, int Symbol, QString Title) {
-  CDataStream2D* pDataItem = new CDataStream2D(Id, PenWidth, Color, Symbol, Title);
+  DataStream2D* pDataItem = new DataStream2D(Id, PenWidth, Color, Symbol, Title);
   pDataItem->setMaxPoints(maxDataPoints);
   dataSetList.append(pDataItem);
   return pDataItem;
@@ -229,7 +229,7 @@ void
 Plot2D::SetShowDataSet(int Id, bool Show) {
   if(!dataSetList.isEmpty()) {
     for(int pos=0; pos<dataSetList.count(); pos++) {
-      CDataStream2D* pData = dataSetList.at(pos);
+      DataStream2D* pData = dataSetList.at(pos);
       if(pData->GetId() == Id) {
         pData->SetShow(Show);
         break;
@@ -243,7 +243,7 @@ void
 Plot2D::NewPoint(int Id, double x, double y) {
   if(std::isnan(y)) return;
   if(dataSetList.isEmpty())  return;
-  CDataStream2D* pData = NULL;
+  DataStream2D* pData = Q_NULLPTR;
   for(int pos=0; pos<dataSetList.count(); pos++) {
     if(dataSetList.at(pos)->GetId() == Id) {
       pData = dataSetList.at(pos);
@@ -259,7 +259,7 @@ Plot2D::NewPoint(int Id, double x, double y) {
 void
 Plot2D::DrawData(QPainter* painter, QFontMetrics fontMetrics) {
   if(dataSetList.isEmpty()) return;
-  CDataStream2D* pData;
+  DataStream2D* pData;
   for(int pos=0; pos<dataSetList.count(); pos++) {
     pData = dataSetList.at(pos);
     if(pData->isShown) {
@@ -279,7 +279,7 @@ Plot2D::DrawData(QPainter* painter, QFontMetrics fontMetrics) {
 void
 Plot2D::SetShowTitle(int Id, bool show) {
   if(dataSetList.isEmpty()) return;
-  CDataStream2D* pData;
+  DataStream2D* pData;
   for(int pos=0; pos<dataSetList.count(); pos++) {
     pData = dataSetList.at(pos);
     if(pData->GetId() == Id) {
@@ -291,7 +291,7 @@ Plot2D::SetShowTitle(int Id, bool show) {
 
 
 void
-Plot2D::ShowTitle(QPainter* painter, QFontMetrics fontMetrics, CDataStream2D *pData) {
+Plot2D::ShowTitle(QPainter* painter, QFontMetrics fontMetrics, DataStream2D *pData) {
   QPen titlePen = QPen(pData->GetProperties().Color);
   painter->setPen(titlePen);
   painter->drawText(int(Pf.right+4), int(Pf.top+fontMetrics.height()*(pData->GetId())), pData->GetTitle());
@@ -440,8 +440,8 @@ Plot2D::XTicLog(QPainter* painter, QFontMetrics fontMetrics) {
   jy = int(Pf.bottom + 5);// Perche' 5 ?
   iy0 = int(Pf.bottom + fontMetrics.height()+5);
 
-  if(Ax.XMin < FLT_MIN) Ax.XMin = FLT_MIN;
-  if(Ax.XMax < FLT_MIN) Ax.XMax = 10.0*FLT_MIN;
+  if(Ax.XMin < DBL_MIN) Ax.XMin = DBL_MIN;
+  if(Ax.XMax < DBL_MIN) Ax.XMax = 10.0*DBL_MIN;
 
   double xlmin = log10(Ax.XMin);
   int minx = int(xlmin);
@@ -451,7 +451,7 @@ Plot2D::XTicLog(QPainter* painter, QFontMetrics fontMetrics) {
   int maxx = int(xlmax);
   if((xlmax > 0.0) && (xlmax != maxx)) maxx= maxx + 1;
 
-  xfact = (Pf.right-Pf.left) / ((xlmax-xlmin)+FLT_MIN);
+  xfact = (Pf.right-Pf.left) / ((xlmax-xlmin)+DBL_MIN);
 
   bool init = true;
   int decades = maxx - minx;
@@ -518,8 +518,8 @@ Plot2D::YTicLog(QPainter* painter, QFontMetrics fontMetrics) {
   double dy;
   QString Label;
 
-  if(Ax.YMin < FLT_MIN) Ax.YMin = FLT_MIN;
-  if(Ax.YMax < FLT_MIN) Ax.YMax = 10.0*FLT_MIN;
+  if(Ax.YMin < DBL_MIN) Ax.YMin = DBL_MIN;
+  if(Ax.YMax < DBL_MIN) Ax.YMax = 10.0*DBL_MIN;
 
   double ylmin = log10(Ax.YMin);
   int miny = int(ylmin);
@@ -529,7 +529,7 @@ Plot2D::YTicLog(QPainter* painter, QFontMetrics fontMetrics) {
   int maxy = int(ylmax);
   if((ylmax > 0.0) && (ylmax != maxy)) maxy= maxy + 1;
 
-  yfact = (Pf.top-Pf.bottom) / ((ylmax-ylmin)+FLT_MIN);
+  yfact = (Pf.top-Pf.bottom) / ((ylmax-ylmin)+DBL_MIN);
 
   bool init = true;
   int decades = maxy - miny;
@@ -638,7 +638,7 @@ Plot2D::DrawPlot(QPainter* painter, QPaintEvent *event) {
 
 
 void
-Plot2D::LinePlot(QPainter* painter, CDataStream2D* pData) {
+Plot2D::LinePlot(QPainter* painter, DataStream2D* pData) {
   if(!pData->isShown) return;
   int iMax = int(pData->m_pointArrayX.count());
   if(iMax == 0) return;
@@ -650,10 +650,10 @@ Plot2D::LinePlot(QPainter* painter, CDataStream2D* pData) {
   if(Ax.XMin > 0.0)
     xlmin = log10(Ax.XMin);
   else
-    xlmin = FLT_MIN;
+    xlmin = DBL_MIN;
   if(Ax.YMin > 0.0)
     ylmin = log10(Ax.YMin);
-  else ylmin = FLT_MIN;
+  else ylmin = DBL_MIN;
 
   if(Ax.LogX) {
     if(pData->m_pointArrayX[0] > 0.0)
@@ -698,7 +698,7 @@ Plot2D::LinePlot(QPainter* painter, CDataStream2D* pData) {
 
 
 void
-Plot2D::DrawLastPoint(QPainter* painter, CDataStream2D* pData) {
+Plot2D::DrawLastPoint(QPainter* painter, DataStream2D* pData) {
   if(!pData->isShown) return;
   int ix, iy, i;
   i = int(pData->m_pointArrayX.count()-1);
@@ -707,10 +707,10 @@ Plot2D::DrawLastPoint(QPainter* painter, CDataStream2D* pData) {
   if(Ax.XMin > 0.0)
     xlmin = log10(Ax.XMin);
   else
-    xlmin = FLT_MIN;
+    xlmin = DBL_MIN;
   if(Ax.YMin > 0.0)
     ylmin = log10(Ax.YMin);
-  else ylmin = FLT_MIN;
+  else ylmin = DBL_MIN;
 
   if(Ax.LogX) {
     if(pData->m_pointArrayX[i] > 0.0)
@@ -736,7 +736,7 @@ Plot2D::DrawLastPoint(QPainter* painter, CDataStream2D* pData) {
 
 
 void
-Plot2D::PointPlot(QPainter* painter, CDataStream2D* pData) {
+Plot2D::PointPlot(QPainter* painter, DataStream2D* pData) {
   int iMax = int(pData->m_pointArrayX.count());
   if(iMax == 0) return;
   QPen dataPen = QPen(pData->GetProperties().Color);
@@ -747,10 +747,10 @@ Plot2D::PointPlot(QPainter* painter, CDataStream2D* pData) {
   if(Ax.XMin > 0.0)
     xlmin = log10(Ax.XMin);
   else
-    xlmin = FLT_MIN;
+    xlmin = DBL_MIN;
   if(Ax.YMin > 0.0)
     ylmin = log10(Ax.YMin);
-  else ylmin = FLT_MIN;
+  else ylmin = DBL_MIN;
 
   for (int i=0; i < iMax; i++) {
     if(!(pData->m_pointArrayX[i] < Ax.XMin ||
@@ -779,7 +779,7 @@ Plot2D::PointPlot(QPainter* painter, CDataStream2D* pData) {
 
 
 void
-Plot2D::ScatterPlot(QPainter* painter, CDataStream2D* pData) {
+Plot2D::ScatterPlot(QPainter* painter, DataStream2D* pData) {
   int iMax = int(pData->m_pointArrayX.count());
   if(iMax == 0) return;
   QPen dataPen = QPen(pData->GetProperties().Color);
@@ -791,10 +791,10 @@ Plot2D::ScatterPlot(QPainter* painter, CDataStream2D* pData) {
   if(Ax.XMin > 0.0)
     xlmin = log10(Ax.XMin);
   else
-    xlmin = FLT_MIN;
+    xlmin = DBL_MIN;
   if(Ax.YMin > 0.0)
     ylmin = log10(Ax.YMin);
-  else ylmin = FLT_MIN;
+  else ylmin = DBL_MIN;
 
   int SYMBOLS_DIM = 8;
   QSize Size(SYMBOLS_DIM, SYMBOLS_DIM);

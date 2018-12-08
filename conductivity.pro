@@ -29,7 +29,8 @@ TARGET = conductivity
 TEMPLATE = app
 
 
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    datastream2d.cpp
 SOURCES += k236tab.cpp
 SOURCES += ls330tab.cpp
 SOURCES += cs130tab.cpp
@@ -40,14 +41,15 @@ SOURCES += mainwindow.cpp
 SOURCES += cornerstone130.cpp
 SOURCES += keithley236.cpp
 SOURCES += lakeshore330.cpp
-SOURCES += cdatastream2d.cpp
+SOURCES +=
 SOURCES += plot2d.cpp
 SOURCES += axesdialog.cpp
 SOURCES += AxisLimits.cpp
 SOURCES += AxisFrame.cpp
 SOURCES += DataSetProperties.cpp
 
-HEADERS += mainwindow.h
+HEADERS += mainwindow.h \
+    datastream2d.h
 HEADERS += k236tab.h
 HEADERS += ls330tab.h
 HEADERS += cs130tab.h
@@ -57,7 +59,7 @@ HEADERS += gpibdevice.h
 HEADERS += cornerstone130.h
 HEADERS += keithley236.h
 HEADERS += lakeshore330.h
-HEADERS += cdatastream2d.h
+HEADERS +=
 HEADERS += plot2d.h
 HEADERS += axesdialog.h
 HEADERS += AxisLimits.h
