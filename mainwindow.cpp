@@ -1705,3 +1705,8 @@ void
 MainWindow::onLogMessage(QString sMessage) {
     logMessage(sMessage);
 }
+
+void
+MainWindow::on_logoButton_clicked() {
+
+}

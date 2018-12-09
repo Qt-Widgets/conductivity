@@ -97,6 +97,7 @@ private slots:
     void on_lampButton_clicked();
     void onLogMessage(QString sMessage);
     void on_lambdaScanButton_clicked();
+    void on_logoButton_clicked();
 
 private:
     Ui::MainWindow *ui;
