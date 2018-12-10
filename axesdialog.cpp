@@ -54,8 +54,8 @@ AxesDialog::AxesDialog(QWidget *parent)
     pLayout->addWidget(pEditYMax, 3, 1, 1, 2);
 
     pLayout->addWidget(pAutoX, 0, 3, 1, 1);
-    pLayout->addWidget(pAutoY, 1, 3, 1, 1);
-    pLayout->addWidget(pLogX,  2, 3, 1, 1);
+    pLayout->addWidget(pLogX,  1, 3, 1, 1);
+    pLayout->addWidget(pAutoY, 2, 3, 1, 1);
     pLayout->addWidget(pLogY,  3, 3, 1, 1);
 
     pLayout->addWidget(pButtonBox, 4, 0, 1, 4);
