@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "lakeshore330.h"
 #include "cornerstone130.h"
 #include "plot2d.h"
+#include "EasterDlg.h"
 #if defined(Q_PROCESSOR_ARM)
     #include "pigpiod_if2.h"// The header for using GPIO pins on Raspberry
 #endif
@@ -1708,5 +1709,6 @@ MainWindow::onLogMessage(QString sMessage) {
 
 void
 MainWindow::on_logoButton_clicked() {
-
+    EasterDlg easterDialog;
+    easterDialog.exec();
 }

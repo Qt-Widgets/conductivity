@@ -30,6 +30,7 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp
+SOURCES += EasterDlg.cpp
 SOURCES += datastream2d.cpp
 SOURCES += k236tab.cpp
 SOURCES += ls330tab.cpp
@@ -48,6 +49,7 @@ SOURCES += AxisFrame.cpp
 SOURCES += DataSetProperties.cpp
 
 HEADERS += mainwindow.h
+HEADERS += EasterDlg.h
 HEADERS += datastream2d.h
 HEADERS += k236tab.h
 HEADERS += ls330tab.h
