@@ -191,13 +191,13 @@ Plot2D::SetLimits (double XMin, double XMax, double YMin, double YMax,
             }
         }
     }
-    if(XMin == XMax) {
-        XMin  -= 0.05*(XMax+XMin)+DBL_MIN;
-        XMax  += 0.05*(XMax+XMin)+DBL_MIN;
+    if(abs(XMin-XMax) < double(FLT_MIN)) {
+        XMin  -= 0.05*(XMax+XMin)+double(FLT_MIN);
+        XMax  += 0.05*(XMax+XMin)+double(FLT_MIN);
     }
-    if(YMin == YMax) {
-        YMin  -= 0.05*(YMax+YMin)+DBL_MIN;
-        YMax  += 0.05*(YMax+YMin)+DBL_MIN;
+    if(abs(YMin-YMax)  < double(FLT_MIN)) {
+        YMin  -= 0.05*(YMax+YMin)+double(FLT_MIN);
+        YMax  += 0.05*(YMax+YMin)+double(FLT_MIN);
     }
     if(XMin > XMax) {
         double tmp = XMin;
@@ -210,12 +210,12 @@ Plot2D::SetLimits (double XMin, double XMax, double YMin, double YMax,
         YMax = tmp;
     }
     if(LogX) {
-        if(XMin <= 0.0) XMin = DBL_MIN;
-        if(XMax <= 0.0) XMax = 2.0*DBL_MIN;
+        if(XMin <= 0.0) XMin = double(FLT_MIN);
+        if(XMax <= 0.0) XMax = 2.0*double(FLT_MIN);
     }
     if(LogY) {
-        if(YMin <= 0.0) YMin = DBL_MIN;
-        if(YMax <= 0.0) YMax = 2.0*DBL_MIN;
+        if(YMin <= 0.0) YMin = double(FLT_MIN);
+        if(YMax <= 0.0) YMax = 2.0*double(FLT_MIN);
     }
     Ax.XMin  = XMin;
     Ax.XMax  = XMax;
