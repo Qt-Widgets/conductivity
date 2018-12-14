@@ -64,7 +64,7 @@ protected:
     void closeEvent(QCloseEvent *event);
     void keyPressEvent(QKeyEvent *e);
     void paintEvent(QPaintEvent *event);
-    void DrawPlot(QPainter* painter, QPaintEvent *event);
+    void DrawPlot(QPainter* painter, QFontMetrics fontMetrics);
     void DrawFrame(QPainter* painter, QFontMetrics fontMetrics);
     void XTicLin(QPainter* painter, QFontMetrics fontMetrics);
     void XTicLog(QPainter* painter, QFontMetrics fontMetrics);
@@ -95,7 +95,7 @@ protected:
     AxisLimits Ax;
     AxisFrame Pf;
     QString sTitle;
-    QString sXCoord, sYCoord;
+    QString sMouseCoord;
     double xfact, yfact;
     QPoint lastPos, zoomStart, zoomEnd;
 };

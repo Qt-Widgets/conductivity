@@ -35,6 +35,7 @@ Plot2D::Plot2D(QWidget *parent, QString Title)
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
     setWindowFlags(windowFlags() |  Qt::WindowMinMaxButtonsHint);
+    setMouseTracking(true);
 //  setAttribute(Qt::WA_AlwaysShowToolTips);
     setWindowIcon(QIcon("qrc:/plot.png"));
     QSettings settings;
@@ -50,8 +51,9 @@ Plot2D::Plot2D(QWidget *parent, QString Title)
 
     gridPen.setWidth(1);
 
-    sXCoord.sprintf("X=% 016.7g", 0.0);
-    sYCoord.sprintf("Y=% 016.7g", 0.0);
+    sMouseCoord = QString("X=%1 Y=%2")
+              .arg(0.0, 10, 'g', 7, ' ')
+              .arg(0.0, 10, 'g', 7, ' ');
 
     maxDataPoints = 100;
 
@@ -90,7 +92,13 @@ Plot2D::paintEvent(QPaintEvent *event) {
     QPainter painter;
     painter.begin(this);
     painter.setFont(QFont("Helvetica", 16, QFont::Bold));
-    DrawPlot(&painter, event);
+    QFontMetrics fontMetrics = painter.fontMetrics();
+    painter.fillRect(event->rect(), QBrush(QColor(0, 0, 0)));
+    DrawPlot(&painter, fontMetrics);
+    QRect textSize = fontMetrics.boundingRect(sMouseCoord);
+    int nPosX = (width()/2) - (textSize.width()/2);
+    int nPosY = height() - 4;
+    painter.drawText(nPosX, nPosY, sMouseCoord);
     painter.end();
 }
 
@@ -613,12 +621,10 @@ Plot2D::DrawFrame(QPainter* painter, QFontMetrics fontMetrics) {
 
 
 void
-Plot2D::DrawPlot(QPainter* painter, QPaintEvent *event) {
+Plot2D::DrawPlot(QPainter* painter, QFontMetrics fontMetrics) {
     if(Ax.AutoX || Ax.AutoY) {
         SetLimits (Ax.XMin, Ax.XMax, Ax.YMin, Ax.YMax, Ax.AutoX, Ax.AutoY, Ax.LogX, Ax.LogY);
     }
-    painter->fillRect(event->rect(), QBrush(QColor(0, 0, 0)));
-    QFontMetrics fontMetrics = painter->fontMetrics();
 
     Pf.left = fontMetrics.width("-0.00000") + 2.0;
     Pf.right = width() - fontMetrics.width("x10-999") - 5.0;
@@ -855,7 +861,8 @@ Plot2D::mousePressEvent(QMouseEvent *event) {
     if (event->buttons() & Qt::RightButton) {
 
 
-    } else if (event->buttons() & Qt::LeftButton) {
+    }
+    else if (event->buttons() & Qt::LeftButton) {
         if(event->modifiers() & Qt::ShiftModifier) {
             setCursor(Qt::SizeAllCursor);
             zoomStart = event->pos();
@@ -907,14 +914,14 @@ Plot2D::mouseReleaseEvent(QMouseEvent *event) {
         }
         event->accept();
     }
-    UpdatePlot();
+    update();
     setCursor(Qt::CrossCursor);
 }
 
 
 void
 Plot2D::mouseMoveEvent(QMouseEvent *event) {
-    if (event->buttons() & Qt::LeftButton) {
+    if(event->buttons() & Qt::LeftButton) {
         if(!bZooming) {
             double xmin, xmax, ymin, ymax;
             double dxPix = event->pos().rx() - lastPos.rx();
@@ -937,28 +944,31 @@ Plot2D::mouseMoveEvent(QMouseEvent *event) {
             }
             lastPos = event->pos();
             SetLimits (xmin, xmax, ymin, ymax, Ax.AutoX, Ax.AutoY, Ax.LogX, Ax.LogY);
-            UpdatePlot();
+            update();
         } else {// is Zooming
             zoomEnd = event->pos();
-            UpdatePlot();
+            update();
         }
-    } else {
-        double xval, yval;
-        if(Ax.LogX) {
-            xval = pow(10.0, log10(Ax.XMin)+(event->pos().rx()-Pf.left)/xfact);
-        }else {
-            xval =Ax.XMin + (event->pos().rx()-Pf.left) / xfact;
-        }
-        if(Ax.LogY) {
-            yval = pow(10.0, log10(Ax.YMin)+(event->pos().ry()-Pf.bottom)/yfact);
-        } else {
-            yval =Ax.YMin + (event->pos().ry()-Pf.bottom) / yfact;
-        }
-        sXCoord.sprintf("X=% -10.7g", xval);
-        sYCoord.sprintf("Y=% -10.7g", yval);
-        //>>>>>>>>>>>>>SetTimer(MOUSETIMER, CURSORUPDATETIME, NULL);
+        event->accept();
+        return;
     }
-    //  setToolTip(sXCoord + " " + sYCoord);
+    double xval, yval;
+    if(Ax.LogX) {
+        xval = pow(10.0, log10(Ax.XMin)+(event->pos().rx()-Pf.left)/xfact);
+    }
+    else {
+        xval =Ax.XMin + (event->pos().rx()-Pf.left) / xfact;
+    }
+    if(Ax.LogY) {
+        yval = pow(10.0, log10(Ax.YMin)+(event->pos().ry()-Pf.bottom)/yfact);
+    }
+    else {
+        yval =Ax.YMin + (event->pos().ry()-Pf.bottom) / yfact;
+    }
+    sMouseCoord = QString("X=%1 Y=%2")
+              .arg(xval, 10, 'g', 7, ' ')
+              .arg(yval, 10, 'g', 7, ' ');
+    update();
     event->accept();
 }
 
@@ -972,7 +982,7 @@ Plot2D::mouseDoubleClickEvent(QMouseEvent *event) {
     if(iRes==QDialog::Accepted) {
         Ax = axesDialog.newLimits;
         SetLimits (Ax.XMin, Ax.XMax, Ax.YMin, Ax.YMax, Ax.AutoX, Ax.AutoY, Ax.LogX, Ax.LogY);
-        UpdatePlot();
+        update();
     }
 }
 
