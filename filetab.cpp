@@ -126,8 +126,8 @@ FileTab::checkFileName() {
     if(QDir(sBaseDir).exists(sOutFileName)) {
         int iAnswer = QMessageBox::question(
                     this,
-                    QString("File Already exists"),
-                    QString("Overwrite %1 ?").arg(sOutFileName),
+                    QString("File Exists"),
+                    QString("Do you want overwrite\n%1 ?").arg(sOutFileName),
                     QMessageBox::Yes,
                     QMessageBox::No,
                     QMessageBox::NoButton);
