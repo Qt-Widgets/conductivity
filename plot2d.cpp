@@ -27,6 +27,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDebug>
 #include <QIcon>
 
+/*
+Elenco dell proprietà della finestra di Plot customizzabili:
+
+    labelPen = QPen(Qt::white);
+    gridPen  = QPen(Qt::blue);
+    framePen = QPen(Qt::blue);
+
+    gridPen.setWidth(1);
+    maxDataPoints = 100;
+    painter.setFont(QFont("Helvetica", 16, QFont::Bold));
+    painter.fillRect(event->rect(), QBrush(QColor(0, 0, 0)));
+
+*/
 
 Plot2D::Plot2D(QWidget *parent, QString Title)
     : QDialog(parent)
