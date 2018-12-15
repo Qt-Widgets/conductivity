@@ -22,6 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QSharedMemory>
 #include <QFileInfo>
 
+// TO BE REMOVED
+#include "plot2d.h"
+// TILL HERE
 
 void
 myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
@@ -62,6 +65,11 @@ main(int argc, char *argv[]) {
     QCoreApplication::setOrganizationName("Gabriele.Salvato");
     QCoreApplication::setApplicationName("Conductivity");
     QCoreApplication::setApplicationVersion("2.0.0");
+
+// TO BE REMOVED
+    Plot2D plot;
+    plot.exec();
+// TILL HERE
 
 //=========================================================================
 // Not working ! if the application crashes the system must be rebooted !!

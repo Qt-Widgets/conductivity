@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QLabel>
 #include <QColorDialog>
 #include <QFontDialog>
+#include <QDebug>
 
 
 plotPropertiesDlg::plotPropertiesDlg(QWidget *parent)
@@ -39,28 +40,29 @@ plotPropertiesDlg::plotPropertiesDlg(QWidget *parent)
     pLayout->addWidget(&labelColorButton, 1, 1, 1, 1);
     pLayout->addWidget(&labelFontButton,  2, 0, 1, 1);
 
-    pLayout->addWidget(new QLabel("Grid Lines Width"),  2, 0, 1, 1);
-    pLayout->addWidget(&gridPenWidthEdit,               2, 1, 1, 1);
-    pLayout->addWidget(new QLabel("Max Data Points"),   3, 0, 1, 1);
-    pLayout->addWidget(&maxDataPointsEdit,              3, 1, 1, 1);
+    pLayout->addWidget(new QLabel("Grid Lines Width"), 3, 0, 1, 1);
+    pLayout->addWidget(&gridPenWidthEdit,              3, 1, 1, 1);
+    pLayout->addWidget(new QLabel("Max Data Points"),  4, 0, 1, 1);
+    pLayout->addWidget(&maxDataPointsEdit,             4, 1, 1, 1);
 
-    pLayout->addWidget(pButtonBox, 4, 0, 1, 2);
+    pLayout->addWidget(pButtonBox, 5, 0, 1, 2);
 
     // Set the Layout
     setLayout(pLayout);
+    connectSignals();
 }
 
 
 void
 plotPropertiesDlg::restoreSettings() {
     QSettings settings;
-    labelColor        = settings.value("LabelColor", QColor(Qt::white)).toUInt();
-    gridColor         = settings.value("GridColor", QColor(Qt::blue)).toUInt();
-    frameColor        = settings.value("FrameColor", QColor(Qt::blue)).toUInt();
-    painterBkColor    = settings.value("PainterBKColor", QColor(Qt::black)).toUInt();
+    painterBkColor.setRgba(settings.value("PainterBKColor", QColor(Qt::black).rgba()).toUInt());
+    frameColor.setRgba(settings.value("FrameColor",     QColor(Qt::blue).rgba()).toUInt());
+    gridColor.setRgba(settings.value("GridColor",      QColor(Qt::blue).rgba()).toUInt());
+    labelColor.setRgba(settings.value("LabelColor",     QColor(Qt::white).rgba()).toUInt());
     gridPenWidth      = settings.value("GridPenWidth", 1).toInt();
     maxDataPoints     = settings.value("MaxDataPoints", 100).toInt();
-    painterFontName   = settings.value("PainterFontName", QString("Helvetica")).toString();
+    painterFontName   = settings.value("PainterFontName", QString("Ubuntu")).toString();
     painterFontSize   = settings.value("PainterFontSize", 16).toInt();
     painterFontWeight = QFont::Weight(settings.value("PainterFontWeight", QFont::Bold).toInt());
     painterFontItalic = settings.value("PainterFontItalic", false).toBool();
@@ -75,15 +77,15 @@ plotPropertiesDlg::restoreSettings() {
 void
 plotPropertiesDlg::saveSettings() {
     QSettings settings;
-    settings.setValue("LabelColor", labelColor);
-    settings.setValue("GridColor", gridColor);
-    settings.setValue("FrameColor", frameColor);
-    settings.setValue("PainterBKColor", painterBkColor);
+    settings.setValue("LabelColor", labelColor.rgba());
+    settings.setValue("GridColor", gridColor.rgba());
+    settings.setValue("FrameColor", frameColor.rgba());
+    settings.setValue("PainterBKColor", painterBkColor.rgba());
     settings.setValue("GridPenWidth", gridPenWidth);
     settings.setValue("MaxDataPoints", maxDataPoints);
     settings.setValue("PainterFontName", painterFontName);
     settings.setValue("PainterFontSize", painterFontSize);
-    settings.setValue("PainterFontWeight", QFont::Bold);
+    settings.setValue("PainterFontWeight", painterFontWeight);
     settings.setValue("PainterFontItalic", painterFontItalic);
 }
 
@@ -128,7 +130,7 @@ plotPropertiesDlg::connectSignals() {
             this, SLOT(onChangeGridPenWidth(const QString)));
     connect(&maxDataPointsEdit, SIGNAL(textChanged(const QString)),
             this, SLOT(onChangeMaxDataPoints(const QString)));
-
+    // Button Box
     connect(pButtonBox, SIGNAL(accepted()),
             this, SLOT(onOk()));
     connect(pButtonBox, SIGNAL(rejected()),
@@ -154,8 +156,9 @@ plotPropertiesDlg::onOk() {
 void
 plotPropertiesDlg::onChangeBkColor() {
     QColorDialog colorDialog(painterBkColor);
+    colorDialog.setOption(QColorDialog::DontUseNativeDialog, true);
     if(colorDialog.exec()==QDialog::Accepted) {
-        painterBkColor = colorDialog.getColor();
+        painterBkColor = colorDialog.currentColor();
         emit configChanged();
     }
 }
@@ -164,8 +167,9 @@ plotPropertiesDlg::onChangeBkColor() {
 void
 plotPropertiesDlg::onChangeFrameColor() {
     QColorDialog colorDialog(frameColor);
+    colorDialog.setOption(QColorDialog::DontUseNativeDialog, true);
     if(colorDialog.exec()==QDialog::Accepted) {
-        frameColor = colorDialog.getColor();
+        frameColor = colorDialog.currentColor();
         emit configChanged();
     }
 }
@@ -174,8 +178,9 @@ plotPropertiesDlg::onChangeFrameColor() {
 void
 plotPropertiesDlg::onChangeGridColor() {
     QColorDialog colorDialog(gridColor);
+    colorDialog.setOption(QColorDialog::DontUseNativeDialog, true);
     if(colorDialog.exec()==QDialog::Accepted) {
-        gridColor = colorDialog.getColor();
+        gridColor = colorDialog.currentColor();
         emit configChanged();
     }
 }
@@ -184,8 +189,9 @@ plotPropertiesDlg::onChangeGridColor() {
 void
 plotPropertiesDlg::onChangeLabelsColor() {
     QColorDialog colorDialog(labelColor);
+    colorDialog.setOption(QColorDialog::DontUseNativeDialog, true);
     if(colorDialog.exec()==QDialog::Accepted) {
-        labelColor = colorDialog.getColor();
+        labelColor = colorDialog.currentColor();
         emit configChanged();
     }
 }
@@ -193,13 +199,16 @@ plotPropertiesDlg::onChangeLabelsColor() {
 
 void
 plotPropertiesDlg::onChangeLabelsFont() {
-    QFontDialog fontDialog(painterFont);
-    if(fontDialog.exec()==QDialog::Accepted) {
-        painterFont = fontDialog.font();
+    QFontDialog* pFontDialog = new QFontDialog(this);
+    pFontDialog->setCurrentFont(painterFont);
+    pFontDialog->setOptions(QFontDialog::MonospacedFonts);
+    if(pFontDialog->exec() == QDialog::Accepted) {
+        painterFont       = pFontDialog->currentFont();
         painterFontName   = painterFont.family();
         painterFontSize   = painterFont.pointSize();
         painterFontWeight = QFont::Weight(painterFont.weight());
         painterFontItalic = painterFont.italic();
+        qDebug() << painterFontName << painterFontSize <<painterFontWeight;
         emit configChanged();
     }
 }

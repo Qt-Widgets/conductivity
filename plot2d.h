@@ -42,7 +42,6 @@ public:
     void NewPoint(int Id, double x, double y);
     void SetShowDataSet(int Id, bool Show);
     void SetShowTitle(int Id, bool show);
-    void UpdatePlot();
     void ClearPlot();
     void setMaxPoints(int nPoints);
     int  getMaxPoints();
@@ -50,6 +49,7 @@ public:
 signals:
 
 public slots:
+    void UpdatePlot();
 
 public:
     static const int iline       = 0;
@@ -99,5 +99,5 @@ protected:
     QString sMouseCoord;
     double xfact, yfact;
     QPoint lastPos, zoomStart, zoomEnd;
-    plotPropertiesDlg properties;
+    plotPropertiesDlg* pPropertiesDlg;
 };

@@ -27,27 +27,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDebug>
 #include <QIcon>
 
-/*
-Elenco dell proprietà della finestra di Plot customizzabili:
-
-    labelPen = QPen(Qt::white);
-    gridPen  = QPen(Qt::blue);
-    framePen = QPen(Qt::blue);
-
-    gridPen.setWidth(1);
-    maxDataPoints = 100;
-    painter.setFont(QFont("Helvetica", 16, QFont::Bold));
-    painter.fillRect(event->rect(), QBrush(QColor(0, 0, 0)));
-
-*/
 
 Plot2D::Plot2D(QWidget *parent, QString Title)
     : QDialog(parent)
     , sTitle(Title)
 {
-    setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
-    setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
-    setWindowFlags(windowFlags() |  Qt::WindowMinMaxButtonsHint);
+//>>>    setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
+//>>>    setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
+//>>>    setWindowFlags(windowFlags() |  Qt::WindowMinMaxButtonsHint);
     setMouseTracking(true);
 //  setAttribute(Qt::WA_AlwaysShowToolTips);
     setWindowIcon(QIcon("qrc:/plot.png"));
@@ -58,17 +45,20 @@ Plot2D::Plot2D(QWidget *parent, QString Title)
     bShowMarker  = false;
     bZooming     = false;
 
-    labelPen = properties.labelColor;//QPen(Qt::white);
-    gridPen  = properties.gridColor; //QPen(Qt::blue);
-    framePen = properties.frameColor;//QPen(Qt::blue);
+    pPropertiesDlg = new plotPropertiesDlg();
+    connect(pPropertiesDlg, SIGNAL(configChanged()),
+            this, SLOT(UpdatePlot()));
 
-    gridPen.setWidth(properties.gridPenWidth);
+    labelPen = pPropertiesDlg->labelColor;//QPen(Qt::white);
+    gridPen  = pPropertiesDlg->gridColor; //QPen(Qt::blue);
+    framePen = pPropertiesDlg->frameColor;//QPen(Qt::blue);
+    gridPen.setWidth(pPropertiesDlg->gridPenWidth);
+    maxDataPoints = pPropertiesDlg->maxDataPoints;
 
     sMouseCoord = QString("X=%1 Y=%2")
                   .arg(0.0, 10, 'g', 7, ' ')
                   .arg(0.0, 10, 'g', 7, ' ');
 
-    maxDataPoints = properties.maxDataPoints;
 
     setCursor(Qt::CrossCursor);
     setWindowTitle(Title);
@@ -94,9 +84,9 @@ Plot2D::keyPressEvent(QKeyEvent *e) {
 
 void
 Plot2D::closeEvent(QCloseEvent *event) {
-    QSettings settings;
-    settings.setValue(sTitle+QString("Plot2D"), saveGeometry());
-    event->ignore();
+//>>>    QSettings settings;
+//>>>    settings.setValue(sTitle+QString("Plot2D"), saveGeometry());
+//>>>    event->ignore();
 }
 
 
@@ -104,10 +94,10 @@ void
 Plot2D::paintEvent(QPaintEvent *event) {
     QPainter painter;
     painter.begin(this);
-    painter.setFont(properties.painterFont);
+    painter.setFont(pPropertiesDlg->painterFont);
     //painter.setFont(QFont("Helvetica", 16, QFont::Bold));
     QFontMetrics fontMetrics = painter.fontMetrics();
-    painter.fillRect(event->rect(), QBrush(QColor(0, 0, 0)));
+    painter.fillRect(event->rect(), QBrush(pPropertiesDlg->painterBkColor));
     DrawPlot(&painter, fontMetrics);
     QRect textSize = fontMetrics.boundingRect(sMouseCoord);
     int nPosX = (width()/2) - (textSize.width()/2);
@@ -873,8 +863,7 @@ Plot2D::ScatterPlot(QPainter* painter, DataStream2D* pData) {
 void
 Plot2D::mousePressEvent(QMouseEvent *event) {
     if (event->buttons() & Qt::RightButton) {
-
-
+        pPropertiesDlg->exec();
     }
     else if (event->buttons() & Qt::LeftButton) {
         if(event->modifiers() & Qt::ShiftModifier) {
@@ -1003,6 +992,11 @@ Plot2D::mouseDoubleClickEvent(QMouseEvent *event) {
 
 void
 Plot2D::UpdatePlot() {
+    labelPen = pPropertiesDlg->labelColor;//QPen(Qt::white);
+    gridPen  = pPropertiesDlg->gridColor; //QPen(Qt::blue);
+    framePen = pPropertiesDlg->frameColor;//QPen(Qt::blue);
+    gridPen.setWidth(pPropertiesDlg->gridPenWidth);
+    maxDataPoints = pPropertiesDlg->maxDataPoints;
     update();
 }
 
