@@ -58,17 +58,17 @@ Plot2D::Plot2D(QWidget *parent, QString Title)
     bShowMarker  = false;
     bZooming     = false;
 
-    labelPen = QPen(Qt::white);
-    gridPen  = QPen(Qt::blue);
-    framePen = QPen(Qt::blue);
+    labelPen = properties.labelColor;//QPen(Qt::white);
+    gridPen  = properties.gridColor; //QPen(Qt::blue);
+    framePen = properties.frameColor;//QPen(Qt::blue);
 
-    gridPen.setWidth(1);
+    gridPen.setWidth(properties.gridPenWidth);
 
     sMouseCoord = QString("X=%1 Y=%2")
-              .arg(0.0, 10, 'g', 7, ' ')
-              .arg(0.0, 10, 'g', 7, ' ');
+                  .arg(0.0, 10, 'g', 7, ' ')
+                  .arg(0.0, 10, 'g', 7, ' ');
 
-    maxDataPoints = 100;
+    maxDataPoints = properties.maxDataPoints;
 
     setCursor(Qt::CrossCursor);
     setWindowTitle(Title);
@@ -104,7 +104,8 @@ void
 Plot2D::paintEvent(QPaintEvent *event) {
     QPainter painter;
     painter.begin(this);
-    painter.setFont(QFont("Helvetica", 16, QFont::Bold));
+    painter.setFont(properties.painterFont);
+    //painter.setFont(QFont("Helvetica", 16, QFont::Bold));
     QFontMetrics fontMetrics = painter.fontMetrics();
     painter.fillRect(event->rect(), QBrush(QColor(0, 0, 0)));
     DrawPlot(&painter, fontMetrics);

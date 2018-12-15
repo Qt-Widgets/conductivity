@@ -28,8 +28,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class plotPropertiesDlg : public QDialog
 {
     Q_OBJECT
+
 public:
-    plotPropertiesDlg(QWidget *parent);
+    plotPropertiesDlg(QWidget *parent=Q_NULLPTR);
 
     QColor labelColor;
     QColor gridColor;
@@ -39,6 +40,17 @@ public:
     int gridPenWidth;
     int maxDataPoints;
     QFont painterFont;
+
+signals:
+    void configChanged();
+
+public slots:
+    void onChangeBkColor();
+    void onChangeFrameColor();
+    void onChangeGridColor();
+    void onChangeLabelsColor();
+    void onChangeGridPenWidth(const QString);
+    void onChangeMaxDataPoints(const QString);
 
 protected:
     void restoreSettings();
@@ -51,11 +63,13 @@ protected:
     int painterFontSize;
     QFont::Weight painterFontWeight;
     bool painterFontItalic;
-
+    // Buttons
     QPushButton BkColorButton;
     QPushButton frameColorButton;
     QPushButton gridColorButton;
     QPushButton labelColorButton;
+    // Line Edit
     QLineEdit   gridPenWidthEdit;
+    QLineEdit   maxDataPointsEdit;
 };
 

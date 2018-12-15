@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
 
+#include "plotpropertiesdlg.h"
 #include "datastream2d.h"
 #include "AxisLimits.h"
 #include "AxisFrame.h"
@@ -98,4 +99,5 @@ protected:
     QString sMouseCoord;
     double xfact, yfact;
     QPoint lastPos, zoomStart, zoomEnd;
+    plotPropertiesDlg properties;
 };

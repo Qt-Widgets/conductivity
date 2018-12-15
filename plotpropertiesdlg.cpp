@@ -18,10 +18,31 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "plotpropertiesdlg.h"
 
+#include <QGridLayout>
+#include <QLabel>
+#include <QColorDialog>
+#include <QFontDialog>
+
+
 plotPropertiesDlg::plotPropertiesDlg(QWidget *parent)
     : QDialog(parent)
 {
     restoreSettings();
+    // Create the Dialog Layout
+    QGridLayout* pLayout = new QGridLayout();
+
+    pLayout->addWidget(&BkColorButton,    0, 0, 1, 1);
+    pLayout->addWidget(&frameColorButton, 0, 1, 1, 1);
+    pLayout->addWidget(&gridColorButton,  1, 0, 1, 1);
+    pLayout->addWidget(&labelColorButton, 1, 1, 1, 1);
+
+    pLayout->addWidget(new QLabel("Grid Lines Width"),  2, 0, 1, 1);
+    pLayout->addWidget(&gridPenWidthEdit,               2, 1, 1, 1);
+    pLayout->addWidget(new QLabel("Max Data Points"),   3, 0, 1, 1);
+    pLayout->addWidget(&maxDataPointsEdit,              3, 1, 1, 1);
+
+    // Set the Layout
+    setLayout(pLayout);
 }
 
 
@@ -42,6 +63,7 @@ plotPropertiesDlg::restoreSettings() {
                               painterFontSize,
                               painterFontWeight,
                               painterFontItalic);
+    emit configChanged();
 }
 
 
@@ -69,11 +91,70 @@ plotPropertiesDlg::setToolTips() {
 
 void
 plotPropertiesDlg::initUI() {
+    BkColorButton.setText("Bkg Color");
+    frameColorButton.setText("Frame Color");
+    gridColorButton.setText("Grid Color");
+    labelColorButton.setText("Labels Color");
 
+    gridPenWidthEdit.setText(QString("%1").arg(gridPenWidth));
+    maxDataPointsEdit.setText(QString("%1").arg(maxDataPoints));
+
+    setToolTips();
 }
 
 
 void
 plotPropertiesDlg::connectSignals() {
+    connect(&BkColorButton, SIGNAL(clicked()),
+            this, SLOT(onChangeBkColor()));
+    connect(&frameColorButton, SIGNAL(clicked()),
+            this, SLOT(onChangeFrameColor()));
+    connect(&gridColorButton, SIGNAL(clicked()),
+            this, SLOT(onChangeGridColor()));
+    connect(&labelColorButton, SIGNAL(clicked()),
+            this, SLOT(onChangeLabelsColor()));
+    // Line Edit
+    connect(&gridPenWidthEdit, SIGNAL(textChanged(const QString)),
+            this, SLOT(onChangeGridPenWidth(const QString)));
+    connect(&maxDataPointsEdit, SIGNAL(textChanged(const QString)),
+            this, SLOT(onChangeMaxDataPoints(const QString)));
 
 }
+
+
+void
+plotPropertiesDlg::onChangeBkColor() {
+
+}
+
+
+void
+plotPropertiesDlg::onChangeFrameColor() {
+
+}
+
+
+void
+plotPropertiesDlg::onChangeGridColor() {
+
+}
+
+
+void
+plotPropertiesDlg::onChangeLabelsColor() {
+
+}
+
+
+void
+plotPropertiesDlg::onChangeGridPenWidth(const QString) {
+
+}
+
+
+void
+plotPropertiesDlg::onChangeMaxDataPoints(const QString) {
+
+}
+
+
