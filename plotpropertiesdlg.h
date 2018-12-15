@@ -49,6 +49,7 @@ public slots:
     void onChangeFrameColor();
     void onChangeGridColor();
     void onChangeLabelsColor();
+    void onChangeLabelsFont();
     void onChangeGridPenWidth(const QString sNewVal);
     void onChangeMaxDataPoints(const QString sNewVal);
 
@@ -69,6 +70,7 @@ private:
     QPushButton frameColorButton;
     QPushButton gridColorButton;
     QPushButton labelColorButton;
+    QPushButton labelFontButton;
     // Line Edit
     QLineEdit   gridPenWidthEdit;
     QLineEdit   maxDataPointsEdit;

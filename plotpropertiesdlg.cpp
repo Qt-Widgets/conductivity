@@ -35,6 +35,7 @@ plotPropertiesDlg::plotPropertiesDlg(QWidget *parent)
     pLayout->addWidget(&frameColorButton, 0, 1, 1, 1);
     pLayout->addWidget(&gridColorButton,  1, 0, 1, 1);
     pLayout->addWidget(&labelColorButton, 1, 1, 1, 1);
+    pLayout->addWidget(&labelFontButton,  2, 0, 1, 1);
 
     pLayout->addWidget(new QLabel("Grid Lines Width"),  2, 0, 1, 1);
     pLayout->addWidget(&gridPenWidthEdit,               2, 1, 1, 1);
@@ -95,6 +96,7 @@ plotPropertiesDlg::initUI() {
     frameColorButton.setText("Frame Color");
     gridColorButton.setText("Grid Color");
     labelColorButton.setText("Labels Color");
+    labelFontButton.setText("Label Font");
 
     gridPenWidthEdit.setText(QString("%1").arg(gridPenWidth));
     maxDataPointsEdit.setText(QString("%1").arg(maxDataPoints));
@@ -113,6 +115,8 @@ plotPropertiesDlg::connectSignals() {
             this, SLOT(onChangeGridColor()));
     connect(&labelColorButton, SIGNAL(clicked()),
             this, SLOT(onChangeLabelsColor()));
+    connect(&labelFontButton, SIGNAL(clicked()),
+            this, SLOT(onChangeLabelsFont()));
     // Line Edit
     connect(&gridPenWidthEdit, SIGNAL(textChanged(const QString)),
             this, SLOT(onChangeGridPenWidth(const QString)));
@@ -157,6 +161,20 @@ plotPropertiesDlg::onChangeLabelsColor() {
     QColorDialog colorDialog(labelColor);
     if(colorDialog.exec()==QDialog::Accepted) {
         labelColor = colorDialog.getColor();
+        emit configChanged();
+    }
+}
+
+
+void
+plotPropertiesDlg::onChangeLabelsFont() {
+    QFontDialog fontDialog(painterFont);
+    if(fontDialog.exec()==QDialog::Accepted) {
+        painterFont = fontDialog.font();
+        painterFontName   = painterFont.family();
+        painterFontSize   = painterFont.pointSize();
+        painterFontWeight = QFont::Weight(painterFont.weight());
+        painterFontItalic = painterFont.italic();
         emit configChanged();
     }
 }
