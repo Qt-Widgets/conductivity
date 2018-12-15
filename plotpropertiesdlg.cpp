@@ -21,16 +21,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 plotPropertiesDlg::plotPropertiesDlg(QWidget *parent)
     : QDialog(parent)
 {
-    labelColor        = Qt::white;
-    gridColor         = Qt::blue;
-    frameColor        = Qt::blue;
-    painterBkColor    = Qt::black;
-    gridPenWidth      = 1;
-    maxDataPoints     = 100;
-    painterFontName   = QString("Helvetica");
-    painterFontSize   = 16;
-    painterFontWeight = QFont::Bold;
-    painterFontItalic = false;
+    restoreSettings();
+}
+
+
+void
+plotPropertiesDlg::restoreSettings() {
+    QSettings settings;
+    labelColor        = settings.value("LabelColor", QColor(Qt::white)).toUInt();
+    gridColor         = settings.value("GridColor", QColor(Qt::blue)).toUInt();
+    frameColor        = settings.value("FrameColor", QColor(Qt::blue)).toUInt();
+    painterBkColor    = settings.value("PainterBKColor", QColor(Qt::black)).toUInt();
+    gridPenWidth      = settings.value("GridPenWidth", 1).toInt();
+    maxDataPoints     = settings.value("MaxDataPoints", 100).toInt();
+    painterFontName   = settings.value("PainterFontName", QString("Helvetica")).toString();
+    painterFontSize   = settings.value("PainterFontSize", 16).toInt();
+    painterFontWeight = QFont::Weight(settings.value("PainterFontWeight", QFont::Bold).toInt());
+    painterFontItalic = settings.value("PainterFontItalic", false).toBool();
     painterFont       = QFont(painterFontName,
                               painterFontSize,
                               painterFontWeight,
@@ -39,14 +46,18 @@ plotPropertiesDlg::plotPropertiesDlg(QWidget *parent)
 
 
 void
-plotPropertiesDlg::restoreSettings() {
-
-}
-
-
-void
 plotPropertiesDlg::saveSettings() {
-
+    QSettings settings;
+    settings.setValue("LabelColor", labelColor);
+    settings.setValue("GridColor", gridColor);
+    settings.setValue("FrameColor", frameColor);
+    settings.setValue("PainterBKColor", painterBkColor);
+    settings.setValue("GridPenWidth", gridPenWidth);
+    settings.setValue("MaxDataPoints", maxDataPoints);
+    settings.setValue("PainterFontName", painterFontName);
+    settings.setValue("PainterFontSize", painterFontSize);
+    settings.setValue("PainterFontWeight", QFont::Bold);
+    settings.setValue("PainterFontItalic", painterFontItalic);
 }
 
 

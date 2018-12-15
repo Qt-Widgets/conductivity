@@ -22,6 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDialog>
 #include <QSettings>
 #include <QFont>
+#include <QPushButton>
+#include <QLineEdit>
 
 class plotPropertiesDlg : public QDialog
 {
@@ -49,5 +51,11 @@ protected:
     int painterFontSize;
     QFont::Weight painterFontWeight;
     bool painterFontItalic;
+
+    QPushButton BkColorButton;
+    QPushButton frameColorButton;
+    QPushButton gridColorButton;
+    QPushButton labelColorButton;
+    QLineEdit   gridPenWidthEdit;
 };
 
