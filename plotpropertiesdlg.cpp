@@ -28,6 +28,8 @@ plotPropertiesDlg::plotPropertiesDlg(QWidget *parent)
     : QDialog(parent)
 {
     restoreSettings();
+    initUI();
+
     // Create the Dialog Layout
     QGridLayout* pLayout = new QGridLayout();
 
@@ -41,6 +43,8 @@ plotPropertiesDlg::plotPropertiesDlg(QWidget *parent)
     pLayout->addWidget(&gridPenWidthEdit,               2, 1, 1, 1);
     pLayout->addWidget(new QLabel("Max Data Points"),   3, 0, 1, 1);
     pLayout->addWidget(&maxDataPointsEdit,              3, 1, 1, 1);
+
+    pLayout->addWidget(pButtonBox, 4, 0, 1, 2);
 
     // Set the Layout
     setLayout(pLayout);
@@ -101,6 +105,8 @@ plotPropertiesDlg::initUI() {
     gridPenWidthEdit.setText(QString("%1").arg(gridPenWidth));
     maxDataPointsEdit.setText(QString("%1").arg(maxDataPoints));
 
+    pButtonBox = new QDialogButtonBox(QDialogButtonBox::Ok |
+                                      QDialogButtonBox::Cancel);
     setToolTips();
 }
 
@@ -123,6 +129,25 @@ plotPropertiesDlg::connectSignals() {
     connect(&maxDataPointsEdit, SIGNAL(textChanged(const QString)),
             this, SLOT(onChangeMaxDataPoints(const QString)));
 
+    connect(pButtonBox, SIGNAL(accepted()),
+            this, SLOT(onOk()));
+    connect(pButtonBox, SIGNAL(rejected()),
+            this, SLOT(onCancel()));
+}
+
+
+void
+plotPropertiesDlg::onCancel() {
+    restoreSettings();
+    emit configChanged();
+    reject();
+}
+
+
+void
+plotPropertiesDlg::onOk() {
+    saveSettings();
+    accept();
 }
 
 

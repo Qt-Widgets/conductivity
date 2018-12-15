@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFont>
 #include <QPushButton>
 #include <QLineEdit>
+#include <QDialogButtonBox>
 
 class plotPropertiesDlg : public QDialog
 {
@@ -31,6 +32,7 @@ class plotPropertiesDlg : public QDialog
 
 public:
     plotPropertiesDlg(QWidget *parent=Q_NULLPTR);
+    void restoreSettings();
 
     QColor labelColor;
     QColor gridColor;
@@ -52,9 +54,10 @@ public slots:
     void onChangeLabelsFont();
     void onChangeGridPenWidth(const QString sNewVal);
     void onChangeMaxDataPoints(const QString sNewVal);
+    void onCancel();
+    void onOk();
 
 protected:
-    void restoreSettings();
     void saveSettings();
     void initUI();
     void connectSignals();
@@ -74,5 +77,7 @@ private:
     // Line Edit
     QLineEdit   gridPenWidthEdit;
     QLineEdit   maxDataPointsEdit;
+    // DialogButtonBox
+    QDialogButtonBox* pButtonBox;
 };
 
