@@ -124,37 +124,63 @@ plotPropertiesDlg::connectSignals() {
 
 void
 plotPropertiesDlg::onChangeBkColor() {
-
+    QColorDialog colorDialog(painterBkColor);
+    if(colorDialog.exec()==QDialog::Accepted) {
+        painterBkColor = colorDialog.getColor();
+        emit configChanged();
+    }
 }
 
 
 void
 plotPropertiesDlg::onChangeFrameColor() {
-
+    QColorDialog colorDialog(frameColor);
+    if(colorDialog.exec()==QDialog::Accepted) {
+        frameColor = colorDialog.getColor();
+        emit configChanged();
+    }
 }
 
 
 void
 plotPropertiesDlg::onChangeGridColor() {
-
+    QColorDialog colorDialog(gridColor);
+    if(colorDialog.exec()==QDialog::Accepted) {
+        gridColor = colorDialog.getColor();
+        emit configChanged();
+    }
 }
 
 
 void
 plotPropertiesDlg::onChangeLabelsColor() {
-
+    QColorDialog colorDialog(labelColor);
+    if(colorDialog.exec()==QDialog::Accepted) {
+        labelColor = colorDialog.getColor();
+        emit configChanged();
+    }
 }
 
 
 void
-plotPropertiesDlg::onChangeGridPenWidth(const QString) {
-
+plotPropertiesDlg::onChangeGridPenWidth(const QString sNewVal) {
+    if((sNewVal.toInt() > 0) &&
+       (sNewVal.toInt() < 10))
+    {
+        gridPenWidth = sNewVal.toInt();
+        emit configChanged();
+    }
 }
 
 
 void
-plotPropertiesDlg::onChangeMaxDataPoints(const QString) {
-
+plotPropertiesDlg::onChangeMaxDataPoints(const QString sNewVal) {
+    if((sNewVal.toInt() > 0) &&
+       (sNewVal.toInt() < 2000))
+    {
+        maxDataPoints = sNewVal.toInt();
+        emit configChanged();
+    }
 }
 
 

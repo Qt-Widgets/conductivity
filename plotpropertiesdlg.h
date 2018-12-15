@@ -49,8 +49,8 @@ public slots:
     void onChangeFrameColor();
     void onChangeGridColor();
     void onChangeLabelsColor();
-    void onChangeGridPenWidth(const QString);
-    void onChangeMaxDataPoints(const QString);
+    void onChangeGridPenWidth(const QString sNewVal);
+    void onChangeMaxDataPoints(const QString sNewVal);
 
 protected:
     void restoreSettings();
@@ -59,6 +59,7 @@ protected:
     void connectSignals();
     void setToolTips();
 
+private:
     QString painterFontName;
     int painterFontSize;
     QFont::Weight painterFontWeight;
