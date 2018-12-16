@@ -31,7 +31,7 @@ class plotPropertiesDlg : public QDialog
     Q_OBJECT
 
 public:
-    plotPropertiesDlg(QWidget *parent=Q_NULLPTR);
+    plotPropertiesDlg(QString sTitle, QWidget *parent=Q_NULLPTR);
     void restoreSettings();
 
     QColor labelColor;
@@ -64,6 +64,7 @@ protected:
     void setToolTips();
 
 private:
+    QString sTitleGroup;
     QString painterFontName;
     int painterFontSize;
     QFont::Weight painterFontWeight;

@@ -25,9 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDebug>
 
 
-plotPropertiesDlg::plotPropertiesDlg(QWidget *parent)
+plotPropertiesDlg::plotPropertiesDlg(QString sTitle, QWidget *parent)
     : QDialog(parent)
 {
+    sTitleGroup = sTitle;
     restoreSettings();
     initUI();
 
@@ -56,6 +57,7 @@ plotPropertiesDlg::plotPropertiesDlg(QWidget *parent)
 void
 plotPropertiesDlg::restoreSettings() {
     QSettings settings;
+    settings.beginGroup(sTitleGroup);
     painterBkColor.setRgba(settings.value("PainterBKColor", QColor(Qt::black).rgba()).toUInt());
     frameColor.setRgba(settings.value("FrameColor",     QColor(Qt::blue).rgba()).toUInt());
     gridColor.setRgba(settings.value("GridColor",      QColor(Qt::blue).rgba()).toUInt());
@@ -77,6 +79,7 @@ plotPropertiesDlg::restoreSettings() {
 void
 plotPropertiesDlg::saveSettings() {
     QSettings settings;
+    settings.beginGroup(sTitleGroup);
     settings.setValue("LabelColor", labelColor.rgba());
     settings.setValue("GridColor", gridColor.rgba());
     settings.setValue("FrameColor", frameColor.rgba());

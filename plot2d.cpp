@@ -32,9 +32,9 @@ Plot2D::Plot2D(QWidget *parent, QString Title)
     : QDialog(parent)
     , sTitle(Title)
 {
-//>>>    setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
-//>>>    setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
-//>>>    setWindowFlags(windowFlags() |  Qt::WindowMinMaxButtonsHint);
+    setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
+    setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
+    setWindowFlags(windowFlags() |  Qt::WindowMinMaxButtonsHint);
     setMouseTracking(true);
 //  setAttribute(Qt::WA_AlwaysShowToolTips);
     setWindowIcon(QIcon("qrc:/plot.png"));
@@ -45,7 +45,7 @@ Plot2D::Plot2D(QWidget *parent, QString Title)
     bShowMarker  = false;
     bZooming     = false;
 
-    pPropertiesDlg = new plotPropertiesDlg();
+    pPropertiesDlg = new plotPropertiesDlg(sTitle);
     connect(pPropertiesDlg, SIGNAL(configChanged()),
             this, SLOT(UpdatePlot()));
 
@@ -75,6 +75,12 @@ Plot2D::~Plot2D() {
 
 
 void
+Plot2D::setTitle(QString sNewTitle) {
+    sTitle= sNewTitle;
+}
+
+
+void
 Plot2D::keyPressEvent(QKeyEvent *e) {
     // To avoid closing the Plot upon Esc keypress
     if(e->key() != Qt::Key_Escape)
@@ -84,9 +90,9 @@ Plot2D::keyPressEvent(QKeyEvent *e) {
 
 void
 Plot2D::closeEvent(QCloseEvent *event) {
-//>>>    QSettings settings;
-//>>>    settings.setValue(sTitle+QString("Plot2D"), saveGeometry());
-//>>>    event->ignore();
+    QSettings settings;
+    settings.setValue(sTitle+QString("Plot2D"), saveGeometry());
+    event->ignore();
 }
 
 
@@ -95,7 +101,6 @@ Plot2D::paintEvent(QPaintEvent *event) {
     QPainter painter;
     painter.begin(this);
     painter.setFont(pPropertiesDlg->painterFont);
-    //painter.setFont(QFont("Helvetica", 16, QFont::Bold));
     QFontMetrics fontMetrics = painter.fontMetrics();
     painter.fillRect(event->rect(), QBrush(pPropertiesDlg->painterBkColor));
     DrawPlot(&painter, fontMetrics);
@@ -457,11 +462,11 @@ Plot2D::XTicLog(QPainter* painter, QFontMetrics fontMetrics) {
 
     double xlmin = log10(Ax.XMin);
     int minx = int(xlmin);
-    if((xlmin < 0.0) && (xlmin != minx)) minx= minx - 1;
+    if((xlmin < 0.0) && fabs(xlmin-minx) <= DBL_MIN) minx= minx - 1;
 
     double xlmax = log10(Ax.XMax);
     int maxx = int(xlmax);
-    if((xlmax > 0.0) && (xlmax != maxx)) maxx= maxx + 1;
+    if((xlmax > 0.0) && fabs(xlmax-maxx) <= DBL_MIN) maxx= maxx + 1;
 
     xfact = (Pf.right-Pf.left) / ((xlmax-xlmin)+DBL_MIN);
 
@@ -535,11 +540,11 @@ Plot2D::YTicLog(QPainter* painter, QFontMetrics fontMetrics) {
 
     double ylmin = log10(Ax.YMin);
     int miny = int(ylmin);
-    if((ylmin < 0.0) && (ylmin != miny)) miny= miny - 1;
+    if((ylmin < 0.0) && fabs(ylmin-miny) <= DBL_MIN) miny= miny - 1;
 
     double ylmax = log10(Ax.YMax);
     int maxy = int(ylmax);
-    if((ylmax > 0.0) && (ylmax != maxy)) maxy= maxy + 1;
+    if((ylmax > 0.0) && fabs(ylmax-maxy) <= DBL_MIN) maxy= maxy + 1;
 
     yfact = (Pf.top-Pf.bottom) / ((ylmax-ylmin)+DBL_MIN);
 

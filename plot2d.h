@@ -33,6 +33,7 @@ class Plot2D : public QDialog
 public:
     explicit Plot2D(QWidget *parent=Q_NULLPTR, QString Title="Plot 2D");
     ~Plot2D();
+    void setTitle(QString sNewTitle);
     QSize minimumSizeHint() const;
     QSize sizeHint() const;
     void SetLimits (double XMin, double XMax, double YMin, double YMax,
