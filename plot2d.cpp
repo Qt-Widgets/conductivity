@@ -59,7 +59,6 @@ Plot2D::Plot2D(QWidget *parent, QString Title)
                   .arg(0.0, 10, 'g', 7, ' ')
                   .arg(0.0, 10, 'g', 7, ' ');
 
-
     setCursor(Qt::CrossCursor);
     setWindowTitle(Title);
 }
@@ -76,7 +75,7 @@ Plot2D::~Plot2D() {
 
 void
 Plot2D::setTitle(QString sNewTitle) {
-    sTitle= sNewTitle;
+    sTitle = sNewTitle;
 }
 
 
@@ -997,9 +996,9 @@ Plot2D::mouseDoubleClickEvent(QMouseEvent *event) {
 
 void
 Plot2D::UpdatePlot() {
-    labelPen = pPropertiesDlg->labelColor;//QPen(Qt::white);
-    gridPen  = pPropertiesDlg->gridColor; //QPen(Qt::blue);
-    framePen = pPropertiesDlg->frameColor;//QPen(Qt::blue);
+    labelPen = pPropertiesDlg->labelColor;
+    gridPen  = pPropertiesDlg->gridColor;
+    framePen = pPropertiesDlg->frameColor;
     gridPen.setWidth(pPropertiesDlg->gridPenWidth);
     maxDataPoints = pPropertiesDlg->maxDataPoints;
     update();
