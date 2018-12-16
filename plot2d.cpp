@@ -151,20 +151,20 @@ Plot2D::SetLimits (double XMin, double XMax, double YMin, double YMax,
             bool EmptyData = true;
             if(Ax.AutoX) {
                 if(Ax.LogX) {
-                    XMin = DBL_MAX;
-                    XMax = DBL_MIN;
+                    XMin = double(FLT_MAX);
+                    XMax = double(FLT_MIN);
                 } else {
-                    XMin = DBL_MAX;
-                    XMax =-DBL_MAX;
+                    XMin = double(FLT_MAX);
+                    XMax =-double(FLT_MAX);
                 }
             }
             if(Ax.AutoY) {
                 if(Ax.LogY) {
-                    YMin = DBL_MAX;
-                    YMax = DBL_MIN;
+                    YMin = double(FLT_MAX);
+                    YMax = double(FLT_MIN);
                 } else {
-                    YMin = DBL_MAX;
-                    YMax =-DBL_MAX;
+                    YMin = double(FLT_MAX);
+                    YMax =-double(FLT_MAX);
                 }
             }
             DataStream2D* pData;
@@ -457,18 +457,18 @@ Plot2D::XTicLog(QPainter* painter, QFontMetrics fontMetrics) {
     jy = int(Pf.bottom + 5);// Perche' 5 ?
     iy0 = int(Pf.bottom + fontMetrics.height()+5);
 
-    if(Ax.XMin < DBL_MIN) Ax.XMin = DBL_MIN;
-    if(Ax.XMax < DBL_MIN) Ax.XMax = 10.0*DBL_MIN;
+    if(Ax.XMin < double(FLT_MIN)) Ax.XMin = double(FLT_MIN);
+    if(Ax.XMax < double(FLT_MIN)) Ax.XMax = 10.0*double(FLT_MIN);
 
     double xlmin = log10(Ax.XMin);
     int minx = int(xlmin);
-    if((xlmin < 0.0) && fabs(xlmin-minx) <= DBL_MIN) minx= minx - 1;
+    if((xlmin < 0.0) && fabs(xlmin-minx) <= double(FLT_MIN)) minx= minx - 1;
 
     double xlmax = log10(Ax.XMax);
     int maxx = int(xlmax);
-    if((xlmax > 0.0) && fabs(xlmax-maxx) <= DBL_MIN) maxx= maxx + 1;
+    if((xlmax > 0.0) && fabs(xlmax-maxx) <= double(FLT_MIN)) maxx= maxx + 1;
 
-    xfact = (Pf.right-Pf.left) / ((xlmax-xlmin)+DBL_MIN);
+    xfact = (Pf.right-Pf.left) / ((xlmax-xlmin)+double(FLT_MIN));
 
     bool init = true;
     int decades = maxx - minx;
@@ -535,18 +535,18 @@ Plot2D::YTicLog(QPainter* painter, QFontMetrics fontMetrics) {
     double dy;
     QString Label;
 
-    if(Ax.YMin < DBL_MIN) Ax.YMin = DBL_MIN;
-    if(Ax.YMax < DBL_MIN) Ax.YMax = 10.0*DBL_MIN;
+    if(Ax.YMin < double(FLT_MIN)) Ax.YMin = double(FLT_MIN);
+    if(Ax.YMax < double(FLT_MIN)) Ax.YMax = 10.0*double(FLT_MIN);
 
     double ylmin = log10(Ax.YMin);
     int miny = int(ylmin);
-    if((ylmin < 0.0) && fabs(ylmin-miny) <= DBL_MIN) miny= miny - 1;
+    if((ylmin < 0.0) && fabs(ylmin-miny) <= double(FLT_MIN)) miny= miny - 1;
 
     double ylmax = log10(Ax.YMax);
     int maxy = int(ylmax);
-    if((ylmax > 0.0) && fabs(ylmax-maxy) <= DBL_MIN) maxy= maxy + 1;
+    if((ylmax > 0.0) && fabs(ylmax-maxy) <= double(FLT_MIN)) maxy= maxy + 1;
 
-    yfact = (Pf.top-Pf.bottom) / ((ylmax-ylmin)+DBL_MIN);
+    yfact = (Pf.top-Pf.bottom) / ((ylmax-ylmin)+double(FLT_MIN));
 
     bool init = true;
     int decades = maxy - miny;
@@ -665,10 +665,10 @@ Plot2D::LinePlot(QPainter* painter, DataStream2D* pData) {
     if(Ax.XMin > 0.0)
         xlmin = log10(Ax.XMin);
     else
-        xlmin = DBL_MIN;
+        xlmin = double(FLT_MIN);
     if(Ax.YMin > 0.0)
         ylmin = log10(Ax.YMin);
-    else ylmin = DBL_MIN;
+    else ylmin = double(FLT_MIN);
 
     if(Ax.LogX) {
         if(pData->m_pointArrayX[0] > 0.0)
@@ -722,10 +722,10 @@ Plot2D::DrawLastPoint(QPainter* painter, DataStream2D* pData) {
     if(Ax.XMin > 0.0)
         xlmin = log10(Ax.XMin);
     else
-        xlmin = DBL_MIN;
+        xlmin = double(FLT_MIN);
     if(Ax.YMin > 0.0)
         ylmin = log10(Ax.YMin);
-    else ylmin = DBL_MIN;
+    else ylmin = double(FLT_MIN);
 
     if(Ax.LogX) {
         if(pData->m_pointArrayX[i] > 0.0)
@@ -762,10 +762,10 @@ Plot2D::PointPlot(QPainter* painter, DataStream2D* pData) {
     if(Ax.XMin > 0.0)
         xlmin = log10(Ax.XMin);
     else
-        xlmin = DBL_MIN;
+        xlmin = double(FLT_MIN);
     if(Ax.YMin > 0.0)
         ylmin = log10(Ax.YMin);
-    else ylmin = DBL_MIN;
+    else ylmin = double(FLT_MIN);
 
     for (int i=0; i < iMax; i++) {
         if(!(pData->m_pointArrayX[i] < Ax.XMin ||
@@ -806,10 +806,10 @@ Plot2D::ScatterPlot(QPainter* painter, DataStream2D* pData) {
     if(Ax.XMin > 0.0)
         xlmin = log10(Ax.XMin);
     else
-        xlmin = DBL_MIN;
+        xlmin = double(FLT_MIN);
     if(Ax.YMin > 0.0)
         ylmin = log10(Ax.YMin);
-    else ylmin = DBL_MIN;
+    else ylmin = double(FLT_MIN);
 
     int SYMBOLS_DIM = 8;
     QSize Size(SYMBOLS_DIM, SYMBOLS_DIM);
