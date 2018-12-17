@@ -106,6 +106,7 @@ Plot2D::paintEvent(QPaintEvent *event) {
     QRect textSize = fontMetrics.boundingRect(sMouseCoord);
     int nPosX = (width()/2) - (textSize.width()/2);
     int nPosY = height() - 4;
+    painter.setPen(labelPen);
     painter.drawText(nPosX, nPosY, sMouseCoord);
     painter.end();
 }
