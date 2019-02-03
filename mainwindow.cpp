@@ -115,7 +115,7 @@ MainWindow::~MainWindow() {
 }
 
 
-// To Be Improved !!!
+// ToDo: Improve !!!
 void
 MainWindow::closeEvent(QCloseEvent *event) {
     Q_UNUSED(event)
@@ -156,6 +156,18 @@ MainWindow::closeEvent(QCloseEvent *event) {
     }
 }
 
+
+void
+MainWindow::stopTimers() {
+    waitingTStartTimer.stop();
+    stabilizingTimer.stop();
+    readingTTimer.stop();
+    measuringTimer.stop();
+    waitingTStartTimer.disconnect();
+    stabilizingTimer.disconnect();
+    readingTTimer.disconnect();
+    measuringTimer.disconnect();
+}
 
 /*!
  * \brief MyApplication::prepareLogFile Prepare a log file for the session log
@@ -461,14 +473,7 @@ void
 MainWindow::stopRvsT() {
     bRunning = false;
     presentMeasure = NoMeasure;
-    waitingTStartTimer.stop();
-    stabilizingTimer.stop();
-    readingTTimer.stop();
-    measuringTimer.stop();
-    waitingTStartTimer.disconnect();
-    stabilizingTimer.disconnect();
-    readingTTimer.disconnect();
-    measuringTimer.disconnect();
+    stopTimers();
     if(pOutputFile) {
         pOutputFile->close();
         pOutputFile->deleteLater();
@@ -488,6 +493,7 @@ MainWindow::stopRvsT() {
 
     ui->endTimeEdit->clear();
     ui->startRvsTButton->setText("Start R vs T");
+    ui->startRvsTimeButton->setEnabled(true);
     ui->startIvsVButton->setEnabled(true);
     ui->lambdaScanButton->setEnabled(true);
     ui->lampButton->setEnabled(true);
@@ -596,6 +602,7 @@ MainWindow::on_startRvsTButton_clicked() {
     QString sString = endMeasureTime.toString("hh:mm dd-MM-yyyy");
     ui->endTimeEdit->setText(sString);
     // now we are waiting for reaching the initial temperature
+    ui->startRvsTimeButton->setDisabled(true);
     ui->startIvsVButton->setDisabled(true);
     ui->startRvsTButton->setText("Stop R vs T");
     ui->lambdaScanButton->setDisabled(true);
@@ -646,6 +653,167 @@ MainWindow::writeRvsTHeader() {
                        .arg(pConfigureDialog->pTabLS330->dTStart)
                        .arg(pConfigureDialog->pTabLS330->dTStop)
                        .arg(pConfigureDialog->pTabLS330->dTRate).toLocal8Bit());
+    pOutputFile->write(QString("# Max_T_Start_Wait=%1[min] T_Stabilize_Time=%2[min]\n")
+                       .arg(pConfigureDialog->pTabLS330->iReachingTStart)
+                       .arg(pConfigureDialog->pTabLS330->iTimeToSteadyT).toLocal8Bit());
+    pOutputFile->flush();
+}
+
+
+void
+MainWindow::stopRvsTime() {
+    bRunning = false;
+    presentMeasure = NoMeasure;
+    stopTimers();
+    if(pOutputFile) {
+        pOutputFile->close();
+        pOutputFile->deleteLater();
+        pOutputFile = Q_NULLPTR;
+    }
+    if(pKeithley != Q_NULLPTR) {
+        pKeithley->disconnect();
+        pKeithley->endVvsT();
+    }
+    if(pLakeShore != Q_NULLPTR) {
+        if(pLakeShore->isRamping())
+            pLakeShore->stopRamp();
+        pLakeShore->disconnect();
+        pLakeShore->switchPowerOff();
+    }
+    switchLampOff();
+
+    ui->endTimeEdit->clear();
+    ui->startRvsTimeButton->setText("Start R vs Time");
+    ui->startRvsTButton->setEnabled(true);
+    ui->startIvsVButton->setEnabled(true);
+    ui->lambdaScanButton->setEnabled(true);
+    ui->lampButton->setEnabled(true);
+    QApplication::restoreOverrideCursor();
+}
+
+
+void
+MainWindow::on_startRvsTimeButton_clicked() {
+    if(ui->startRvsTimeButton->text().contains("Stop")) {
+        stopRvsTime();
+        ui->statusBar->showMessage("Measure (R vs Time) Halted");
+        return;
+    }
+    // else
+    if(pConfigureDialog) delete pConfigureDialog;
+    pConfigureDialog = new ConfigureDialog(iConfRvsTime, bUseMonochromator, this);
+    if(pConfigureDialog->exec() == QDialog::Rejected)
+        return;
+    QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
+    if(bUseMonochromator) {
+        //Initializing Corner Stone 130
+        ui->statusBar->showMessage("Initializing Corner Stone 130...");
+        if(pCornerStone130->init() != pCornerStone130->NO_ERROR){
+            ui->statusBar->showMessage("Unable to Initialize Corner Stone 130...");
+            QApplication::restoreOverrideCursor();
+            return;
+        }
+        pCornerStone130->setGrating(pConfigureDialog->pTabCS130->iGratingNumber);
+        pCornerStone130->setWavelength(pConfigureDialog->pTabCS130->dWavelength);
+        ui->wavelengthEdit->setText(QString("%1")
+                                    .arg(pConfigureDialog->pTabCS130->dWavelength, 10, 'f', 1, ' '));
+    }
+    switchLampOff();
+    // Initializing Keithley 236
+    ui->statusBar->showMessage("Initializing Keithley 236...");
+    if(pKeithley->init()) {
+        ui->statusBar->showMessage("Unable to Initialize Keithley 236...");
+        QApplication::restoreOverrideCursor();
+        return;
+    }
+    isK236ReadyForTrigger = false;
+    connect(pKeithley, SIGNAL(complianceEvent()),
+            this, SLOT(onComplianceEvent()));
+    connect(pKeithley, SIGNAL(clearCompliance()),
+            this, SLOT(onClearComplianceEvent()));
+    connect(pKeithley, SIGNAL(readyForTrigger()),
+            this, SLOT(onKeithleyReadyForTrigger()));
+    connect(pKeithley, SIGNAL(newReading(QDateTime, QString)),
+            this, SLOT(onNewRvsTimeKeithleyReading(QDateTime, QString)));
+    // Open the Output file
+    ui->statusBar->showMessage("Opening Output file...");
+    if(!prepareOutputFile(pConfigureDialog->pTabFile->sBaseDir,
+                          pConfigureDialog->pTabFile->sOutFileName))
+    {
+        ui->statusBar->showMessage("Unable to Open the Output file...");
+        pKeithley->disconnect();
+        QApplication::restoreOverrideCursor();
+        return;
+    }
+    writeRvsTimeHeader();
+    // Init the Plots
+    initRvsTimePlots();
+    // Configure Source-Measure Unit
+    double dCompliance = pConfigureDialog->pTabK236->dCompliance;
+    if(pConfigureDialog->pTabK236->bSourceI) {
+        presentMeasure = RvsTimeSourceI;
+        double dAppliedCurrent = pConfigureDialog->pTabK236->dStart;
+        pKeithley->initVvsTSourceI(dAppliedCurrent, dCompliance);
+    }
+    else {
+        presentMeasure = RvsTimeSourceV;
+        double dAppliedVoltage = pConfigureDialog->pTabK236->dStart;
+        pKeithley->initVvsTSourceV(dAppliedVoltage, dCompliance);
+    }
+    // Configure the needed timers
+    connect(&readingTTimer, SIGNAL(timeout()),
+            this, SLOT(onTimeToReadT()));
+    // Read and plot initial value of Temperature
+    startReadingTTime = QDateTime::currentDateTime();
+    onTimeToReadT();
+    readingTTimer.start(30000);
+    // now we are waiting for reaching the initial temperature
+    ui->startRvsTButton->setDisabled(true);
+    ui->startIvsVButton->setDisabled(true);
+    ui->startRvsTimeButton->setText("Stop R vs Time");
+    ui->lambdaScanButton->setDisabled(true);
+    ui->lampButton->setDisabled(true);
+    ui->statusBar->showMessage(QString("%1 Waiting Initial T [%2K]")
+                               .arg(waitingTStartTime.toString())
+                               .arg(pConfigureDialog->pTabLS330->dTStart));
+    double timeBetweenMeasurements = pConfigureDialog->pTabK236->dInterval*1000.0;
+    measuringTimer.start(int(timeBetweenMeasurements));
+    dateStart = QDateTime::currentDateTime();
+}
+
+
+void
+MainWindow::writeRvsTimeHeader() {
+    // Write the header
+    // To cope with the GnuPlot way to handle the comment lines
+    // we need a # as a first chraracter in each row.
+    pOutputFile->write(QString("#%1 %2 %3 %4\n")
+                       .arg("Time[s]", 12)
+                       .arg("V[V]", 12)
+                       .arg("I[A]", 12)
+                       .arg("T[K]", 12)
+                       .toLocal8Bit());
+    QStringList HeaderLines = pConfigureDialog->pTabFile->sSampleInfo.split("\n");
+    for(int i=0; i<HeaderLines.count(); i++) {
+        pOutputFile->write("# ");
+        pOutputFile->write(HeaderLines.at(i).toLocal8Bit());
+        pOutputFile->write("\n");
+    }
+    if(bUseMonochromator) {
+        pOutputFile->write(QString("# Grating #= %1 Wavelength = %2 nm\n")
+                                   .arg(pConfigureDialog->pTabCS130->iGratingNumber)
+                                   .arg(pConfigureDialog->pTabCS130->dWavelength).toLocal8Bit());
+    }
+    if(pConfigureDialog->pTabK236->bSourceI) {
+        pOutputFile->write(QString("# Current=%1[A] Compliance=%2[V]\n")
+                           .arg(pConfigureDialog->pTabK236->dStart)
+                           .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
+    }
+    else {
+        pOutputFile->write(QString("# Voltage=%1[V] Compliance=%2[A]\n")
+                           .arg(pConfigureDialog->pTabK236->dStart)
+                           .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
+    }
     pOutputFile->write(QString("# Max_T_Start_Wait=%1[min] T_Stabilize_Time=%2[min]\n")
                        .arg(pConfigureDialog->pTabLS330->iReachingTStart)
                        .arg(pConfigureDialog->pTabLS330->iTimeToSteadyT).toLocal8Bit());
@@ -757,6 +925,7 @@ MainWindow::on_startIvsVButton_clicked() {
     QString sString = endMeasureTime.toString("hh:mm:ss dd-MM-yyyy");
     ui->endTimeEdit->setText(sString);
     ui->startRvsTButton->setDisabled(true);
+    ui->startRvsTimeButton->setDisabled(true);
     ui->startIvsVButton->setText("Stop I vs V");
     ui->lambdaScanButton->setDisabled(true);
     ui->lampButton->setDisabled(true);
@@ -919,6 +1088,7 @@ MainWindow::on_lambdaScanButton_clicked() {
 
     ui->lambdaScanButton->setText("Stop");
     ui->startRvsTButton->setDisabled(true);
+    ui->startRvsTimeButton->setDisabled(true);
     ui->startIvsVButton->setDisabled(true);
     ui->lampButton->setDisabled(true);
     if(pConfigureDialog->pTabLS330->bUseThermostat) {
@@ -1018,12 +1188,7 @@ MainWindow::stopIvsV() {
         pOutputFile->deleteLater();
         pOutputFile = Q_NULLPTR;
     }
-    readingTTimer.stop();
-    waitingTStartTimer.stop();
-    stabilizingTimer.stop();
-    readingTTimer.disconnect();
-    waitingTStartTimer.disconnect();
-    stabilizingTimer.disconnect();
+    stopTimers();
     if(pKeithley != Q_NULLPTR) {
         pKeithley->disconnect();
         pKeithley->stopSweep();
@@ -1036,6 +1201,7 @@ MainWindow::stopIvsV() {
     ui->endTimeEdit->clear();
     ui->startIvsVButton->setText("Start I vs V");
     ui->startRvsTButton->setEnabled(true);
+    ui->startRvsTimeButton->setEnabled(true);
     ui->lambdaScanButton->setEnabled(true);
     ui->lampButton->setEnabled(true);
     QApplication::restoreOverrideCursor();
@@ -1051,12 +1217,7 @@ MainWindow::stopLambdaScan() {
         pOutputFile->deleteLater();
         pOutputFile = Q_NULLPTR;
     }
-    readingTTimer.stop();
-    waitingTStartTimer.stop();
-    stabilizingTimer.stop();
-    readingTTimer.disconnect();
-    waitingTStartTimer.disconnect();
-    stabilizingTimer.disconnect();
+    stopTimers();
     if(pKeithley != Q_NULLPTR) {
         pKeithley->disconnect();
     }
@@ -1069,9 +1230,11 @@ MainWindow::stopLambdaScan() {
     ui->lambdaScanButton->setText("λ Scan");
     ui->startIvsVButton->setEnabled(true);
     ui->startRvsTButton->setEnabled(true);
+    ui->startRvsTimeButton->setEnabled(true);
     ui->lampButton->setEnabled(true);
     ui->statusBar->showMessage(QString("λ Scan Terminated"));
-    QApplication::restoreOverrideCursor();}
+    QApplication::restoreOverrideCursor();
+}
 
 
 void
@@ -1139,6 +1302,33 @@ MainWindow::initRvsTPlots() {
                                   );
     pPlotMeasurements->SetShowDataSet(iPlotPhoto, true);
     pPlotMeasurements->SetShowTitle(iPlotPhoto, true);
+    pPlotMeasurements->UpdatePlot();
+    pPlotMeasurements->show();
+
+    initTemperaturePlot();
+}
+
+
+void
+MainWindow::initRvsTimePlots() {
+    if(pPlotMeasurements) delete pPlotMeasurements;
+    pPlotMeasurements = Q_NULLPTR;
+    if(pPlotTemperature) delete pPlotTemperature;
+    pPlotTemperature = Q_NULLPTR;
+    // Plot of Resistance vs Time
+    sMeasurementPlotLabel = QString("R [Ohm] -vs- Time [s]");
+    pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
+    pPlotMeasurements->setMaxPoints(maxPlotPoints);
+    pPlotMeasurements->SetLimits(0.0, 1.0, 0.1, 1.0, true, true, false, true);
+    // Dataset
+    pPlotMeasurements->NewDataSet(iPlotDark,//Id
+                                  3, //Pen Width
+                                  QColor(255, 0, 0),// Color
+                                  Plot2D::ipoint,// Symbol
+                                  "R"// Title
+                       );
+    pPlotMeasurements->SetShowDataSet(iPlotDark, true);
+    pPlotMeasurements->SetShowTitle(iPlotDark, true);
     pPlotMeasurements->UpdatePlot();
     pPlotMeasurements->show();
 
@@ -1223,6 +1413,7 @@ MainWindow::initTemperaturePlot() {
 
 // Invoked to check the reaching of the temperature
 // Set Point during I-V measurements
+// ToDo: Change Name !!!
 void
 MainWindow::onTimeToCheckT() {
     double T = pLakeShore->getTemperature();
@@ -1352,6 +1543,7 @@ MainWindow::onTimerStabilizeT() {
 }
 
 
+// ToDo: Change Name (onTimeToGetNewRamp ?)
 void
 MainWindow::onTimeToGetNewMeasure() {
     getNewMeasure();
@@ -1450,6 +1642,37 @@ MainWindow::onNewRvsTKeithleyReading(QDateTime dataTime, QString sDataRead) {
         pOutputFile->write("\n");
         pOutputFile->flush();
         switchLampOff();
+    }
+}
+
+
+void
+MainWindow::onNewRvsTimeKeithleyReading(QDateTime dateTime, QString sDataRead) {
+    double current, voltage, elapsedTime;
+    if(!DecodeReadings(sDataRead, &current, &voltage))
+        return;
+    elapsedTime = double(dateStart.secsTo(dateTime));
+    currentTemperature = pLakeShore->getTemperature();
+    ui->temperatureEdit->setText(QString("%1").arg(currentTemperature));
+    ui->currentEdit->setText(QString("%1").arg(current, 10, 'g', 4, ' '));
+    ui->voltageEdit->setText(QString("%1").arg(voltage, 10, 'g', 4, ' '));
+    if(bUseMonochromator) {
+        double lambda = pCornerStone130->dPresentWavelength;
+        ui->wavelengthEdit->setText(QString("%1").arg(lambda, 10, 'f', 1, ' '));
+    }
+
+    if(!bRunning) return;
+
+    QString sData = QString("%1 %2 %3 %4\n")
+                            .arg(elapsedTime, 12, 'g', 6, ' ')
+                            .arg(voltage, 12, 'g', 6, ' ')
+                            .arg(current, 12, 'g', 6, ' ')
+                            .arg(currentTemperature, 12, 'g', 6, ' ');
+    pOutputFile->write(sData.toLocal8Bit());
+    pOutputFile->flush();
+    if(current != 0.0) {
+        pPlotMeasurements->NewPoint(iPlotDark, elapsedTime, voltage/current);
+        pPlotMeasurements->UpdatePlot();
     }
 }
 
@@ -1712,3 +1935,4 @@ MainWindow::on_logoButton_clicked() {
     EasterDlg easterDialog;
     easterDialog.exec();
 }
+

@@ -22,8 +22,8 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>50</y>
-      <width>90</width>
+      <y>30</y>
+      <width>110</width>
       <height>25</height>
      </rect>
     </property>
@@ -38,8 +38,8 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>90</y>
-      <width>90</width>
+      <y>110</y>
+      <width>110</width>
       <height>25</height>
      </rect>
     </property>
@@ -318,7 +318,7 @@
      <rect>
       <x>10</x>
       <y>290</y>
-      <width>90</width>
+      <width>110</width>
       <height>25</height>
      </rect>
     </property>
@@ -330,8 +330,8 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>130</y>
-      <width>90</width>
+      <y>150</y>
+      <width>110</width>
       <height>25</height>
      </rect>
     </property>
@@ -342,7 +342,7 @@
    <widget class="QPushButton" name="logoButton">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>30</x>
       <y>190</y>
       <width>64</width>
       <height>64</height>
@@ -360,6 +360,19 @@
     </property>
     <property name="flat">
      <bool>false</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="startRvsTimeButton">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>70</y>
+      <width>110</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Start R vs Time</string>
     </property>
    </widget>
   </widget>

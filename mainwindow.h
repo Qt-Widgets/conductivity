@@ -48,19 +48,24 @@ public:
     bool checkInstruments();
 
 public:
-    static const int iConfIvsV  = 1;
-    static const int iConfRvsT  = 2;
-    static const int iConfLScan = 3;
+    static const int iConfIvsV    = 1;
+    static const int iConfRvsT    = 2;
+    static const int iConfLScan   = 3;
+    static const int iConfRvsTime = 4;
 
 signals:
 
 protected:
     void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
+    void stopTimers();
     bool getNewMeasure();
     void initTemperaturePlot();
     void writeRvsTHeader();
     void initRvsTPlots();
     void stopRvsT();
+    void writeRvsTimeHeader();
+    void initRvsTimePlots();
+    void stopRvsTime();
     void writeIvsVHeader();
     void startI_Vscan(bool bSourceI);
     void initIvsVPlots();
@@ -78,6 +83,7 @@ protected:
 
 private slots:
     void on_startRvsTButton_clicked();
+    void on_startRvsTimeButton_clicked();
     void on_startIvsVButton_clicked();
     void onTimeToCheckReachedT();
     void onTimeToCheckT();
@@ -89,6 +95,7 @@ private slots:
     void onClearComplianceEvent();
     void onKeithleyReadyForTrigger();
     void onNewRvsTKeithleyReading(QDateTime dataTime, QString sDataRead);
+    void onNewRvsTimeKeithleyReading(QDateTime dataTime, QString sDataRead);
     void onNewLambdaScanKeithleyReading(QDateTime dataTime, QString sDataRead);
     bool onKeithleyReadyForSweepTrigger();
     void onKeithleySweepDone(QDateTime dataTime, QString sData);
@@ -99,18 +106,21 @@ private slots:
     void on_lambdaScanButton_clicked();
     void on_logoButton_clicked();
 
+
 private:
     Ui::MainWindow *ui;
 
     enum measure {
-        NoMeasure   = 0,
-        RvsTSourceI = 1,
-        RvsTSourceV = 2,
-        IvsVSourceI = 3,
-        IvsVSourceV = 4,
-        IvsV        = 5,
-        LambdaScanI = 6,
-        LambdaScanV = 7
+        NoMeasure      = 0,
+        RvsTSourceI    = 1,
+        RvsTSourceV    = 2,
+        IvsVSourceI    = 3,
+        IvsVSourceV    = 4,
+        IvsV           = 5,
+        LambdaScanI    = 6,
+        LambdaScanV    = 7,
+        RvsTimeSourceI = 8,
+        RvsTimeSourceV = 9
     };
     measure          presentMeasure;
 
@@ -133,6 +143,7 @@ private:
     QDateTime        startReadingTTime;
     QDateTime        startMeasuringTime;
     QDateTime        endMeasureTime;
+    QDateTime        dateStart;
 
     QTimer           waitingTStartTimer;
     QTimer           stabilizingTimer;
