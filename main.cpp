@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QSharedMemory>
 #include <QFileInfo>
 
+#define TEST_NO_INTERFACE
 
 void
 myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
@@ -63,7 +64,6 @@ main(int argc, char *argv[]) {
     QCoreApplication::setApplicationName("Conductivity");
     QCoreApplication::setApplicationVersion("2.0.0");
 
-
 //=========================================================================
 // Not working ! if the application crashes the system must be rebooted !!
 //=========================================================================
@@ -86,6 +86,7 @@ main(int argc, char *argv[]) {
 //        return 0;
 //     }
 
+#ifndef TEST_NO_INTERFACE
 #ifdef Q_OS_LINUX
     QString sGpibInterface = QString("/dev/gpib%1").arg(gpibBoardID);
     QFileInfo checkFile(sGpibInterface);
@@ -100,12 +101,14 @@ main(int argc, char *argv[]) {
             return 0;
     }
 #endif
+#endif
 
     MainWindow w(gpibBoardID);
     w.setWindowIcon(QIcon("qrc:/myLogoT.png"));
     w.show();
     QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
 
+#ifndef TEST_NO_INTERFACE
     while(!w.checkInstruments()) {
         QMessageBox msgBox;
         msgBox.setWindowTitle(QCoreApplication::applicationName());
@@ -117,6 +120,7 @@ main(int argc, char *argv[]) {
         if(msgBox.exec()==QMessageBox::Abort)
             return 0;
     }
+#endif
 
     QApplication::restoreOverrideCursor();
     return a.exec();

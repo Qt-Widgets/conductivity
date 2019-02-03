@@ -41,10 +41,10 @@ ConfigureDialog::ConfigureDialog(int iConfiguration, bool enableMonochromator, Q
 
     pTabWidget = new QTabWidget();
 
+    iFileIndex   = pTabWidget->addTab(pTabFile,  tr("Out File"));
     iSourceIndex = pTabWidget->addTab(pTabK236,  tr("K236"));
     iThermIndex  = pTabWidget->addTab(pTabLS330, tr("LS330"));
     iMonoIndex   = pTabWidget->addTab(pTabCS130, tr("CS130"));
-    iFileIndex   = pTabWidget->addTab(pTabFile,  tr("Out File"));
 
     pButtonBox = new QDialogButtonBox(QDialogButtonBox::Ok |
                                       QDialogButtonBox::Cancel);
@@ -59,13 +59,22 @@ ConfigureDialog::ConfigureDialog(int iConfiguration, bool enableMonochromator, Q
         setWindowTitle("I versus V");
         break;
     case MainWindow::iConfRvsT:
-        setWindowTitle("I versus V");
+        setWindowTitle("R versus T");
+        break;
+    case MainWindow::iConfRvsTime:
+        setWindowTitle("R versus Time");
+        pTabLS330->setDisabled(true);
+        pTabCS130->setDisabled(true);
         break;
     case MainWindow::iConfLScan:
         setWindowTitle("Lambda Scan");
         break;
     default:
         setWindowTitle("Unknown Measurement");
+        pTabFile->setDisabled(true);
+        pTabK236->setDisabled(true);
+        pTabLS330->setDisabled(true);
+        pTabCS130->setDisabled(true);
         reject();
     }
     connectSignals();
