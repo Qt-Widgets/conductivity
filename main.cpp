@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QSharedMemory>
 #include <QFileInfo>
 
-#define TEST_NO_INTERFACE
+//#define TEST_NO_INTERFACE
 
 void
 myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg) {

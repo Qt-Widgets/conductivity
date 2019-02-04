@@ -705,19 +705,6 @@ MainWindow::on_startRvsTimeButton_clicked() {
     if(pConfigureDialog->exec() == QDialog::Rejected)
         return;
     QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
-    if(bUseMonochromator) {
-        //Initializing Corner Stone 130
-        ui->statusBar->showMessage("Initializing Corner Stone 130...");
-        if(pCornerStone130->init() != pCornerStone130->NO_ERROR){
-            ui->statusBar->showMessage("Unable to Initialize Corner Stone 130...");
-            QApplication::restoreOverrideCursor();
-            return;
-        }
-        pCornerStone130->setGrating(pConfigureDialog->pTabCS130->iGratingNumber);
-        pCornerStone130->setWavelength(pConfigureDialog->pTabCS130->dWavelength);
-        ui->wavelengthEdit->setText(QString("%1")
-                                    .arg(pConfigureDialog->pTabCS130->dWavelength, 10, 'f', 1, ' '));
-    }
     switchLampOff();
     // Initializing Keithley 236
     ui->statusBar->showMessage("Initializing Keithley 236...");
@@ -735,6 +722,14 @@ MainWindow::on_startRvsTimeButton_clicked() {
             this, SLOT(onKeithleyReadyForTrigger()));
     connect(pKeithley, SIGNAL(newReading(QDateTime, QString)),
             this, SLOT(onNewRvsTimeKeithleyReading(QDateTime, QString)));
+    // Initializing LakeShore 330
+    ui->statusBar->showMessage("Initializing LakeShore 330...");
+    if(pLakeShore->init()) {
+        ui->statusBar->showMessage("Unable to Initialize LakeShore 330...");
+        pKeithley->disconnect();
+        QApplication::restoreOverrideCursor();
+        return;
+    }
     // Open the Output file
     ui->statusBar->showMessage("Opening Output file...");
     if(!prepareOutputFile(pConfigureDialog->pTabFile->sBaseDir,
@@ -773,12 +768,14 @@ MainWindow::on_startRvsTimeButton_clicked() {
     ui->startRvsTimeButton->setText("Stop R vs Time");
     ui->lambdaScanButton->setDisabled(true);
     ui->lampButton->setDisabled(true);
-    ui->statusBar->showMessage(QString("%1 Waiting Initial T [%2K]")
-                               .arg(waitingTStartTime.toString())
-                               .arg(pConfigureDialog->pTabLS330->dTStart));
+    bRunning = true;
     double timeBetweenMeasurements = pConfigureDialog->pTabK236->dInterval*1000.0;
+    connect(&measuringTimer, SIGNAL(timeout()),
+            this, SLOT(onTimeToGetNewMeasure()));
     measuringTimer.start(int(timeBetweenMeasurements));
     dateStart = QDateTime::currentDateTime();
+    ui->statusBar->showMessage(QString("%1 Measure started")
+                               .arg(dateStart.toString()));
 }
 
 
@@ -799,11 +796,6 @@ MainWindow::writeRvsTimeHeader() {
         pOutputFile->write(HeaderLines.at(i).toLocal8Bit());
         pOutputFile->write("\n");
     }
-    if(bUseMonochromator) {
-        pOutputFile->write(QString("# Grating #= %1 Wavelength = %2 nm\n")
-                                   .arg(pConfigureDialog->pTabCS130->iGratingNumber)
-                                   .arg(pConfigureDialog->pTabCS130->dWavelength).toLocal8Bit());
-    }
     if(pConfigureDialog->pTabK236->bSourceI) {
         pOutputFile->write(QString("# Current=%1[A] Compliance=%2[V]\n")
                            .arg(pConfigureDialog->pTabK236->dStart)
@@ -814,9 +806,6 @@ MainWindow::writeRvsTimeHeader() {
                            .arg(pConfigureDialog->pTabK236->dStart)
                            .arg(pConfigureDialog->pTabK236->dCompliance).toLocal8Bit());
     }
-    pOutputFile->write(QString("# Max_T_Start_Wait=%1[min] T_Stabilize_Time=%2[min]\n")
-                       .arg(pConfigureDialog->pTabLS330->iReachingTStart)
-                       .arg(pConfigureDialog->pTabLS330->iTimeToSteadyT).toLocal8Bit());
     pOutputFile->flush();
 }
 
@@ -1319,13 +1308,13 @@ MainWindow::initRvsTimePlots() {
     sMeasurementPlotLabel = QString("R [Ohm] -vs- Time [s]");
     pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
     pPlotMeasurements->setMaxPoints(maxPlotPoints);
-    pPlotMeasurements->SetLimits(0.0, 1.0, 0.1, 1.0, true, true, false, true);
+    pPlotMeasurements->SetLimits(0.0, 1.0, 0.1, 1.0, true, true, false, false);
     // Dataset
     pPlotMeasurements->NewDataSet(iPlotDark,//Id
                                   3, //Pen Width
-                                  QColor(255, 0, 0),// Color
+                                  QColor(255, 255, 64),// Color
                                   Plot2D::ipoint,// Symbol
-                                  "R"// Title
+                                  "R(t)"// Title
                        );
     pPlotMeasurements->SetShowDataSet(iPlotDark, true);
     pPlotMeasurements->SetShowTitle(iPlotDark, true);
