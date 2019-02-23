@@ -53,7 +53,7 @@ LakeShore330::LakeShore330(int gpio, int address, QObject *parent)
     , QYE(4)  // Query Error
     , OPC(1)  // Operation Complete
 {
-    pollInterval = 200;
+    pollInterval = 659;
     Q_UNUSED(lakeshore330::rearmMask);
 }
 

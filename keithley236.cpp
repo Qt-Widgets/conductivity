@@ -54,7 +54,7 @@ Keithley236::Keithley236(int gpio, int address, QObject *parent)
     , isSweeping(false)
 {
     iComplianceEvents = 0;
-    pollInterval = 500;
+    pollInterval = 569;
 }
 
 
