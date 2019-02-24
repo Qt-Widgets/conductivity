@@ -245,7 +245,7 @@ plotPropertiesDlg::onChangeGridPenWidth(const QString sNewVal) {
 void
 plotPropertiesDlg::onChangeMaxDataPoints(const QString sNewVal) {
     if((sNewVal.toInt() > 0) &&
-       (sNewVal.toInt() < 10000))
+       (sNewVal.toInt() < 10001))
     {
         maxDataPoints = sNewVal.toInt();
         maxDataPointsEdit.setStyleSheet(sNormalStyle);
