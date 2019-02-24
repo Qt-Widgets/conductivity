@@ -67,7 +67,7 @@ DataStream2D::AddPoint(double x, double y) {
     }
     if(m_pointArrayX.count() > maxPoints) {
         m_pointArrayX.removeFirst();
-        m_pointArrayX.removeFirst();
+        m_pointArrayY.removeFirst();
         minx = x-DBL_MIN;
         maxx = x+DBL_MIN;
         miny = y-DBL_MIN;

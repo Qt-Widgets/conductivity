@@ -72,7 +72,7 @@ LakeShore330::~LakeShore330() {
 
 int
 LakeShore330::init() {
-    gpibId = ibdev(gpibNumber, gpibAddress, 0, T3s, 1, 0);
+    gpibId = ibdev(gpibNumber, gpibAddress, 0, T10s, 1, 0);
     if(gpibId < 0) {
         QString sError = QString(Q_FUNC_INFO) + ErrMsg(ThreadIbsta(), ThreadIberr(), ThreadIbcntl());
         emit sendMessage(sError);
@@ -262,10 +262,12 @@ LakeShore330::isRamping() {
     sCommand = QString("RAMPS?\r\n");
     gpibWrite(gpibId, sCommand);
     if(isGpibError(QString(Q_FUNC_INFO) + "Unable to query Ramp Status"))
-        return false;
+// Unable to query Ramp Status...assume it is still ramping
+        return true;
     int iRamping = gpibRead(gpibId).toInt();
     if(isGpibError(QString(Q_FUNC_INFO) + "Unable to get Ramp Status"))
-        return false;
+// Unable to get Ramp Status...assume it is still ramping
+        return true;
     return (iRamping == 1);
 }
 

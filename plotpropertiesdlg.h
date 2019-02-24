@@ -78,6 +78,9 @@ private:
     // Line Edit
     QLineEdit   gridPenWidthEdit;
     QLineEdit   maxDataPointsEdit;
+    // QLineEdit styles
+    QString sNormalStyle;
+    QString sErrorStyle;
     // DialogButtonBox
     QDialogButtonBox* pButtonBox;
 };

@@ -50,6 +50,14 @@ plotPropertiesDlg::plotPropertiesDlg(QString sTitle, QWidget *parent)
 
     // Set the Layout
     setLayout(pLayout);
+    sNormalStyle = gridPenWidthEdit.styleSheet();
+
+    sErrorStyle  = "QLineEdit { ";
+    sErrorStyle += "color: rgb(255, 255, 255);";
+    sErrorStyle += "background: rgb(255, 0, 0);";
+    sErrorStyle += "selection-background-color: rgb(128, 128, 255);";
+    sErrorStyle += "}";
+
     connectSignals();
 }
 
@@ -59,13 +67,13 @@ plotPropertiesDlg::restoreSettings() {
     QSettings settings;
     settings.beginGroup(sTitleGroup);
     painterBkColor.setRgba(settings.value("PainterBKColor", QColor(Qt::black).rgba()).toUInt());
-    frameColor.setRgba(settings.value("FrameColor",     QColor(Qt::blue).rgba()).toUInt());
-    gridColor.setRgba(settings.value("GridColor",      QColor(Qt::blue).rgba()).toUInt());
-    labelColor.setRgba(settings.value("LabelColor",     QColor(Qt::white).rgba()).toUInt());
-    gridPenWidth      = settings.value("GridPenWidth", 1).toInt();
-    maxDataPoints     = settings.value("MaxDataPoints", 100).toInt();
-    painterFontName   = settings.value("PainterFontName", QString("Ubuntu")).toString();
-    painterFontSize   = settings.value("PainterFontSize", 16).toInt();
+    frameColor.setRgba(settings.value("FrameColor",         QColor(Qt::blue).rgba()).toUInt());
+    gridColor.setRgba(settings.value("GridColor",           QColor(Qt::blue).rgba()).toUInt());
+    labelColor.setRgba(settings.value("LabelColor",         QColor(Qt::white).rgba()).toUInt());
+    gridPenWidth      = settings.value("GridPenWidth",      1).toInt();
+    maxDataPoints     = settings.value("MaxDataPoints",     4000).toInt();
+    painterFontName   = settings.value("PainterFontName",   QString("Ubuntu")).toString();
+    painterFontSize   = settings.value("PainterFontSize",   16).toInt();
     painterFontWeight = QFont::Weight(settings.value("PainterFontWeight", QFont::Bold).toInt());
     painterFontItalic = settings.value("PainterFontItalic", false).toBool();
     painterFont       = QFont(painterFontName,
@@ -95,7 +103,9 @@ plotPropertiesDlg::saveSettings() {
 
 void
 plotPropertiesDlg::setToolTips() {
-
+    QString sHeader = QString("Enter values in range [%1 : %2]");
+    gridPenWidthEdit.setToolTip(sHeader.arg(1).arg(10));
+    maxDataPointsEdit.setToolTip(sHeader.arg(1).arg(10000));
 }
 
 
@@ -220,10 +230,14 @@ plotPropertiesDlg::onChangeLabelsFont() {
 void
 plotPropertiesDlg::onChangeGridPenWidth(const QString sNewVal) {
     if((sNewVal.toInt() > 0) &&
-       (sNewVal.toInt() < 10))
+       (sNewVal.toInt() < 11))
     {
         gridPenWidth = sNewVal.toInt();
+        gridPenWidthEdit.setStyleSheet(sNormalStyle);
         emit configChanged();
+    }
+    else {
+        gridPenWidthEdit.setStyleSheet(sErrorStyle);
     }
 }
 
@@ -231,10 +245,14 @@ plotPropertiesDlg::onChangeGridPenWidth(const QString sNewVal) {
 void
 plotPropertiesDlg::onChangeMaxDataPoints(const QString sNewVal) {
     if((sNewVal.toInt() > 0) &&
-       (sNewVal.toInt() < 2000))
+       (sNewVal.toInt() < 10000))
     {
         maxDataPoints = sNewVal.toInt();
+        maxDataPointsEdit.setStyleSheet(sNormalStyle);
         emit configChanged();
+    }
+    else {
+        maxDataPointsEdit.setStyleSheet(sErrorStyle);
     }
 }
 
