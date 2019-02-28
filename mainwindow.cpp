@@ -1271,6 +1271,7 @@ MainWindow::initRvsTPlots() {
     // Plot of Conductivity vs Temperature
     sMeasurementPlotLabel = QString("log(S) [Ohm^-1] -vs- 1000/T [K^-1]");
     pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
+    pPlotMeasurements->setWindowTitle(pConfigureDialog->pTabFile->sOutFileName);
     pPlotMeasurements->setMaxPoints(maxPlotPoints);
     pPlotMeasurements->SetLimits(0.0, 1.0, 0.1, 1.0, true, true, false, true);
     // Dataset for Dark measurements
@@ -1307,6 +1308,7 @@ MainWindow::initRvsTimePlots() {
     // Plot of Resistance vs Time
     sMeasurementPlotLabel = QString("R [Ohm] -vs- Time [s]");
     pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
+    pPlotMeasurements->setWindowTitle(pConfigureDialog->pTabFile->sOutFileName);
     pPlotMeasurements->setMaxPoints(maxPlotPoints);
     pPlotMeasurements->SetLimits(0.0, 1.0, 0.1, 1.0, true, true, false, false);
     // Dataset
@@ -1334,6 +1336,7 @@ MainWindow::initIvsVPlots() {
     // Plot of Current vs Voltage
     sMeasurementPlotLabel = QString("I [A] vs V [V]");
     pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
+    pPlotMeasurements->setWindowTitle(pConfigureDialog->pTabFile->sOutFileName);
     pPlotMeasurements->setMaxPoints(maxPlotPoints);
     pPlotMeasurements->NewDataSet(1,//Id
                                   3, //Pen Width
@@ -1362,6 +1365,7 @@ MainWindow::initSvsLPlots() {
     // Plot of Sigma vs Wavelength
     sMeasurementPlotLabel = QString("S [Ohm^-1] -vs- Lambda [nm]");
     pPlotMeasurements = new Plot2D(this, sMeasurementPlotLabel);
+    pPlotMeasurements->setWindowTitle(pConfigureDialog->pTabFile->sOutFileName);
     pPlotMeasurements->setMaxPoints(maxPlotPoints);
     pPlotMeasurements->NewDataSet(1,//Id
                                   3, //Pen Width
