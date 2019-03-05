@@ -775,7 +775,7 @@ Plot2D::PointPlot(QPainter* painter, DataStream2D* pData) {
         {
             if(Ax.LogX) {
                 if(pData->m_pointArrayX[i] > 0.0)
-                    ix = int(((pData->m_pointArrayX[i] - xlmin)*xfact) + Pf.left);
+                    ix = int(((log10(pData->m_pointArrayX[i]) - xlmin)*xfact) + Pf.left);
                 else
                     ix = -INT_MAX;
             } else

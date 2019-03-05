@@ -762,7 +762,14 @@ MainWindow::on_startRvsTimeButton_clicked() {
     startReadingTTime = QDateTime::currentDateTime();
     onTimeToReadT();
     readingTTimer.start(30000);
-    // now we are waiting for reaching the initial temperature
+    if(pConfigureDialog->pTabLS330->bUseThermostat) {
+        pLakeShore->setTemperature(pConfigureDialog->pTabLS330->dTStart);
+        pLakeShore->switchPowerOn(3);
+        if(!pLakeShore->startRamp(pConfigureDialog->pTabLS330->dTStop, pConfigureDialog->pTabLS330->dTRate)) {
+            ui->statusBar->showMessage(QString("Error Starting the Measure"));
+            return;
+        }
+    }
     ui->startRvsTButton->setDisabled(true);
     ui->startIvsVButton->setDisabled(true);
     ui->startRvsTimeButton->setText("Stop R vs Time");

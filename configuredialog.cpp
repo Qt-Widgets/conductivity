@@ -63,7 +63,7 @@ ConfigureDialog::ConfigureDialog(int iConfiguration, bool enableMonochromator, Q
         break;
     case MainWindow::iConfRvsTime:
         setWindowTitle("R versus Time");
-        pTabLS330->setDisabled(true);
+//        pTabLS330->setDisabled(true);
         pTabCS130->setDisabled(true);
         break;
     case MainWindow::iConfLScan:
